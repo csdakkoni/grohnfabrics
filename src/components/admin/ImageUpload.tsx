@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { compressImage } from '@/lib/imageCompression';
 
 interface ImageUploadProps {
   images: string[];
@@ -10,6 +11,9 @@ interface ImageUploadProps {
   maxImages?: number;
 }
 
+// Vercel free tier limit
+const MAX_UPLOAD_SIZE_MB = 4;
+
 export default function ImageUpload({ 
   images, 
   onImagesChange, 
@@ -17,6 +21,7 @@ export default function ImageUpload({
   maxImages = 10 
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<string>('');
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,26 +34,47 @@ export default function ImageUpload({
 
     setUploading(true);
     const newImages: string[] = [];
+    const totalFiles = Math.min(files.length, maxImages - images.length);
 
-    for (let i = 0; i < files.length; i++) {
-      if (images.length + newImages.length >= maxImages) break;
-      
+    for (let i = 0; i < totalFiles; i++) {
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', folder);
+      setProgress(`${i + 1}/${totalFiles}: ${file.name} işleniyor...`);
 
       try {
+        // Compress if file is too large
+        let processedFile = file;
+        const originalSize = file.size / 1024 / 1024;
+        
+        if (originalSize > MAX_UPLOAD_SIZE_MB) {
+          setProgress(`${i + 1}/${totalFiles}: ${file.name} sıkıştırılıyor (${originalSize.toFixed(1)}MB)...`);
+          processedFile = await compressImage(file, {
+            maxWidth: 2400,
+            maxHeight: 2400,
+            quality: 0.85,
+            maxSizeMB: MAX_UPLOAD_SIZE_MB,
+          });
+        }
+
+        setProgress(`${i + 1}/${totalFiles}: ${file.name} yükleniyor...`);
+
+        const formData = new FormData();
+        formData.append('file', processedFile);
+        formData.append('folder', folder);
+
         const response = await fetch('/api/image/upload', {
           method: 'POST',
           body: formData,
         });
 
         const data = await response.json();
+        
         if (data.success && data.url) {
           newImages.push(data.url);
+        } else if (data.error) {
+          console.error('Upload failed:', data.error);
+          alert(`Hata: ${data.error}`);
         }
       } catch (error) {
         console.error('Upload error:', error);
@@ -59,6 +85,7 @@ export default function ImageUpload({
       onImagesChange([...images, ...newImages]);
     }
     setUploading(false);
+    setProgress('');
   };
 
   const handleRemove = (index: number) => {
@@ -102,7 +129,7 @@ export default function ImageUpload({
           {uploading ? (
             <>
               <div className="w-10 h-10 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-[var(--foreground-muted)]">Yükleniyor...</p>
+              <p className="text-sm text-[var(--foreground-muted)]">{progress || 'Yükleniyor...'}</p>
             </>
           ) : (
             <>
@@ -110,6 +137,9 @@ export default function ImageUpload({
               <p className="text-sm font-medium">Görsel yüklemek için tıklayın veya sürükleyin</p>
               <p className="text-xs text-[var(--foreground-light)]">
                 PNG, JPG, WEBP • Maks {maxImages} görsel
+              </p>
+              <p className="text-xs text-[var(--accent)]">
+                ✨ Büyük dosyalar otomatik sıkıştırılır
               </p>
             </>
           )}
