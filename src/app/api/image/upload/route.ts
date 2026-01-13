@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import sharp from 'sharp';
 
+// Size variants to generate
+const SIZE_VARIANTS = {
+  thumb: { width: 400, height: 400, fit: 'cover' as const, quality: 80 },
+  small: { width: 600, height: 600, fit: 'inside' as const, quality: 82 },
+  medium: { width: 1200, height: 1200, fit: 'inside' as const, quality: 85 },
+  large: { width: 1920, height: 1920, fit: 'inside' as const, quality: 85 },
+};
+
+// Max file size: 20MB (raw upload)
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -12,8 +23,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ 
+        error: `File too large. Max size: ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+      }, { status: 400 });
+    }
+
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif'];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
     }
@@ -21,64 +39,122 @@ export async function POST(request: NextRequest) {
     // Read file buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Process with Sharp - create optimized versions
+    // Get image metadata
+    const metadata = await sharp(buffer).metadata();
+    console.log(`Processing: ${file.name}, ${metadata.width}x${metadata.height}, ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+
+    // Generate unique filename
     const timestamp = Date.now();
     const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9]/gi, '-').toLowerCase();
     const fileName = `${baseName}-${timestamp}`;
 
-    // Original (optimized)
-    const originalBuffer = await sharp(buffer)
-      .rotate() // Auto-rotate based on EXIF
-      .jpeg({ quality: 85, progressive: true })
-      .toBuffer();
+    const urls: Record<string, string> = {};
+    const uploadPromises: Promise<void>[] = [];
 
-    // Thumbnail (400px)
-    const thumbBuffer = await sharp(buffer)
-      .rotate()
-      .resize(400, 400, { fit: 'cover' })
-      .jpeg({ quality: 80 })
-      .toBuffer();
+    // Process each size variant
+    for (const [sizeName, config] of Object.entries(SIZE_VARIANTS)) {
+      const processAndUpload = async () => {
+        try {
+          // Skip if original is smaller than target
+          if (metadata.width && metadata.height) {
+            if (metadata.width < config.width && metadata.height < config.height && sizeName !== 'thumb') {
+              return;
+            }
+          }
 
-    // Upload original
-    const { error: originalError } = await supabaseAdmin.storage
-      .from('images')
-      .upload(`${folder}/${fileName}.jpg`, originalBuffer, {
-        contentType: 'image/jpeg',
-        cacheControl: '31536000', // 1 year
-      });
+          const processedBuffer = await sharp(buffer)
+            .rotate() // Auto-rotate based on EXIF
+            .resize(config.width, config.height, { 
+              fit: config.fit,
+              withoutEnlargement: true 
+            })
+            .jpeg({ 
+              quality: config.quality, 
+              progressive: true,
+              mozjpeg: true // Better compression
+            })
+            .toBuffer();
 
-    if (originalError) {
-      console.error('Upload error:', originalError);
-      return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 });
+          const path = sizeName === 'thumb' 
+            ? `${folder}/thumbs/${fileName}.jpg`
+            : sizeName === 'medium'
+            ? `${folder}/${fileName}.jpg` // Default/main image
+            : `${folder}/${sizeName}/${fileName}.jpg`;
+
+          const { error } = await supabaseAdmin.storage
+            .from('images')
+            .upload(path, processedBuffer, {
+              contentType: 'image/jpeg',
+              cacheControl: '31536000', // 1 year
+            });
+
+          if (error) {
+            console.error(`Upload error (${sizeName}):`, error);
+            return;
+          }
+
+          const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('images')
+            .getPublicUrl(path);
+
+          urls[sizeName] = publicUrl;
+
+        } catch (err) {
+          console.error(`Processing error (${sizeName}):`, err);
+        }
+      };
+
+      uploadPromises.push(processAndUpload());
     }
 
-    // Upload thumbnail
-    const { error: thumbError } = await supabaseAdmin.storage
-      .from('images')
-      .upload(`${folder}/thumbs/${fileName}.jpg`, thumbBuffer, {
-        contentType: 'image/jpeg',
-        cacheControl: '31536000',
-      });
+    // Also create WebP version for modern browsers (medium size)
+    uploadPromises.push((async () => {
+      try {
+        const webpBuffer = await sharp(buffer)
+          .rotate()
+          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
 
-    if (thumbError) {
-      console.error('Thumb upload error:', thumbError);
-      // Continue anyway, main image is uploaded
-    }
+        const { error } = await supabaseAdmin.storage
+          .from('images')
+          .upload(`${folder}/webp/${fileName}.webp`, webpBuffer, {
+            contentType: 'image/webp',
+            cacheControl: '31536000',
+          });
 
-    // Get public URLs
-    const { data: { publicUrl: originalUrl } } = supabaseAdmin.storage
-      .from('images')
-      .getPublicUrl(`${folder}/${fileName}.jpg`);
+        if (!error) {
+          const { data: { publicUrl } } = supabaseAdmin.storage
+            .from('images')
+            .getPublicUrl(`${folder}/webp/${fileName}.webp`);
+          urls.webp = publicUrl;
+        }
+      } catch (err) {
+        console.error('WebP processing error:', err);
+      }
+    })());
 
-    const { data: { publicUrl: thumbUrl } } = supabaseAdmin.storage
-      .from('images')
-      .getPublicUrl(`${folder}/thumbs/${fileName}.jpg`);
+    // Wait for all uploads
+    await Promise.all(uploadPromises);
+
+    // Calculate compression stats
+    const originalSize = file.size;
+    const savedPercentage = urls.medium 
+      ? Math.round((1 - (await getFileSize(urls.medium)) / originalSize) * 100)
+      : 0;
 
     return NextResponse.json({
       success: true,
-      url: originalUrl,
-      thumbnail: thumbUrl,
+      url: urls.medium || urls.large || urls.small,
+      thumbnail: urls.thumb,
+      variants: urls,
       fileName: `${fileName}.jpg`,
+      original: {
+        width: metadata.width,
+        height: metadata.height,
+        size: originalSize,
+      },
+      compression: `~${savedPercentage}% smaller`,
     });
 
   } catch (error) {
@@ -87,4 +163,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Note: In App Router, body parsing is handled automatically for FormData
+// Helper to estimate file size (rough)
+async function getFileSize(url: string): Promise<number> {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    const contentLength = response.headers.get('content-length');
+    return contentLength ? parseInt(contentLength) : 0;
+  } catch {
+    return 0;
+  }
+}
