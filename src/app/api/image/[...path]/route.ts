@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { downloadFromR2, uploadToR2, isR2Configured } from '@/lib/r2';
 import sharp from 'sharp';
 
 // Dynamic image transformation endpoint
@@ -7,7 +8,7 @@ import sharp from 'sharp';
 //
 // Features:
 // - On-the-fly image transformation (Cloudinary-like)
-// - Server-side caching in Supabase Storage
+// - Server-side caching in R2 or Supabase Storage
 // - CDN-friendly cache headers
 // - WebP/AVIF/JPEG/PNG support
 
@@ -19,10 +20,38 @@ function getCacheKey(imagePath: string, params: URLSearchParams): string {
   const format = params.get('f') || 'webp';
   const fit = params.get('fit') || 'cover';
   
-  // e.g., products/foto.jpg → cache/products/foto_w800_h600_q80_webp_cover.webp
   const baseName = imagePath.replace(/\.[^/.]+$/, '');
   const ext = format === 'jpeg' ? 'jpg' : format;
   return `cache/${baseName}_w${width}_h${height}_q${quality}_${format}_${fit}.${ext}`;
+}
+
+// Download from storage (R2 or Supabase)
+async function downloadImage(path: string): Promise<Buffer | null> {
+  if (isR2Configured) {
+    return await downloadFromR2(path);
+  } else {
+    const { data, error } = await supabaseAdmin.storage
+      .from('images')
+      .download(path);
+    
+    if (error || !data) return null;
+    return Buffer.from(await data.arrayBuffer());
+  }
+}
+
+// Upload to storage (R2 or Supabase)
+async function uploadCache(path: string, buffer: Buffer, contentType: string): Promise<void> {
+  if (isR2Configured) {
+    await uploadToR2(path, buffer, contentType);
+  } else {
+    await supabaseAdmin.storage
+      .from('images')
+      .upload(path, buffer, {
+        contentType,
+        cacheControl: '31536000',
+        upsert: true,
+      });
+  }
 }
 
 export async function GET(
@@ -47,41 +76,39 @@ export async function GET(
     // Generate cache key
     const cacheKey = hasTransformations ? getCacheKey(imagePath, searchParams) : null;
 
+    // Determine content type
+    const getContentType = (fmt: string) => {
+      switch (fmt) {
+        case 'webp': return 'image/webp';
+        case 'avif': return 'image/avif';
+        case 'png': return 'image/png';
+        default: return 'image/jpeg';
+      }
+    };
+
     // Try to get from cache first
     if (cacheKey) {
-      const { data: cachedData } = await supabaseAdmin.storage
-        .from('images')
-        .download(cacheKey);
+      const cachedBuffer = await downloadImage(cacheKey);
 
-      if (cachedData) {
-        const cachedBuffer = Buffer.from(await cachedData.arrayBuffer());
-        const contentType = format === 'webp' ? 'image/webp' 
-          : format === 'avif' ? 'image/avif'
-          : format === 'png' ? 'image/png'
-          : 'image/jpeg';
-
+      if (cachedBuffer) {
         return new Response(new Uint8Array(cachedBuffer), {
           headers: {
-            'Content-Type': contentType,
+            'Content-Type': getContentType(format),
             'Cache-Control': 'public, max-age=31536000, immutable',
             'CDN-Cache-Control': 'public, max-age=31536000',
             'X-Cache': 'HIT',
+            'X-Storage': isR2Configured ? 'R2' : 'Supabase',
           },
         });
       }
     }
 
-    // Download original image from Supabase
-    const { data, error } = await supabaseAdmin.storage
-      .from('images')
-      .download(imagePath);
+    // Download original image
+    const buffer = await downloadImage(imagePath);
 
-    if (error || !data) {
+    if (!buffer) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
-
-    // Convert to buffer
-    const buffer = Buffer.from(await data.arrayBuffer());
 
     // Apply transformations with Sharp
     let transformer = sharp(buffer).rotate();
@@ -120,15 +147,9 @@ export async function GET(
 
     // Save to cache (async, don't wait)
     if (cacheKey) {
-      supabaseAdmin.storage
-        .from('images')
-        .upload(cacheKey, outputBuffer, {
-          contentType,
-          cacheControl: '31536000',
-          upsert: true,
-        })
+      uploadCache(cacheKey, outputBuffer, contentType)
         .then(() => console.log(`Cached: ${cacheKey}`))
-        .catch(() => {}); // Ignore cache errors
+        .catch(() => {});
     }
 
     // Return transformed image with cache headers
@@ -138,6 +159,7 @@ export async function GET(
         'Cache-Control': 'public, max-age=31536000, immutable',
         'CDN-Cache-Control': 'public, max-age=31536000',
         'X-Cache': 'MISS',
+        'X-Storage': isR2Configured ? 'R2' : 'Supabase',
       },
     });
 
