@@ -2,7 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
-import AddToCartButton from '@/components/store/AddToCartButton';
+import ProductDetailClient from './ProductDetailClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,54 +150,11 @@ export default async function ProductPage({
               )}
             </div>
 
-            {/* Options */}
-            {optionGroups.length > 0 && (
-              <div className="space-y-6 mb-8">
-                {optionGroups.map((group: {
-                  id: string;
-                  name_tr: string;
-                  option_type: string;
-                  values?: Array<{
-                    id: string;
-                    value_tr: string;
-                    hex_color?: string;
-                    is_available: boolean;
-                  }>;
-                }) => (
-                  <div key={group.id}>
-                    <label className="block text-sm font-medium mb-3">{group.name_tr}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {group.values?.map((value) => (
-                        <button
-                          key={value.id}
-                          disabled={!value.is_available}
-                          className={`
-                            px-4 py-2 rounded-lg border text-sm transition-colors
-                            ${value.is_available 
-                              ? 'border-[var(--border)] hover:border-[var(--brand-primary)]' 
-                              : 'opacity-50 cursor-not-allowed'
-                            }
-                          `}
-                          style={group.option_type === 'color' && value.hex_color ? {
-                            backgroundColor: value.hex_color,
-                            width: '2.5rem',
-                            height: '2.5rem',
-                            padding: 0,
-                          } : undefined}
-                        >
-                          {group.option_type !== 'color' && value.value_tr}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Quantity & Add to Cart */}
-            <AddToCartButton 
+            {/* Options & Add to Cart - Client Component */}
+            <ProductDetailClient 
               product={product}
-              price={trPrice?.price || 0}
+              optionGroups={optionGroups}
+              basePrice={trPrice?.price || 0}
             />
 
             {/* Features */}
