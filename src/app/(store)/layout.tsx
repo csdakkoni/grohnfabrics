@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { ShoppingBag, User, Search } from 'lucide-react';
+import { User, Search } from 'lucide-react';
+import { CartProvider } from '@/components/store/CartProvider';
+import CartDrawer from '@/components/store/CartDrawer';
+import CartButton from '@/components/store/CartButton';
 
 export default function StoreLayout({
   children,
@@ -7,6 +10,7 @@ export default function StoreLayout({
   children: React.ReactNode;
 }) {
   return (
+    <CartProvider>
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[var(--border)]">
@@ -62,17 +66,14 @@ export default function StoreLayout({
               >
                 <User className="w-5 h-5 text-[var(--foreground-muted)]" />
               </Link>
-              <Link 
-                href="/cart" 
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-primary-dark)] transition-colors"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span className="text-sm font-medium">Sepet</span>
-              </Link>
+              <CartButton />
             </div>
           </div>
         </div>
       </header>
+
+      {/* Cart Drawer */}
+      <CartDrawer />
 
       {/* Main Content */}
       <main className="flex-1">
@@ -135,5 +136,6 @@ export default function StoreLayout({
         </div>
       </footer>
     </div>
+    </CartProvider>
   );
 }

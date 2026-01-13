@@ -2,21 +2,34 @@
 
 import { useState } from 'react';
 import { ShoppingBag, Minus, Plus } from 'lucide-react';
+import { useCart } from './CartProvider';
 
 interface Product {
   id: string;
   name_tr: string;
+  name_en?: string;
   sales_model: string;
   min_order_quantity: number;
   order_step: number;
+  thumbnail_url?: string;
+  images?: string[];
 }
 
 interface AddToCartButtonProps {
   product: Product;
   price: number;
+  selectedOptions?: Record<string, string>;
+  variantId?: string;
 }
 
-export default function AddToCartButton({ product, price }: AddToCartButtonProps) {
+export default function AddToCartButton({ 
+  product, 
+  price, 
+  selectedOptions,
+  variantId 
+}: AddToCartButtonProps) {
+  const { addToCart } = useCart();
+  
   const isMeter = product.sales_model === 'meter';
   const minQty = product.min_order_quantity || 1;
   const step = product.order_step || (isMeter ? 0.5 : 1);
@@ -38,31 +51,28 @@ export default function AddToCartButton({ product, price }: AddToCartButtonProps
   const handleAddToCart = async () => {
     setAdding(true);
     
-    // TODO: Implement actual cart logic
-    // For now, just simulate adding to cart
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Small delay for UX
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Store in localStorage for now
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingIndex = cart.findIndex((item: { productId: string }) => item.productId === product.id);
-    
-    if (existingIndex >= 0) {
-      cart[existingIndex].quantity += quantity;
-    } else {
-      cart.push({
-        productId: product.id,
-        name: product.name_tr,
-        quantity,
-        price,
-        salesModel: product.sales_model,
-      });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
+    addToCart({
+      productId: product.id,
+      variantId,
+      name: product.name_tr,
+      nameEn: product.name_en,
+      image: product.thumbnail_url || product.images?.[0],
+      quantity,
+      price,
+      currency: 'TRY',
+      salesModel: product.sales_model as 'meter' | 'unit' | 'preset_sizes',
+      options: selectedOptions,
+    });
     
     setAdding(false);
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    setTimeout(() => {
+      setAdded(false);
+      setQuantity(minQty); // Reset quantity
+    }, 2000);
   };
 
   const total = price * quantity;
