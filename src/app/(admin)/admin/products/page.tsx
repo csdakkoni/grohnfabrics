@@ -112,12 +112,14 @@ export default async function ProductsPage() {
                       )}
                     </td>
                     <td>
-                      <Link 
-                        href={`/admin/products/${product.id}`}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        Düzenle
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link 
+                          href={`/admin/products/${product.id}`}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          Düzenle
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );

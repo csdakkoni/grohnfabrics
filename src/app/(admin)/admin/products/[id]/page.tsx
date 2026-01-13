@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface Category {
@@ -12,13 +12,42 @@ interface Category {
   name_tr: string;
 }
 
-export default function NewProductPage() {
+interface Product {
+  id: string;
+  name_tr: string;
+  name_en: string;
+  slug: string;
+  description_tr: string | null;
+  description_en: string | null;
+  category_id: string | null;
+  product_type: string;
+  sales_model: string;
+  min_order_quantity: number;
+  order_step: number;
+  is_active: boolean;
+  show_in_tr: boolean;
+  show_in_global: boolean;
+  images: string[];
+  thumbnail_url: string | null;
+}
+
+interface ProductPrice {
+  id: string;
+  market_id: string;
+  currency: string;
+  price: number;
+}
+
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const supabase = createClient();
   
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [form, setForm] = useState({
     name_tr: '',
     name_en: '',
@@ -33,48 +62,75 @@ export default function NewProductPage() {
     is_active: true,
     show_in_tr: true,
     show_in_global: true,
-    // Prices
     price_tr: '',
     price_usd: '',
     price_eur: '',
   });
 
   useEffect(() => {
-    async function loadCategories() {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name_tr')
-        .eq('is_active', true)
-        .order('name_tr');
-      setCategories(data || []);
-    }
-    loadCategories();
-  }, [supabase]);
+    loadData();
+  }, [id]);
 
-  // Auto-generate slug from Turkish name
-  useEffect(() => {
-    const slug = form.name_tr
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    setForm(f => ({ ...f, slug }));
-  }, [form.name_tr]);
+  async function loadData() {
+    const [productRes, categoriesRes, pricesRes] = await Promise.all([
+      supabase.from('products').select('*').eq('id', id).single(),
+      supabase.from('categories').select('id, name_tr').eq('is_active', true).order('name_tr'),
+      supabase.from('product_prices').select('*').eq('product_id', id),
+    ]);
+
+    if (productRes.data) {
+      const p = productRes.data as Product;
+      setForm({
+        name_tr: p.name_tr,
+        name_en: p.name_en,
+        slug: p.slug,
+        description_tr: p.description_tr || '',
+        description_en: p.description_en || '',
+        category_id: p.category_id || '',
+        product_type: p.product_type,
+        sales_model: p.sales_model,
+        min_order_quantity: p.min_order_quantity.toString(),
+        order_step: p.order_step.toString(),
+        is_active: p.is_active,
+        show_in_tr: p.show_in_tr,
+        show_in_global: p.show_in_global,
+        price_tr: '',
+        price_usd: '',
+        price_eur: '',
+      });
+      setImages(p.images || []);
+    }
+
+    if (categoriesRes.data) {
+      setCategories(categoriesRes.data);
+    }
+
+    if (pricesRes.data) {
+      setPrices(pricesRes.data);
+      const trPrice = pricesRes.data.find((p: ProductPrice) => p.market_id === 'TR');
+      const usdPrice = pricesRes.data.find((p: ProductPrice) => p.market_id === 'GLOBAL' && p.currency === 'USD');
+      const eurPrice = pricesRes.data.find((p: ProductPrice) => p.market_id === 'GLOBAL' && p.currency === 'EUR');
+      
+      setForm(f => ({
+        ...f,
+        price_tr: trPrice?.price?.toString() || '',
+        price_usd: usdPrice?.price?.toString() || '',
+        price_eur: eurPrice?.price?.toString() || '',
+      }));
+    }
+
+    setLoading(false);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     try {
-      // Create product
-      const { data: product, error: productError } = await supabase
+      // Update product
+      const { error: productError } = await supabase
         .from('products')
-        .insert({
+        .update({
           name_tr: form.name_tr,
           name_en: form.name_en,
           slug: form.slug,
@@ -91,68 +147,99 @@ export default function NewProductPage() {
           images: images,
           thumbnail_url: images[0] || null,
         })
-        .select()
-        .single();
+        .eq('id', id);
 
       if (productError) throw productError;
 
-      // Create prices
-      const prices = [];
+      // Update prices - upsert each
+      const priceUpdates = [];
+      
       if (form.price_tr) {
-        prices.push({
-          product_id: product.id,
+        priceUpdates.push({
+          product_id: id,
           market_id: 'TR',
           currency: 'TRY',
           price: parseFloat(form.price_tr),
         });
       }
       if (form.price_usd) {
-        prices.push({
-          product_id: product.id,
+        priceUpdates.push({
+          product_id: id,
           market_id: 'GLOBAL',
           currency: 'USD',
           price: parseFloat(form.price_usd),
         });
       }
       if (form.price_eur) {
-        prices.push({
-          product_id: product.id,
+        priceUpdates.push({
+          product_id: id,
           market_id: 'GLOBAL',
           currency: 'EUR',
           price: parseFloat(form.price_eur),
         });
       }
 
-      if (prices.length > 0) {
-        const { error: priceError } = await supabase
+      for (const priceData of priceUpdates) {
+        await supabase
           .from('product_prices')
-          .insert(prices);
-        if (priceError) throw priceError;
+          .upsert(priceData, { 
+            onConflict: 'product_id,market_id,currency',
+          });
       }
 
       router.push('/admin/products');
       router.refresh();
     } catch (error) {
-      console.error('Error creating product:', error);
-      alert('Ürün oluşturulurken bir hata oluştu.');
+      console.error('Error updating product:', error);
+      alert('Ürün güncellenirken bir hata oluştu.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (!confirm('Bu ürünü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+    
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) {
+      alert('Silme işlemi başarısız oldu.');
+      return;
+    }
+    
+    router.push('/admin/products');
+    router.refresh();
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-[var(--border)] rounded w-48"></div>
+          <div className="h-96 bg-[var(--border)] rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="mb-8">
-        <Link 
-          href="/admin/products" 
-          className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Ürünlere Dön
-        </Link>
-        <h1 className="text-2xl font-semibold">Yeni Ürün</h1>
-        <p className="text-[var(--foreground-muted)]">Yeni bir ürün ekleyin</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <Link 
+            href="/admin/products" 
+            className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Ürünlere Dön
+          </Link>
+          <h1 className="text-2xl font-semibold">Ürün Düzenle</h1>
+          <p className="text-[var(--foreground-muted)]">{form.name_tr}</p>
+        </div>
+        <button onClick={handleDelete} className="btn btn-ghost text-[var(--error)]">
+          <Trash2 className="w-4 h-4" />
+          Sil
+        </button>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -195,7 +282,6 @@ export default function NewProductPage() {
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
                     className="input"
                   />
-                  <p className="form-hint">grohnfabrics.com/products/{form.slug || '...'}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -225,7 +311,6 @@ export default function NewProductPage() {
             <div className="card">
               <div className="card-header">
                 <h2 className="card-title">Görseller</h2>
-                <p className="card-description">İlk görsel ana görsel olarak kullanılır</p>
               </div>
               <div className="card-body">
                 <ImageUpload 
@@ -241,7 +326,6 @@ export default function NewProductPage() {
             <div className="card">
               <div className="card-header">
                 <h2 className="card-title">Fiyatlandırma</h2>
-                <p className="card-description">Market bazlı fiyatlar</p>
               </div>
               <div className="card-body">
                 <div className="grid grid-cols-3 gap-4">
@@ -253,7 +337,6 @@ export default function NewProductPage() {
                       value={form.price_tr}
                       onChange={(e) => setForm({ ...form, price_tr: e.target.value })}
                       className="input"
-                      placeholder="0.00"
                     />
                   </div>
                   <div className="form-group">
@@ -264,7 +347,6 @@ export default function NewProductPage() {
                       value={form.price_usd}
                       onChange={(e) => setForm({ ...form, price_usd: e.target.value })}
                       className="input"
-                      placeholder="0.00"
                     />
                   </div>
                   <div className="form-group">
@@ -275,7 +357,6 @@ export default function NewProductPage() {
                       value={form.price_eur}
                       onChange={(e) => setForm({ ...form, price_eur: e.target.value })}
                       className="input"
-                      placeholder="0.00"
                     />
                   </div>
                 </div>
@@ -342,12 +423,11 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="label">Ürün Tipi *</label>
+                  <label className="label">Ürün Tipi</label>
                   <select
                     value={form.product_type}
                     onChange={(e) => setForm({ ...form, product_type: e.target.value })}
                     className="input"
-                    required
                   >
                     <option value="fabric">Kumaş</option>
                     <option value="pillow">Yastık Kılıfı</option>
@@ -358,12 +438,11 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="label">Satış Modeli *</label>
+                  <label className="label">Satış Modeli</label>
                   <select
                     value={form.sales_model}
                     onChange={(e) => setForm({ ...form, sales_model: e.target.value })}
                     className="input"
-                    required
                   >
                     <option value="meter">Metre Bazlı</option>
                     <option value="unit">Adet Bazlı</option>
@@ -373,7 +452,7 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Order Settings (for meter-based) */}
+            {/* Order Settings */}
             {form.sales_model === 'meter' && (
               <div className="card">
                 <div className="card-header">
@@ -399,7 +478,6 @@ export default function NewProductPage() {
                       onChange={(e) => setForm({ ...form, order_step: e.target.value })}
                       className="input"
                     />
-                    <p className="form-hint">Örn: 0.5 = 1m, 1.5m, 2m...</p>
                   </div>
                 </div>
               </div>
@@ -410,8 +488,8 @@ export default function NewProductPage() {
               <Link href="/admin/products" className="btn btn-secondary flex-1">
                 İptal
               </Link>
-              <button type="submit" disabled={loading} className="btn btn-primary flex-1">
-                {loading ? 'Kaydediliyor...' : 'Kaydet'}
+              <button type="submit" disabled={saving} className="btn btn-primary flex-1">
+                {saving ? 'Kaydediliyor...' : 'Kaydet'}
               </button>
             </div>
           </div>
