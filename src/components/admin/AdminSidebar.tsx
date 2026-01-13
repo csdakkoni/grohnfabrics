@@ -12,7 +12,8 @@ import {
   Boxes,
   FileText,
   Globe,
-  LogOut
+  LogOut,
+  FileEdit
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Müşteriler', href: '/admin/customers', icon: Users },
   { name: 'Materyaller', href: '/admin/materials', icon: Palette },
   { name: 'Stok (Toplar)', href: '/admin/stock', icon: FileText },
+  { name: 'Sayfalar', href: '/admin/pages', icon: FileEdit },
   { name: 'Marketler', href: '/admin/markets', icon: Globe },
   { name: 'Ayarlar', href: '/admin/settings', icon: Settings },
 ];
