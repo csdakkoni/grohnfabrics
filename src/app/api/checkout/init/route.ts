@@ -115,17 +115,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize payment based on market
-    if (market === 'TR') {
-      // iyzico payment
-      return await initIyzicoPayment(order, cart.items, address, total);
-    } else {
-      // Stripe payment
-      return await initStripePayment(order, cart.items, address, total);
+    try {
+      if (market === 'TR') {
+        // iyzico payment
+        return await initIyzicoPayment(order, cart.items, address, total);
+      } else {
+        // Stripe payment
+        return await initStripePayment(order, cart.items, address, total);
+      }
+    } catch (paymentError) {
+      console.error('Payment initialization error:', paymentError);
+      // Mark order as failed
+      await supabaseAdmin
+        .from('orders')
+        .update({ status: 'cancelled', notes: 'Ödeme başlatılamadı' })
+        .eq('id', order.id);
+      
+      const errorMessage = paymentError instanceof Error ? paymentError.message : 'Bilinmeyen hata';
+      return NextResponse.json({ 
+        error: `Ödeme başlatılamadı: ${errorMessage}` 
+      }, { status: 500 });
     }
 
   } catch (error) {
     console.error('Checkout error:', error);
-    return NextResponse.json({ error: 'Bir hata oluştu' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
+    return NextResponse.json({ error: `Bir hata oluştu: ${errorMessage}` }, { status: 500 });
   }
 }
 
@@ -188,11 +203,12 @@ async function initIyzicoPayment(
     basketItems,
   };
 
-  return new Promise<NextResponse>((resolve) => {
-    iyzipay.checkoutFormInitialize.create(request, (err: Error, result: { status: string; checkoutFormContent: string; paymentPageUrl: string }) => {
+  return new Promise<NextResponse>((resolve, reject) => {
+    iyzipay.checkoutFormInitialize.create(request, (err: Error, result: { status: string; errorMessage?: string; checkoutFormContent: string; paymentPageUrl: string }) => {
       if (err || result.status !== 'success') {
         console.error('iyzico error:', err || result);
-        resolve(NextResponse.json({ error: 'Ödeme başlatılamadı' }, { status: 500 }));
+        const errorDetail = err?.message || result?.errorMessage || 'iyzico bağlantı hatası';
+        reject(new Error(`iyzico: ${errorDetail}`));
         return;
       }
 
@@ -211,52 +227,58 @@ async function initStripePayment(
   address: CheckoutRequest['address'],
   total: number
 ) {
-  const lineItems = items.map(item => ({
-    price_data: {
-      currency: 'usd',
-      product_data: {
-        name: item.name,
-      },
-      unit_amount: Math.round(item.price * 100), // Stripe uses cents
-    },
-    quantity: item.salesModel === 'meter' ? 1 : item.quantity,
-    ...(item.salesModel === 'meter' && {
-      quantity: 1,
+  try {
+    const lineItems = items.map(item => ({
       price_data: {
         currency: 'usd',
         product_data: {
-          name: `${item.name} (${item.quantity}m)`,
+          name: item.name,
         },
-        unit_amount: Math.round(item.price * item.quantity * 100),
+        unit_amount: Math.round(item.price * 100), // Stripe uses cents
       },
-    }),
-  }));
+      quantity: item.salesModel === 'meter' ? 1 : item.quantity,
+      ...(item.salesModel === 'meter' && {
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `${item.name} (${item.quantity}m)`,
+          },
+          unit_amount: Math.round(item.price * item.quantity * 100),
+        },
+      }),
+    }));
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: lineItems,
-    customer_email: address.email,
-    metadata: {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      customer_email: address.email,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.order_number,
+      },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout?cancelled=true`,
+      shipping_address_collection: {
+        allowed_countries: ['US', 'GB', 'DE', 'FR', 'NL', 'BE', 'AT', 'CH'],
+      },
+    });
+
+    // Update order with Stripe session ID
+    await supabaseAdmin
+      .from('orders')
+      .update({ payment_id: session.id })
+      .eq('id', order.id);
+
+    return NextResponse.json({
+      success: true,
+      checkoutUrl: session.url,
       orderId: order.id,
-      orderNumber: order.order_number,
-    },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout?cancelled=true`,
-    shipping_address_collection: {
-      allowed_countries: ['US', 'GB', 'DE', 'FR', 'NL', 'BE', 'AT', 'CH'],
-    },
-  });
-
-  // Update order with Stripe session ID
-  await supabaseAdmin
-    .from('orders')
-    .update({ payment_id: session.id })
-    .eq('id', order.id);
-
-  return NextResponse.json({
-    success: true,
-    checkoutUrl: session.url,
-    orderId: order.id,
-  });
+    });
+  } catch (error) {
+    console.error('Stripe error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Stripe bağlantı hatası';
+    throw new Error(`Stripe: ${errorMessage}`);
+  }
 }
