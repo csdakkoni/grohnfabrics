@@ -13,7 +13,8 @@ import {
   FileText,
   Globe,
   LogOut,
-  FileEdit
+  FileEdit,
+  Layers
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -21,6 +22,7 @@ import { useRouter } from 'next/navigation';
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Ürünler', href: '/admin/products', icon: Package },
+  { name: 'Varyantlar', href: '/admin/variants', icon: Layers },
   { name: 'Kategoriler', href: '/admin/categories', icon: Boxes },
   { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Müşteriler', href: '/admin/customers', icon: Users },

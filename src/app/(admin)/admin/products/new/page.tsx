@@ -4,12 +4,32 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Layers, Check, Info } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface Category {
   id: string;
   name_tr: string;
+}
+
+interface OptionValueTemplate {
+  id: string;
+  template_id: string;
+  value_tr: string;
+  value_en: string;
+  sku_suffix: string | null;
+  hex_color: string | null;
+  default_price_modifier: number;
+  sort_order: number;
+}
+
+interface OptionGroupTemplate {
+  id: string;
+  name_tr: string;
+  name_en: string;
+  option_type: string;
+  description: string | null;
+  values?: OptionValueTemplate[];
 }
 
 export default function NewProductPage() {
@@ -19,6 +39,8 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [variantTemplates, setVariantTemplates] = useState<OptionGroupTemplate[]>([]);
+  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({
     name_tr: '',
     name_en: '',
@@ -40,15 +62,38 @@ export default function NewProductPage() {
   });
 
   useEffect(() => {
-    async function loadCategories() {
-      const { data } = await supabase
+    async function loadData() {
+      // Load categories
+      const { data: cats } = await supabase
         .from('categories')
         .select('id, name_tr')
         .eq('is_active', true)
         .order('name_tr');
-      setCategories(data || []);
+      setCategories(cats || []);
+
+      // Load variant templates
+      const { data: templates } = await supabase
+        .from('option_group_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+
+      if (templates) {
+        const templatesWithValues = await Promise.all(
+          templates.map(async (template) => {
+            const { data: values } = await supabase
+              .from('option_value_templates')
+              .select('*')
+              .eq('template_id', template.id)
+              .eq('is_active', true)
+              .order('sort_order');
+            return { ...template, values: values || [] };
+          })
+        );
+        setVariantTemplates(templatesWithValues);
+      }
     }
-    loadCategories();
+    loadData();
   }, [supabase]);
 
   // Auto-generate slug from Turkish name
@@ -65,6 +110,16 @@ export default function NewProductPage() {
       .replace(/^-|-$/g, '');
     setForm(f => ({ ...f, slug }));
   }, [form.name_tr]);
+
+  const toggleTemplate = (templateId: string) => {
+    const newSelected = new Set(selectedTemplates);
+    if (newSelected.has(templateId)) {
+      newSelected.delete(templateId);
+    } else {
+      newSelected.add(templateId);
+    }
+    setSelectedTemplates(newSelected);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +183,50 @@ export default function NewProductPage() {
           .from('product_prices')
           .insert(prices);
         if (priceError) throw priceError;
+      }
+
+      // Copy selected variant templates to product
+      if (selectedTemplates.size > 0) {
+        for (const templateId of selectedTemplates) {
+          const template = variantTemplates.find(t => t.id === templateId);
+          if (!template) continue;
+
+          // Create option group
+          const { data: optionGroup, error: groupError } = await supabase
+            .from('option_groups')
+            .insert({
+              product_id: product.id,
+              name_tr: template.name_tr,
+              name_en: template.name_en,
+              option_type: template.option_type,
+              is_required: true,
+              affects_price: template.values?.some(v => v.default_price_modifier !== 0) || false,
+              affects_stock: true,
+            })
+            .select()
+            .single();
+
+          if (groupError) throw groupError;
+
+          // Create option values
+          if (template.values && template.values.length > 0) {
+            const optionValues = template.values.map((v, idx) => ({
+              option_group_id: optionGroup.id,
+              value_tr: v.value_tr,
+              value_en: v.value_en,
+              sku_suffix: v.sku_suffix,
+              hex_color: v.hex_color,
+              price_modifier: v.default_price_modifier,
+              sort_order: idx,
+              is_available: true,
+            }));
+
+            const { error: valuesError } = await supabase
+              .from('option_values')
+              .insert(optionValues);
+            if (valuesError) throw valuesError;
+          }
+        }
       }
 
       // Ürün kaydedildi, düzenleme sayfasına yönlendir (varyant eklemesi için)
@@ -280,6 +379,97 @@ export default function NewProductPage() {
                     />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Variant Templates */}
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-[var(--brand-primary)]" />
+                  <h2 className="card-title">Varyant Şablonları</h2>
+                </div>
+                <p className="card-description">Ön tanımlı seçenekleri ürüne ekleyin</p>
+              </div>
+              <div className="card-body">
+                {variantTemplates.length === 0 ? (
+                  <div className="text-center py-6 text-[var(--foreground-muted)]">
+                    <Info className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Henüz varyant şablonu oluşturulmamış.</p>
+                    <Link href="/admin/variants" className="text-sm text-[var(--brand-primary)] hover:underline">
+                      Şablon oluştur →
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {variantTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        onClick={() => toggleTemplate(template.id)}
+                        className={`
+                          p-4 rounded-lg border-2 cursor-pointer transition-all
+                          ${selectedTemplates.has(template.id) 
+                            ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5' 
+                            : 'border-[var(--border)] hover:border-[var(--brand-primary)]/50'
+                          }
+                        `}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{template.name_tr}</span>
+                              <span className="text-xs text-[var(--foreground-muted)] bg-[var(--background-secondary)] px-2 py-0.5 rounded">
+                                {template.values?.length || 0} değer
+                              </span>
+                            </div>
+                            {template.description && (
+                              <p className="text-sm text-[var(--foreground-muted)] mt-1">{template.description}</p>
+                            )}
+                            {template.values && template.values.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {template.values.slice(0, 6).map((value) => (
+                                  <span 
+                                    key={value.id} 
+                                    className="inline-flex items-center gap-1 text-xs bg-[var(--background-secondary)] px-2 py-1 rounded"
+                                  >
+                                    {value.hex_color && (
+                                      <span 
+                                        className="w-3 h-3 rounded-full border border-black/10" 
+                                        style={{ backgroundColor: value.hex_color }}
+                                      />
+                                    )}
+                                    {value.value_tr}
+                                  </span>
+                                ))}
+                                {template.values.length > 6 && (
+                                  <span className="text-xs text-[var(--foreground-muted)] px-2 py-1">
+                                    +{template.values.length - 6} daha
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          <div className={`
+                            w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                            ${selectedTemplates.has(template.id) 
+                              ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]' 
+                              : 'border-[var(--border)]'
+                            }
+                          `}>
+                            {selectedTemplates.has(template.id) && (
+                              <Check className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {selectedTemplates.size > 0 && (
+                      <p className="text-sm text-[var(--brand-primary)] mt-2">
+                        ✓ {selectedTemplates.size} şablon seçildi - kaydedildiğinde ürüne eklenecek
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
