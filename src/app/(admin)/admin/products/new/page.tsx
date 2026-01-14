@@ -130,7 +130,8 @@ export default function NewProductPage() {
         if (priceError) throw priceError;
       }
 
-      router.push('/admin/products');
+      // Ürün kaydedildi, düzenleme sayfasına yönlendir (varyant eklemesi için)
+      router.push(`/admin/products/${product.id}?new=true`);
       router.refresh();
     } catch (error) {
       console.error('Error creating product:', error);

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle, Info } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 import VariantManager from '@/components/admin/VariantManager';
 
@@ -42,7 +42,10 @@ interface ProductPrice {
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const isNewProduct = searchParams.get('new') === 'true';
+  const [showNewProductBanner, setShowNewProductBanner] = useState(isNewProduct);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -224,6 +227,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="p-8">
+      {/* New Product Success Banner */}
+      {showNewProductBanner && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-4">
+          <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-medium text-green-800">Ürün başarıyla oluşturuldu! 🎉</h3>
+            <p className="text-sm text-green-700 mt-1">
+              Şimdi aşağıda varyant seçenekleri (renk, beden vb.) ekleyebilirsiniz. 
+              Varyant eklemezseniz ürün basit ürün olarak yayınlanır.
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowNewProductBanner(false)}
+            className="text-green-600 hover:text-green-800"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
