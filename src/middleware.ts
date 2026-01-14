@@ -86,7 +86,7 @@ export async function middleware(request: NextRequest) {
       .single();
     
     const adminRoles = ['admin', 'sales', 'production', 'warehouse'];
-    isAdmin = customer && adminRoles.includes(customer.role);
+    isAdmin = !!(customer && adminRoles.includes(customer.role));
   }
 
   // Protect admin routes
