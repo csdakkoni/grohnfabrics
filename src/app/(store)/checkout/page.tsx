@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/store/CartProvider';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { ShoppingBag, ChevronLeft, CreditCard, Truck } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,6 +59,7 @@ export default function CheckoutPage() {
   const [estimatedDays, setEstimatedDays] = useState<{ min: number; max: number } | null>(null);
   
   const supabase = createClient();
+  const { t } = useTranslation();
   
   const [address, setAddress] = useState<ShippingAddress>({
     firstName: '',
@@ -196,12 +198,12 @@ export default function CheckoutPage() {
       <div className="container py-16">
         <div className="max-w-md mx-auto text-center">
           <ShoppingBag className="w-16 h-16 mx-auto text-[var(--foreground-light)] mb-4" />
-          <h1 className="text-2xl font-semibold mb-4">Sepetiniz Boş</h1>
+          <h1 className="text-2xl font-semibold mb-4">{t('cart.empty')}</h1>
           <p className="text-[var(--foreground-muted)] mb-6">
-            Ödeme yapabilmek için sepetinize ürün eklemeniz gerekiyor.
+            {t('cart.empty_desc')}
           </p>
           <Link href="/products" className="btn btn-primary">
-            Alışverişe Başla
+            {t('home.shop_now')}
           </Link>
         </div>
       </div>
@@ -218,9 +220,9 @@ export default function CheckoutPage() {
             className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] mb-4"
           >
             <ChevronLeft className="w-4 h-4" />
-            Alışverişe Devam Et
+            {t('cart.continue_shopping')}
           </Link>
-          <h1 className="text-2xl font-semibold">Ödeme</h1>
+          <h1 className="text-2xl font-semibold">{t('checkout.title')}</h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -235,14 +237,14 @@ export default function CheckoutPage() {
                       1
                     </div>
                     <div>
-                      <h2 className="card-title">Teslimat Bilgileri</h2>
-                      <p className="card-description">Siparişinizin gönderileceği adres</p>
+                      <h2 className="card-title">{t('checkout.step1')}</h2>
+                      <p className="card-description">{t('checkout.step1_desc')}</p>
                     </div>
                   </div>
                   <div className="card-body space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="form-group">
-                        <label className="label">Ad *</label>
+                        <label className="label">{t('checkout.firstname')} *</label>
                         <input
                           type="text"
                           value={address.firstName}
@@ -252,7 +254,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="label">Soyad *</label>
+                        <label className="label">{t('checkout.lastname')} *</label>
                         <input
                           type="text"
                           value={address.lastName}
@@ -265,7 +267,7 @@ export default function CheckoutPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="form-group">
-                        <label className="label">E-posta *</label>
+                        <label className="label">{t('checkout.email')} *</label>
                         <input
                           type="email"
                           value={address.email}
@@ -275,7 +277,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="label">Telefon *</label>
+                        <label className="label">{t('checkout.phone')} *</label>
                         <input
                           type="tel"
                           value={address.phone}
@@ -288,7 +290,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="form-group">
-                      <label className="label">Ülke *</label>
+                      <label className="label">{t('checkout.country')} *</label>
                       <select
                         value={address.country}
                         onChange={(e) => setAddress({ ...address, country: e.target.value })}
@@ -310,38 +312,36 @@ export default function CheckoutPage() {
                           <Truck className="w-4 h-4" />
                           <span>
                             Kargo: {shippingCost} {shippingCurrency} 
-                            ({estimatedDays.min}-{estimatedDays.max} iş günü)
+                            ({estimatedDays.min}-{estimatedDays.max} {t('checkout.business_days')})
                           </span>
                         </div>
                       </div>
                     )}
 
                     <div className="form-group">
-                      <label className="label">Adres *</label>
+                      <label className="label">{t('checkout.address')} *</label>
                       <input
                         type="text"
                         value={address.addressLine1}
                         onChange={(e) => setAddress({ ...address, addressLine1: e.target.value })}
                         className="input"
-                        placeholder="Sokak, Cadde, Bina No"
                         required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label className="label">Adres 2 (Opsiyonel)</label>
+                      <label className="label">{t('checkout.address2')}</label>
                       <input
                         type="text"
                         value={address.addressLine2}
                         onChange={(e) => setAddress({ ...address, addressLine2: e.target.value })}
                         className="input"
-                        placeholder="Daire, Kat, vb."
                       />
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                       <div className="form-group">
-                        <label className="label">Şehir *</label>
+                        <label className="label">{t('checkout.city')} *</label>
                         <input
                           type="text"
                           value={address.city}
@@ -351,7 +351,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="label">İlçe/Eyalet</label>
+                        <label className="label">{t('checkout.state')}</label>
                         <input
                           type="text"
                           value={address.state}
@@ -360,7 +360,7 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="form-group">
-                        <label className="label">Posta Kodu *</label>
+                        <label className="label">{t('checkout.postal')} *</label>
                         <input
                           type="text"
                           value={address.postalCode}
@@ -373,7 +373,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="card-footer">
                     <button type="submit" className="btn btn-primary w-full">
-                      Ödemeye Geç
+                      {t('checkout.continue')}
                     </button>
                   </div>
                 </div>
@@ -387,14 +387,14 @@ export default function CheckoutPage() {
                     <div className="card-header flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Truck className="w-5 h-5 text-[var(--brand-primary)]" />
-                        <h3 className="font-medium">Teslimat Adresi</h3>
+                        <h3 className="font-medium">{t('checkout.delivery_address')}</h3>
                       </div>
                       <button 
                         type="button"
                         onClick={() => setStep(1)}
                         className="text-sm text-[var(--brand-primary)]"
                       >
-                        Düzenle
+                        {t('checkout.edit')}
                       </button>
                     </div>
                     <div className="card-body text-sm">
@@ -414,11 +414,11 @@ export default function CheckoutPage() {
                         2
                       </div>
                       <div>
-                        <h2 className="card-title">Ödeme Yöntemi</h2>
+                        <h2 className="card-title">{t('checkout.step2')}</h2>
                         <p className="card-description">
                           {paymentProvider === 'iyzico' 
-                            ? 'iyzico güvenli ödeme ile devam edeceksiniz' 
-                            : 'Stripe güvenli ödeme ile devam edeceksiniz'
+                            ? t('checkout.iyzico_desc')
+                            : t('checkout.stripe_desc')
                           }
                         </p>
                       </div>
@@ -431,7 +431,7 @@ export default function CheckoutPage() {
                             {paymentProvider === 'iyzico' ? 'iyzico' : 'Stripe'}
                           </p>
                           <p className="text-sm text-[var(--foreground-muted)]">
-                            Kredi kartı, banka kartı veya banka havalesi
+                            {t('checkout.card_desc')}
                           </p>
                         </div>
                       </div>
@@ -445,10 +445,10 @@ export default function CheckoutPage() {
                         {loading ? (
                           <>
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            İşleniyor...
+                            {t('checkout.processing')}
                           </>
                         ) : (
-                          `₺${grandTotal.toFixed(2)} Öde`
+                          `${t('checkout.pay')} ${currency === 'TRY' ? '₺' : '$'}${grandTotal.toFixed(2)}`
                         )}
                       </button>
                     </div>
@@ -462,7 +462,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <div className="card sticky top-24">
               <div className="card-header">
-                <h3 className="card-title">Sipariş Özeti</h3>
+                <h3 className="card-title">{t('checkout.order_summary')}</h3>
               </div>
               <div className="card-body space-y-4">
                 {/* Items */}
@@ -480,10 +480,10 @@ export default function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.name}</p>
                       <p className="text-xs text-[var(--foreground-muted)]">
-                        {item.salesModel === 'meter' ? `${item.quantity.toFixed(1)}m` : `${item.quantity} adet`}
+                        {item.salesModel === 'meter' ? `${item.quantity.toFixed(1)}m` : `${item.quantity}x`}
                       </p>
                     </div>
-                    <p className="text-sm font-medium">₺{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="text-sm font-medium">{currency === 'TRY' ? '₺' : '$'}{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
 
@@ -492,22 +492,22 @@ export default function CheckoutPage() {
                 {/* Totals */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-[var(--foreground-muted)]">Ara Toplam</span>
+                    <span className="text-[var(--foreground-muted)]">{t('cart.subtotal')}</span>
                     <span>{currency === 'TRY' ? '₺' : '$'}{total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[var(--foreground-muted)]">Kargo</span>
+                    <span className="text-[var(--foreground-muted)]">{t('cart.shipping')}</span>
                     <span>
                       {shippingCost === 0 
-                        ? 'Ücretsiz' 
+                        ? t('cart.free_shipping')
                         : `${shippingCurrency === 'TRY' ? '₺' : shippingCurrency === 'EUR' ? '€' : '$'}${shippingCost.toFixed(2)}`
                       }
                     </span>
                   </div>
                   {estimatedDays && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-[var(--foreground-muted)]">Tahmini Teslimat</span>
-                      <span>{estimatedDays.min}-{estimatedDays.max} iş günü</span>
+                      <span className="text-[var(--foreground-muted)]">{t('checkout.estimated_delivery')}</span>
+                      <span>{estimatedDays.min}-{estimatedDays.max} {t('checkout.business_days')}</span>
                     </div>
                   )}
                 </div>
@@ -515,7 +515,7 @@ export default function CheckoutPage() {
                 <hr className="border-[var(--border)]" />
 
                 <div className="flex justify-between text-lg font-semibold">
-                  <span>Toplam</span>
+                  <span>{t('cart.total')}</span>
                   <span className="text-[var(--brand-primary)]">
                     {currency === 'TRY' ? '₺' : '$'}{grandTotal.toFixed(2)}
                   </span>
@@ -526,7 +526,7 @@ export default function CheckoutPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  256-bit SSL güvenli ödeme
+                  {t('checkout.secure')}
                 </div>
               </div>
             </div>
