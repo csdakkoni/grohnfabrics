@@ -3,17 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { uploadToR2, isR2Configured } from '@/lib/r2';
 import sharp from 'sharp';
 
-// Vercel body size limit (increase from default 4.5MB)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '20mb',
-    },
-  },
-};
-
-// Next.js 13+ route segment config
+// Next.js App Router config
+export const runtime = 'nodejs';
 export const maxDuration = 30; // 30 seconds timeout
+export const dynamic = 'force-dynamic';
 
 // Size variants to generate
 const SIZE_VARIANTS = {

@@ -2,17 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { uploadToR2, isR2Configured } from '@/lib/r2';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Vercel body size limit
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-  },
-};
-
-// Next.js 13+ route segment config  
+// Next.js App Router config
+export const runtime = 'nodejs';
 export const maxDuration = 60; // 60 seconds timeout for video
+export const dynamic = 'force-dynamic';
 
 // Max video file size: 100MB
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
