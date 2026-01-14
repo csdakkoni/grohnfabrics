@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/store/CartProvider';
+import { createClient } from '@/lib/supabase/client';
 import { ShoppingBag, ChevronLeft, CreditCard, Truck } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,12 +20,44 @@ interface ShippingAddress {
   country: string;
 }
 
+// Tüm ülkeler listesi
+const COUNTRIES = [
+  { code: 'TR', name: 'Türkiye' },
+  { code: 'US', name: 'Amerika Birleşik Devletleri' },
+  { code: 'GB', name: 'İngiltere' },
+  { code: 'DE', name: 'Almanya' },
+  { code: 'FR', name: 'Fransa' },
+  { code: 'NL', name: 'Hollanda' },
+  { code: 'BE', name: 'Belçika' },
+  { code: 'AT', name: 'Avusturya' },
+  { code: 'CH', name: 'İsviçre' },
+  { code: 'IT', name: 'İtalya' },
+  { code: 'ES', name: 'İspanya' },
+  { code: 'PT', name: 'Portekiz' },
+  { code: 'SE', name: 'İsveç' },
+  { code: 'DK', name: 'Danimarka' },
+  { code: 'NO', name: 'Norveç' },
+  { code: 'FI', name: 'Finlandiya' },
+  { code: 'PL', name: 'Polonya' },
+  { code: 'GR', name: 'Yunanistan' },
+  { code: 'IE', name: 'İrlanda' },
+  { code: 'CA', name: 'Kanada' },
+  { code: 'AU', name: 'Avustralya' },
+  { code: 'NZ', name: 'Yeni Zelanda' },
+  { code: 'JP', name: 'Japonya' },
+  { code: 'AE', name: 'Birleşik Arap Emirlikleri' },
+];
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, total, clear } = useCart();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Info, 2: Payment
   const [shippingCost, setShippingCost] = useState(0);
+  const [shippingCurrency, setShippingCurrency] = useState('TRY');
+  const [estimatedDays, setEstimatedDays] = useState<{ min: number; max: number } | null>(null);
+  
+  const supabase = createClient();
   
   const [address, setAddress] = useState<ShippingAddress>({
     firstName: '',
@@ -42,14 +75,67 @@ export default function CheckoutPage() {
   // Determine market based on country
   const market = address.country === 'TR' ? 'TR' : 'GLOBAL';
   const paymentProvider = market === 'TR' ? 'iyzico' : 'stripe';
+  const currency = market === 'TR' ? 'TRY' : 'USD';
 
   useEffect(() => {
-    // Calculate shipping based on country
-    if (address.country === 'TR') {
-      setShippingCost(total >= 500 ? 0 : 50); // Free shipping over 500 TRY
-    } else {
-      setShippingCost(25); // $25 for international
+    // Fetch shipping rate for selected country
+    async function fetchShippingRate() {
+      if (address.country === 'TR') {
+        // Türkiye için sabit kargo
+        setShippingCost(total >= 500 ? 0 : 50);
+        setShippingCurrency('TRY');
+        setEstimatedDays({ min: 2, max: 4 });
+        return;
+      }
+
+      // Ülke bazlı fiyat ara
+      const { data: countryRate } = await supabase
+        .from('shipping_country_rates')
+        .select('*')
+        .eq('country_code', address.country)
+        .eq('is_active', true)
+        .single();
+
+      if (countryRate) {
+        setShippingCost(countryRate.rate);
+        setShippingCurrency(countryRate.currency);
+        setEstimatedDays({
+          min: countryRate.estimated_days_min,
+          max: countryRate.estimated_days_max,
+        });
+        return;
+      }
+
+      // Bölge bazlı fiyat ara
+      const { data: zoneData } = await supabase
+        .from('shipping_zone_countries')
+        .select(`
+          zone_id,
+          shipping_zones!inner(
+            shipping_zone_rates(rate, currency, estimated_days_min, estimated_days_max)
+          )
+        `)
+        .eq('country_code', address.country)
+        .single();
+
+      if (zoneData?.shipping_zones?.shipping_zone_rates?.[0]) {
+        const zoneRate = zoneData.shipping_zones.shipping_zone_rates[0];
+        setShippingCost(zoneRate.rate);
+        setShippingCurrency(zoneRate.currency);
+        setEstimatedDays({
+          min: zoneRate.estimated_days_min,
+          max: zoneRate.estimated_days_max,
+        });
+        return;
+      }
+
+      // Varsayılan fiyat
+      setShippingCost(25);
+      setShippingCurrency('USD');
+      setEstimatedDays({ min: 7, max: 14 });
     }
+
+    fetchShippingRate();
   }, [address.country, total]);
 
   const grandTotal = total + shippingCost;
@@ -205,17 +291,26 @@ export default function CheckoutPage() {
                         className="input"
                         required
                       >
-                        <option value="TR">Türkiye</option>
-                        <option value="US">United States</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="NL">Netherlands</option>
-                        <option value="BE">Belgium</option>
-                        <option value="AT">Austria</option>
-                        <option value="CH">Switzerland</option>
+                        {COUNTRIES.map(country => (
+                          <option key={country.code} value={country.code}>
+                            {country.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
+                    
+                    {/* Kargo Bilgisi */}
+                    {address.country !== 'TR' && estimatedDays && (
+                      <div className="p-3 bg-blue-50 rounded-lg text-sm">
+                        <div className="flex items-center gap-2 text-blue-700">
+                          <Truck className="w-4 h-4" />
+                          <span>
+                            Kargo: {shippingCost} {shippingCurrency} 
+                            ({estimatedDays.min}-{estimatedDays.max} iş günü)
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="form-group">
                       <label className="label">Adres *</label>
@@ -394,19 +489,32 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-[var(--foreground-muted)]">Ara Toplam</span>
-                    <span>₺{total.toFixed(2)}</span>
+                    <span>{currency === 'TRY' ? '₺' : '$'}{total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[var(--foreground-muted)]">Kargo</span>
-                    <span>{shippingCost === 0 ? 'Ücretsiz' : `₺${shippingCost.toFixed(2)}`}</span>
+                    <span>
+                      {shippingCost === 0 
+                        ? 'Ücretsiz' 
+                        : `${shippingCurrency === 'TRY' ? '₺' : shippingCurrency === 'EUR' ? '€' : '$'}${shippingCost.toFixed(2)}`
+                      }
+                    </span>
                   </div>
+                  {estimatedDays && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-[var(--foreground-muted)]">Tahmini Teslimat</span>
+                      <span>{estimatedDays.min}-{estimatedDays.max} iş günü</span>
+                    </div>
+                  )}
                 </div>
 
                 <hr className="border-[var(--border)]" />
 
                 <div className="flex justify-between text-lg font-semibold">
                   <span>Toplam</span>
-                  <span className="text-[var(--brand-primary)]">₺{grandTotal.toFixed(2)}</span>
+                  <span className="text-[var(--brand-primary)]">
+                    {currency === 'TRY' ? '₺' : '$'}{grandTotal.toFixed(2)}
+                  </span>
                 </div>
 
                 {/* Trust badges */}
