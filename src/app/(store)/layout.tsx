@@ -1,8 +1,7 @@
 import Link from 'next/link';
-import { User, Search } from 'lucide-react';
 import { CartProvider } from '@/components/store/CartProvider';
 import CartDrawer from '@/components/store/CartDrawer';
-import CartButton from '@/components/store/CartButton';
+import StoreHeader from '@/components/store/StoreHeader';
 
 export default function StoreLayout({
   children,
@@ -13,64 +12,7 @@ export default function StoreLayout({
     <CartProvider>
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[var(--border)]">
-        <div className="container">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              GROHN FABRICS
-            </Link>
-
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <Link 
-                href="/products" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Tüm Ürünler
-              </Link>
-              <Link 
-                href="/products?type=fabric" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Kumaşlar
-              </Link>
-              <Link 
-                href="/products?type=curtain" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Perdeler
-              </Link>
-              <Link 
-                href="/products?type=pillow" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Ev Tekstili
-              </Link>
-              <Link 
-                href="/about" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Hakkımızda
-              </Link>
-            </nav>
-
-            {/* Actions */}
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors">
-                <Search className="w-5 h-5 text-[var(--foreground-muted)]" />
-              </button>
-              <Link 
-                href="/account" 
-                className="p-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors"
-              >
-                <User className="w-5 h-5 text-[var(--foreground-muted)]" />
-              </Link>
-              <CartButton />
-            </div>
-          </div>
-        </div>
-      </header>
+      <StoreHeader />
 
       {/* Cart Drawer */}
       <CartDrawer />
