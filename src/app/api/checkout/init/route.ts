@@ -95,7 +95,8 @@ export async function POST(request: NextRequest) {
     const orderItems = cart.items.map(item => ({
       order_id: order.id,
       product_id: item.productId,
-      variant_id: item.variantId || null,
+      variant_id: null, // Simplified - variant info stored in variant_info JSONB
+      variant_info: item.variantId ? { selectedOptions: item.variantId } : null,
       product_name: item.name,
       quantity: item.quantity,
       unit_type: item.salesModel === 'meter' ? 'meter' : 'unit',
@@ -109,9 +110,10 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) {
       console.error('Order items error:', itemsError);
+      console.error('Order items data:', JSON.stringify(orderItems, null, 2));
       // Rollback order
       await supabaseAdmin.from('orders').delete().eq('id', order.id);
-      return NextResponse.json({ error: 'Sipariş kalemleri oluşturulamadı' }, { status: 500 });
+      return NextResponse.json({ error: 'Sipariş kalemleri oluşturulamadı: ' + itemsError.message }, { status: 500 });
     }
 
     // Initialize payment based on market
