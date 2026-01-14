@@ -43,7 +43,7 @@ const REGIONS: Record<RegionId, RegionConfig> = {
 };
 
 interface MarketContextType {
-  // Region - IP bazlı, değişmez
+  // Region - IP bazlı, değişmez (admin hariç)
   region: RegionConfig;
   
   // Locale - kullanıcı değiştirebilir
@@ -53,6 +53,10 @@ interface MarketContextType {
   // Currency - GLOBAL için kullanıcı değiştirebilir
   currency: Currency;
   setCurrency: (currency: Currency) => void;
+  
+  // Admin mode
+  isAdminMode: boolean;
+  setAdminRegionOverride: (region: RegionId) => void;
   
   // Helpers
   t: (tr: string, en: string) => string;
@@ -70,9 +74,12 @@ export function MarketProvider({
   initialRegion?: RegionId;
   initialLocale?: Locale;
 }) {
-  // Region is fixed based on IP (set from server/middleware)
-  const [regionId] = useState<RegionId>(initialRegion || 'TR');
+  // Region - can be overridden by admin
+  const [regionId, setRegionId] = useState<RegionId>(initialRegion || 'TR');
   const region = REGIONS[regionId];
+  
+  // Admin mode detection
+  const [isAdminMode, setIsAdminMode] = useState(false);
   
   // Locale can be changed by user
   const [locale, setLocaleState] = useState<Locale>(initialLocale || 'tr');
@@ -81,6 +88,16 @@ export function MarketProvider({
   const [currency, setCurrencyState] = useState<Currency>(region.defaultCurrency);
   
   useEffect(() => {
+    // Check if user is admin (look for admin cookie or localStorage flag)
+    const adminOverride = localStorage.getItem('admin_region_override');
+    const isAdmin = !!adminOverride || document.cookie.includes('admin_region_override');
+    setIsAdminMode(isAdmin);
+    
+    // If admin has an override, use it
+    if (adminOverride && (adminOverride === 'TR' || adminOverride === 'GLOBAL')) {
+      setRegionId(adminOverride);
+    }
+    
     // Load saved locale preference
     const savedLocale = localStorage.getItem('locale') as Locale;
     if (savedLocale && (savedLocale === 'tr' || savedLocale === 'en')) {
@@ -89,14 +106,21 @@ export function MarketProvider({
     
     // Load saved currency preference (only matters for GLOBAL)
     const savedCurrency = localStorage.getItem('currency') as Currency;
-    if (savedCurrency && region.currencies.includes(savedCurrency)) {
+    if (savedCurrency && REGIONS[regionId].currencies.includes(savedCurrency)) {
       setCurrencyState(savedCurrency);
     }
-  }, [region.currencies]);
+  }, []);
+
+  // Update currency when region changes
+  useEffect(() => {
+    setCurrencyState(REGIONS[regionId].defaultCurrency);
+  }, [regionId]);
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);
     localStorage.setItem('locale', newLocale);
+    // Also set cookie for server-side
+    document.cookie = `locale=${newLocale};path=/;max-age=${60 * 60 * 24 * 365}`;
   };
 
   const setCurrency = (newCurrency: Currency) => {
@@ -104,6 +128,17 @@ export function MarketProvider({
       setCurrencyState(newCurrency);
       localStorage.setItem('currency', newCurrency);
     }
+  };
+
+  const setAdminRegionOverride = (newRegion: RegionId) => {
+    setRegionId(newRegion);
+    setIsAdminMode(true);
+    localStorage.setItem('admin_region_override', newRegion);
+    // Also set cookie for server-side
+    document.cookie = `admin_region_override=${newRegion};path=/;max-age=${60 * 60 * 24}`;
+    document.cookie = `region=${newRegion};path=/;max-age=${60 * 60 * 24}`;
+    // Reload to apply changes on server
+    window.location.reload();
   };
 
   // Translation helper - based on LOCALE not region
@@ -126,6 +161,8 @@ export function MarketProvider({
       setLocale, 
       currency, 
       setCurrency, 
+      isAdminMode,
+      setAdminRegionOverride,
       t, 
       formatPrice 
     }}>

@@ -3,8 +3,21 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Detect REGION based on IP location (NOT changeable by user)
 // This determines: price, shipping, payment
-function detectRegion(request: NextRequest): 'TR' | 'GLOBAL' {
-  // Region is ONLY based on IP - user cannot change this
+// EXCEPTION: Admins can override via URL param or cookie
+function detectRegion(request: NextRequest, isAdmin: boolean): 'TR' | 'GLOBAL' {
+  // Admin override via URL parameter: ?_region=GLOBAL or ?_region=TR
+  const urlRegion = request.nextUrl.searchParams.get('_region');
+  if (isAdmin && urlRegion && (urlRegion === 'TR' || urlRegion === 'GLOBAL')) {
+    return urlRegion;
+  }
+  
+  // Admin override via cookie (set from previous URL param)
+  const adminRegionOverride = request.cookies.get('admin_region_override')?.value;
+  if (isAdmin && adminRegionOverride && (adminRegionOverride === 'TR' || adminRegionOverride === 'GLOBAL')) {
+    return adminRegionOverride;
+  }
+  
+  // Normal users: Region is ONLY based on IP
   // Check Vercel's geo header (automatic with Vercel)
   const country = request.headers.get('x-vercel-ip-country');
   if (country === 'TR') {
@@ -36,30 +49,6 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
-  
-  // Region & Locale detection for store pages
-  if (!request.nextUrl.pathname.startsWith('/admin') && 
-      !request.nextUrl.pathname.startsWith('/api') &&
-      !request.nextUrl.pathname.startsWith('/login')) {
-    
-    // Region is ALWAYS set based on IP (not user preference)
-    const region = detectRegion(request);
-    supabaseResponse.cookies.set('region', region, {
-      path: '/',
-      maxAge: 60 * 60 * 24, // 1 day (refresh daily in case of travel)
-      sameSite: 'lax',
-    });
-    
-    // Locale is set only if not already set (user can change later)
-    if (!request.cookies.get('locale')) {
-      const locale = detectInitialLocale(request);
-      supabaseResponse.cookies.set('locale', locale, {
-        path: '/',
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        sameSite: 'lax',
-      });
-    }
-  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,6 +76,19 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Check if user is admin
+  let isAdmin = false;
+  if (user) {
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    
+    const adminRoles = ['admin', 'sales', 'production', 'warehouse'];
+    isAdmin = customer && adminRoles.includes(customer.role);
+  }
+
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!user) {
@@ -96,16 +98,51 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     
-    // Check if user has admin role
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-    
-    const adminRoles = ['admin', 'sales', 'production', 'warehouse'];
-    if (!customer || !adminRoles.includes(customer.role)) {
+    if (!isAdmin) {
       return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  // Region & Locale detection for store pages
+  if (!request.nextUrl.pathname.startsWith('/admin') && 
+      !request.nextUrl.pathname.startsWith('/api') &&
+      !request.nextUrl.pathname.startsWith('/login')) {
+    
+    // Check for admin override via URL params
+    const urlRegion = request.nextUrl.searchParams.get('_region');
+    const urlLocale = request.nextUrl.searchParams.get('_locale');
+    
+    // Region detection (admin can override)
+    const region = detectRegion(request, isAdmin);
+    supabaseResponse.cookies.set('region', region, {
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+      sameSite: 'lax',
+    });
+    
+    // If admin used URL override, save it to cookie for persistence
+    if (isAdmin && urlRegion && (urlRegion === 'TR' || urlRegion === 'GLOBAL')) {
+      supabaseResponse.cookies.set('admin_region_override', urlRegion, {
+        path: '/',
+        maxAge: 60 * 60 * 24, // 1 day
+        sameSite: 'lax',
+      });
+    }
+    
+    // Locale (user can always change, admin can override via URL)
+    if (isAdmin && urlLocale && (urlLocale === 'tr' || urlLocale === 'en')) {
+      supabaseResponse.cookies.set('locale', urlLocale, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      });
+    } else if (!request.cookies.get('locale')) {
+      const locale = detectInitialLocale(request);
+      supabaseResponse.cookies.set('locale', locale, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      });
     }
   }
 
