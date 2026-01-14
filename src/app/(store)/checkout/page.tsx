@@ -106,27 +106,31 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Bölge bazlı fiyat ara
-      const { data: zoneData } = await supabase
+      // Bölge bazlı fiyat ara - önce ülkenin bölgesini bul
+      const { data: zoneCountry } = await supabase
         .from('shipping_zone_countries')
-        .select(`
-          zone_id,
-          shipping_zones!inner(
-            shipping_zone_rates(rate, currency, estimated_days_min, estimated_days_max)
-          )
-        `)
+        .select('zone_id')
         .eq('country_code', address.country)
         .single();
 
-      if (zoneData?.shipping_zones?.shipping_zone_rates?.[0]) {
-        const zoneRate = zoneData.shipping_zones.shipping_zone_rates[0];
-        setShippingCost(zoneRate.rate);
-        setShippingCurrency(zoneRate.currency);
-        setEstimatedDays({
-          min: zoneRate.estimated_days_min,
-          max: zoneRate.estimated_days_max,
-        });
-        return;
+      if (zoneCountry?.zone_id) {
+        // Bölge fiyatını al
+        const { data: zoneRate } = await supabase
+          .from('shipping_zone_rates')
+          .select('rate, currency, estimated_days_min, estimated_days_max')
+          .eq('zone_id', zoneCountry.zone_id)
+          .eq('is_active', true)
+          .single();
+
+        if (zoneRate) {
+          setShippingCost(zoneRate.rate);
+          setShippingCurrency(zoneRate.currency);
+          setEstimatedDays({
+            min: zoneRate.estimated_days_min,
+            max: zoneRate.estimated_days_max,
+          });
+          return;
+        }
       }
 
       // Varsayılan fiyat
