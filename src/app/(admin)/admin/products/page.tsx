@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { Plus, Package } from 'lucide-react';
+import ProductActions from '@/components/admin/ProductActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,14 +113,7 @@ export default async function ProductsPage() {
                       )}
                     </td>
                     <td>
-                      <div className="flex items-center gap-2">
-                        <Link 
-                          href={`/admin/products/${product.id}`}
-                          className="btn btn-ghost btn-sm"
-                        >
-                          Düzenle
-                        </Link>
-                      </div>
+                      <ProductActions productId={product.id} />
                     </td>
                   </tr>
                 );

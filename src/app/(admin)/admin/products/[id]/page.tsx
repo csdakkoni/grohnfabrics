@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CheckCircle, Info, Video, X, Loader2, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle, Info, Video, X, Loader2, Plus, Copy } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 import VariantManager from '@/components/admin/VariantManager';
 
@@ -50,6 +50,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [videos, setVideos] = useState<string[]>([]);
@@ -219,6 +220,37 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     router.refresh();
   };
 
+  const handleCopy = async () => {
+    if (copying) return;
+    
+    if (!confirm('Bu ürünü kopyalamak istiyor musunuz? Tüm bilgiler, fiyatlar ve varyantlar kopyalanacak.')) {
+      return;
+    }
+
+    setCopying(true);
+    try {
+      const response = await fetch('/api/admin/products/duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: id }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        router.push(`/admin/products/${result.newProductId}?new=true`);
+        router.refresh();
+      } else {
+        alert(result.error || 'Kopyalama başarısız oldu');
+      }
+    } catch (error) {
+      console.error('Copy error:', error);
+      alert('Bir hata oluştu');
+    } finally {
+      setCopying(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-8">
@@ -265,10 +297,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <h1 className="text-2xl font-semibold">Ürün Düzenle</h1>
           <p className="text-[var(--foreground-muted)]">{form.name_tr}</p>
         </div>
-        <button onClick={handleDelete} className="btn btn-ghost text-[var(--error)]">
-          <Trash2 className="w-4 h-4" />
-          Sil
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={handleCopy} 
+            disabled={copying}
+            className="btn btn-secondary"
+          >
+            {copying ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+            Kopyala
+          </button>
+          <button onClick={handleDelete} className="btn btn-ghost text-[var(--error)]">
+            <Trash2 className="w-4 h-4" />
+            Sil
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
