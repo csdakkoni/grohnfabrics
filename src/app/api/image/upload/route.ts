@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { uploadToR2, isR2Configured, getR2PublicUrl } from '@/lib/r2';
+import { uploadToR2, isR2Configured } from '@/lib/r2';
 import sharp from 'sharp';
+
+// Vercel body size limit (increase from default 4.5MB)
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '20mb',
+    },
+  },
+};
+
+// Next.js 13+ route segment config
+export const maxDuration = 30; // 30 seconds timeout
 
 // Size variants to generate
 const SIZE_VARIANTS = {
@@ -176,6 +188,24 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Image upload error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    
+    // More descriptive error messages
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage.includes('memory') || errorMessage.includes('heap')) {
+      return NextResponse.json({ 
+        error: 'Görsel çok büyük. Lütfen daha küçük bir görsel deneyin.' 
+      }, { status: 413 });
+    }
+    
+    if (errorMessage.includes('timeout')) {
+      return NextResponse.json({ 
+        error: 'İşlem zaman aşımına uğradı. Lütfen daha küçük bir görsel deneyin.' 
+      }, { status: 408 });
+    }
+    
+    return NextResponse.json({ 
+      error: `Yükleme hatası: ${errorMessage}` 
+    }, { status: 500 });
   }
 }
