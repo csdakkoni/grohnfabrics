@@ -523,8 +523,12 @@ export default function VariantManager({ productId }: VariantManagerProps) {
                                       ))}
 
                                       {/* Add Image Input */}
-                                      <label className="w-12 h-12 border-2 border-dashed border-[var(--border)] rounded flex items-center justify-center cursor-pointer hover:border-[var(--brand-primary)] transition-colors">
-                                        <ImagePlus className="w-5 h-5 text-[var(--foreground-muted)]" />
+                                      <label className={`w-12 h-12 border-2 border-dashed border-[var(--border)] rounded flex items-center justify-center cursor-pointer hover:border-[var(--brand-primary)] transition-colors ${savingIds.has('upload-' + value.id) ? 'opacity-50 pointer-events-none' : ''}`}>
+                                        {savingIds.has('upload-' + value.id) ? (
+                                          <Loader2 className="w-5 h-5 text-[var(--foreground-muted)] animate-spin" />
+                                        ) : (
+                                          <ImagePlus className="w-5 h-5 text-[var(--foreground-muted)]" />
+                                        )}
                                         <input
                                           type="file"
                                           accept="image/*"
@@ -533,10 +537,41 @@ export default function VariantManager({ productId }: VariantManagerProps) {
                                             const file = e.target.files?.[0];
                                             if (!file) return;
                                             
-                                            // For now, just use a placeholder - in production you'd upload to Supabase Storage
-                                            const url = URL.createObjectURL(file);
-                                            // TODO: Upload to Supabase Storage and get real URL
-                                            alert('Görsel yükleme özelliği yakında aktif olacak. Şimdilik URL olarak ekleyebilirsiniz.');
+                                            // Show loading state
+                                            setSavingIds(prev => new Set(prev).add('upload-' + value.id));
+                                            
+                                            try {
+                                              // Upload via API (uses R2)
+                                              const formData = new FormData();
+                                              formData.append('file', file);
+                                              formData.append('folder', `variants/${value.id}`);
+                                              
+                                              const response = await fetch('/api/image/upload', {
+                                                method: 'POST',
+                                                body: formData,
+                                              });
+                                              
+                                              const result = await response.json();
+                                              
+                                              if (!response.ok || !result.success) {
+                                                throw new Error(result.error || 'Upload failed');
+                                              }
+                                              
+                                              // Add to images array
+                                              const newImages = [...(value.images || []), result.url];
+                                              updateValue(value.id, { images: newImages });
+                                            } catch (err) {
+                                              console.error('Upload error:', err);
+                                              alert('Görsel yüklenirken hata oluştu. Lütfen tekrar deneyin.');
+                                            } finally {
+                                              setSavingIds(prev => {
+                                                const next = new Set(prev);
+                                                next.delete('upload-' + value.id);
+                                                return next;
+                                              });
+                                              // Reset input
+                                              e.target.value = '';
+                                            }
                                           }}
                                         />
                                       </label>
