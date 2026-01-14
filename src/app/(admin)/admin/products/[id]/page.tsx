@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
+import VariantManager from '@/components/admin/VariantManager';
 
 interface Category {
   id: string;
@@ -362,6 +363,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
             </div>
+
+            {/* Variants */}
+            <VariantManager productId={id} />
           </div>
 
           {/* Sidebar */}
