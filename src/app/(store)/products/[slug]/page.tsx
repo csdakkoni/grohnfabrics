@@ -66,7 +66,6 @@ export default async function ProductPage({
   const basePrice = currentPrice?.price || prices[0]?.price || 0;
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
-  const material = null; // TODO: Re-enable after materials FK is fixed
   const optionGroups = product.option_groups || [];
 
   // Localized labels
@@ -195,36 +194,7 @@ export default async function ProductPage({
               </div>
             )}
 
-            {/* Material Info */}
-            {material && (
-              <div className="mt-8 pt-8 border-t border-[var(--border)]">
-                <h3 className="text-sm font-semibold mb-4">{t('Materyal Bilgisi', 'Material Info')}</h3>
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <dt className="text-[var(--foreground-muted)]">{t('Materyal', 'Material')}</dt>
-                    <dd className="font-medium">{material.name}</dd>
-                  </div>
-                  {material.composition && (
-                    <div>
-                      <dt className="text-[var(--foreground-muted)]">{t('Kompozisyon', 'Composition')}</dt>
-                      <dd className="font-medium">{material.composition}</dd>
-                    </div>
-                  )}
-                  {material.width_cm && (
-                    <div>
-                      <dt className="text-[var(--foreground-muted)]">{t('En', 'Width')}</dt>
-                      <dd className="font-medium">{material.width_cm} cm</dd>
-                    </div>
-                  )}
-                </dl>
-                {(isEnglish ? material.care_instructions_en : material.care_instructions_tr) && (
-                  <div className="mt-4">
-                    <dt className="text-[var(--foreground-muted)] text-sm">{t('Bakım Talimatları', 'Care Instructions')}</dt>
-                    <dd className="text-sm mt-1">{isEnglish ? material.care_instructions_en : material.care_instructions_tr}</dd>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Material Info - TODO: Re-enable after materials FK is fixed */}
 
             {/* Sales Model Info */}
             <div className="mt-8 p-4 bg-[var(--background-secondary)] rounded-xl">
