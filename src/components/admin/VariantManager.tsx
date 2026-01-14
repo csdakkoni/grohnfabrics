@@ -1,8 +1,27 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Trash2, GripVertical, Palette, List, Grid3X3 } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Palette, List, Grid3X3, Loader2, ImagePlus, X } from 'lucide-react';
+
+// Debounce helper
+function useDebouncedCallback<T extends (...args: never[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
+  
+  return useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]) as T;
+}
 
 interface OptionValue {
   id: string;
@@ -14,6 +33,7 @@ interface OptionValue {
   price_modifier: number;
   sort_order: number;
   is_available: boolean;
+  images?: string[];
   isNew?: boolean;
 }
 
@@ -53,7 +73,7 @@ export default function VariantManager({ productId }: VariantManagerProps) {
   const supabase = createClient();
   const [groups, setGroups] = useState<OptionGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const loadGroups = useCallback(async () => {
@@ -109,18 +129,30 @@ export default function VariantManager({ productId }: VariantManagerProps) {
     }
   };
 
-  // Update option group
-  const updateGroup = async (groupId: string, updates: Partial<OptionGroup>) => {
-    const { error } = await supabase
+  // Save to database (debounced)
+  const saveGroupToDb = useCallback(async (groupId: string, updates: Partial<OptionGroup>) => {
+    setSavingIds(prev => new Set(prev).add(groupId));
+    await supabase
       .from('option_groups')
       .update(updates)
       .eq('id', groupId);
+    setSavingIds(prev => {
+      const next = new Set(prev);
+      next.delete(groupId);
+      return next;
+    });
+  }, [supabase]);
 
-    if (!error) {
-      setGroups(groups.map(g => 
-        g.id === groupId ? { ...g, ...updates } : g
-      ));
-    }
+  const debouncedSaveGroup = useDebouncedCallback(saveGroupToDb, 500);
+
+  // Update option group (optimistic + debounced save)
+  const updateGroup = (groupId: string, updates: Partial<OptionGroup>) => {
+    // Optimistic update - instant UI response
+    setGroups(prev => prev.map(g => 
+      g.id === groupId ? { ...g, ...updates } : g
+    ));
+    // Debounced save to database
+    debouncedSaveGroup(groupId, updates);
   };
 
   // Delete option group
@@ -169,21 +201,33 @@ export default function VariantManager({ productId }: VariantManagerProps) {
     }
   };
 
-  // Update option value
-  const updateValue = async (valueId: string, updates: Partial<OptionValue>) => {
-    const { error } = await supabase
+  // Save value to database (debounced)
+  const saveValueToDb = useCallback(async (valueId: string, updates: Partial<OptionValue>) => {
+    setSavingIds(prev => new Set(prev).add(valueId));
+    await supabase
       .from('option_values')
       .update(updates)
       .eq('id', valueId);
+    setSavingIds(prev => {
+      const next = new Set(prev);
+      next.delete(valueId);
+      return next;
+    });
+  }, [supabase]);
 
-    if (!error) {
-      setGroups(groups.map(g => ({
-        ...g,
-        values: g.values.map(v => 
-          v.id === valueId ? { ...v, ...updates } : v
-        )
-      })));
-    }
+  const debouncedSaveValue = useDebouncedCallback(saveValueToDb, 500);
+
+  // Update option value (optimistic + debounced save)
+  const updateValue = (valueId: string, updates: Partial<OptionValue>) => {
+    // Optimistic update - instant UI response
+    setGroups(prev => prev.map(g => ({
+      ...g,
+      values: g.values.map(v => 
+        v.id === valueId ? { ...v, ...updates } : v
+      )
+    })));
+    // Debounced save to database
+    debouncedSaveValue(valueId, updates);
   };
 
   // Delete option value
@@ -222,7 +266,15 @@ export default function VariantManager({ productId }: VariantManagerProps) {
     <div className="card">
       <div className="card-header flex items-center justify-between">
         <div>
-          <h2 className="card-title">Varyantlar</h2>
+          <h2 className="card-title flex items-center gap-2">
+            Varyantlar
+            {savingIds.size > 0 && (
+              <span className="flex items-center gap-1 text-xs text-[var(--foreground-muted)] font-normal">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Kaydediliyor...
+              </span>
+            )}
+          </h2>
           <p className="card-description">Renk, beden gibi ürün seçenekleri</p>
         </div>
         <button 
@@ -376,69 +428,139 @@ export default function VariantManager({ productId }: VariantManagerProps) {
                             Henüz değer eklenmemiş
                           </p>
                         ) : (
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             {group.values.map((value, idx) => (
                               <div 
                                 key={value.id} 
-                                className="flex items-center gap-3 p-3 bg-[var(--background-secondary)] rounded-lg"
+                                className="p-3 bg-[var(--background-secondary)] rounded-lg"
                               >
-                                <GripVertical className="w-4 h-4 text-[var(--foreground-light)] cursor-grab" />
-                                
-                                {/* Color Preview */}
-                                {group.option_type === 'color' && (
-                                  <input
-                                    type="color"
-                                    value={value.hex_color || '#cccccc'}
-                                    onChange={(e) => updateValue(value.id, { hex_color: e.target.value })}
-                                    className="w-8 h-8 rounded cursor-pointer border-0"
-                                  />
-                                )}
-
-                                <input
-                                  type="text"
-                                  value={value.value_tr}
-                                  onChange={(e) => updateValue(value.id, { value_tr: e.target.value })}
-                                  placeholder="Değer (TR)"
-                                  className="input input-sm flex-1"
-                                />
-                                <input
-                                  type="text"
-                                  value={value.value_en}
-                                  onChange={(e) => updateValue(value.id, { value_en: e.target.value })}
-                                  placeholder="Value (EN)"
-                                  className="input input-sm flex-1"
-                                />
-                                
-                                {group.affects_price && (
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-xs text-[var(--foreground-muted)]">+₺</span>
+                                {/* Main Row */}
+                                <div className="flex items-center gap-3">
+                                  <GripVertical className="w-4 h-4 text-[var(--foreground-light)] cursor-grab" />
+                                  
+                                  {/* Color Preview */}
+                                  {group.option_type === 'color' && (
                                     <input
-                                      type="number"
-                                      step="0.01"
-                                      value={value.price_modifier}
-                                      onChange={(e) => updateValue(value.id, { price_modifier: parseFloat(e.target.value) || 0 })}
-                                      className="input input-sm w-20"
+                                      type="color"
+                                      value={value.hex_color || '#cccccc'}
+                                      onChange={(e) => updateValue(value.id, { hex_color: e.target.value })}
+                                      className="w-8 h-8 rounded cursor-pointer border-0"
                                     />
+                                  )}
+
+                                  <input
+                                    type="text"
+                                    value={value.value_tr}
+                                    onChange={(e) => updateValue(value.id, { value_tr: e.target.value })}
+                                    placeholder="Değer (TR)"
+                                    className="input input-sm flex-1"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={value.value_en}
+                                    onChange={(e) => updateValue(value.id, { value_en: e.target.value })}
+                                    placeholder="Value (EN)"
+                                    className="input input-sm flex-1"
+                                  />
+                                  
+                                  {group.affects_price && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-[var(--foreground-muted)]">+₺</span>
+                                      <input
+                                        type="number"
+                                        step="0.01"
+                                        value={value.price_modifier}
+                                        onChange={(e) => updateValue(value.id, { price_modifier: parseFloat(e.target.value) || 0 })}
+                                        className="input input-sm w-20"
+                                      />
+                                    </div>
+                                  )}
+
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={value.is_available}
+                                      onChange={(e) => updateValue(value.id, { is_available: e.target.checked })}
+                                      className="w-4 h-4 rounded"
+                                    />
+                                    <span className="text-xs text-[var(--foreground-muted)]">Aktif</span>
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => deleteValue(group.id, value.id)}
+                                    className="btn btn-ghost p-2 text-[var(--error)]"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                                {/* Images Row - For color variants */}
+                                {group.option_type === 'color' && (
+                                  <div className="mt-3 pt-3 border-t border-[var(--border)]">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs text-[var(--foreground-muted)]">Görseller:</span>
+                                      
+                                      {/* Image Previews */}
+                                      {(value.images || []).map((img, imgIdx) => (
+                                        <div key={imgIdx} className="relative group">
+                                          <img 
+                                            src={img} 
+                                            alt="" 
+                                            className="w-12 h-12 object-cover rounded border border-[var(--border)]"
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const newImages = (value.images || []).filter((_, i) => i !== imgIdx);
+                                              updateValue(value.id, { images: newImages });
+                                            }}
+                                            className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      ))}
+
+                                      {/* Add Image Input */}
+                                      <label className="w-12 h-12 border-2 border-dashed border-[var(--border)] rounded flex items-center justify-center cursor-pointer hover:border-[var(--brand-primary)] transition-colors">
+                                        <ImagePlus className="w-5 h-5 text-[var(--foreground-muted)]" />
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            
+                                            // For now, just use a placeholder - in production you'd upload to Supabase Storage
+                                            const url = URL.createObjectURL(file);
+                                            // TODO: Upload to Supabase Storage and get real URL
+                                            alert('Görsel yükleme özelliği yakında aktif olacak. Şimdilik URL olarak ekleyebilirsiniz.');
+                                          }}
+                                        />
+                                      </label>
+
+                                      {/* URL Input */}
+                                      <input
+                                        type="text"
+                                        placeholder="veya URL yapıştır"
+                                        className="input input-sm w-40"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            const input = e.target as HTMLInputElement;
+                                            const url = input.value.trim();
+                                            if (url) {
+                                              const newImages = [...(value.images || []), url];
+                                              updateValue(value.id, { images: newImages });
+                                              input.value = '';
+                                            }
+                                          }
+                                        }}
+                                      />
+                                    </div>
                                   </div>
                                 )}
-
-                                <label className="flex items-center gap-1 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={value.is_available}
-                                    onChange={(e) => updateValue(value.id, { is_available: e.target.checked })}
-                                    className="w-4 h-4 rounded"
-                                  />
-                                  <span className="text-xs text-[var(--foreground-muted)]">Aktif</span>
-                                </label>
-
-                                <button
-                                  type="button"
-                                  onClick={() => deleteValue(group.id, value.id)}
-                                  className="btn btn-ghost p-2 text-[var(--error)]"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
                               </div>
                             ))}
                           </div>

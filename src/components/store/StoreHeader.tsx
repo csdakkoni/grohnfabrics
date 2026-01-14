@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Search, Menu, X } from 'lucide-react';
+import { User, Search, Menu, X, Settings } from 'lucide-react';
 import CartButton from './CartButton';
 import SearchModal from './SearchModal';
 import MarketSwitcher from './MarketSwitcher';
@@ -11,7 +11,7 @@ import { useMarket } from '@/lib/market/context';
 export default function StoreHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { t } = useMarket();
+  const { t, isAdminMode } = useMarket();
 
   // Keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -84,6 +84,17 @@ export default function StoreHeader() {
 
             {/* Actions */}
             <div className="flex items-center gap-1 md:gap-2">
+              {/* Admin Panel Link - Only for admins */}
+              {isAdminMode && (
+                <Link 
+                  href="/admin/dashboard"
+                  className="flex items-center gap-2 px-3 py-2 text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
+              
               {/* Market/Language Switcher */}
               <MarketSwitcher />
               

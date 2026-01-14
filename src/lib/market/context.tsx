@@ -88,13 +88,13 @@ export function MarketProvider({
   const [currency, setCurrencyState] = useState<Currency>(region.defaultCurrency);
   
   useEffect(() => {
-    // Check if user is admin (look for admin cookie or localStorage flag)
-    const adminOverride = localStorage.getItem('admin_region_override');
-    const isAdmin = !!adminOverride || document.cookie.includes('admin_region_override');
+    // Check if user is admin (look for isAdmin flag set by admin panel)
+    const isAdmin = localStorage.getItem('isAdmin') === 'true' || document.cookie.includes('isAdmin=true');
     setIsAdminMode(isAdmin);
     
-    // If admin has an override, use it
-    if (adminOverride && (adminOverride === 'TR' || adminOverride === 'GLOBAL')) {
+    // If admin has a region override, use it
+    const adminOverride = localStorage.getItem('admin_region_override') as RegionId;
+    if (isAdmin && adminOverride && (adminOverride === 'TR' || adminOverride === 'GLOBAL')) {
       setRegionId(adminOverride);
     }
     
