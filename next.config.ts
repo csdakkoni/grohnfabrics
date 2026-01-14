@@ -12,7 +12,19 @@ const nextConfig: NextConfig = {
         hostname: 'xfbcqbjfprtwqwiimdpn.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.r2.dev',
+        pathname: '/**',
+      },
     ],
+  },
+
+  // Increase body size limit for file uploads
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '20mb',
+    },
   },
   
   // Redirects

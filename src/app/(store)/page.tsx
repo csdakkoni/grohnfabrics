@@ -231,7 +231,6 @@ export default async function HomePage() {
                 className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
               >
                 <div className={`absolute inset-0 bg-gradient-to-t ${category.bg} to-[#2C3830]`} />
-                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03]" />
                 <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors z-10" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <h3 className="text-xl font-medium text-white mb-1">{category.name}</h3>
@@ -289,7 +288,6 @@ export default async function HomePage() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-20 -right-20 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-[var(--accent)]/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[url('/noise.png')] opacity-[0.02]" />
         </div>
         <div className="container text-center relative">
           <span className="inline-block px-4 py-1.5 mb-6 text-xs font-medium bg-white/10 text-white rounded-full border border-white/20">

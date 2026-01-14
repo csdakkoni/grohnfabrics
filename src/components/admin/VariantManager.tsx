@@ -4,6 +4,55 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Trash2, GripVertical, Palette, List, Grid3X3, Loader2, ImagePlus, X } from 'lucide-react';
 
+// Client-side image resize before upload (to avoid 413 errors)
+async function resizeImage(file: File, maxWidth = 1600, maxHeight = 1600, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      let { width, height } = img;
+      
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
+      
+      // Draw with white background (for transparent images)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to blob
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob'));
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 // Debounce helper
 function useDebouncedCallback<T extends (...args: never[]) => void>(
   callback: T,
@@ -541,9 +590,17 @@ export default function VariantManager({ productId }: VariantManagerProps) {
                                             setSavingIds(prev => new Set(prev).add('upload-' + value.id));
                                             
                                             try {
+                                              // Resize image client-side before upload (avoids 413 errors)
+                                              console.log(`Resizing ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+                                              const resizedBlob = await resizeImage(file, 1600, 1600, 0.85);
+                                              console.log(`Resized: ${(resizedBlob.size / 1024 / 1024).toFixed(2)}MB`);
+                                              
+                                              // Create new file from resized blob
+                                              const resizedFile = new File([resizedBlob], file.name, { type: 'image/jpeg' });
+                                              
                                               // Upload via API (uses R2)
                                               const formData = new FormData();
-                                              formData.append('file', file);
+                                              formData.append('file', resizedFile);
                                               formData.append('folder', `variants/${value.id}`);
                                               
                                               const response = await fetch('/api/image/upload', {
