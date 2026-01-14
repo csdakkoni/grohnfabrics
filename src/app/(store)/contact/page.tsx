@@ -14,19 +14,33 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
-    // Simulate API call - in production, this would send to an API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Here you would typically send the form data to your backend
-    console.log('Contact form submitted:', form);
-    
-    setSuccess(true);
-    setForm({ name: '', email: '', phone: '', subject: '', message: '' });
-    setLoading(false);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Bir hata oluştu');
+      }
+
+      setSuccess(true);
+      setForm({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (success) {
@@ -151,6 +165,11 @@ export default function ContactPage() {
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="card-body space-y-6">
+                  {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                      {error}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="form-group">
                       <label className="label">Ad Soyad *</label>

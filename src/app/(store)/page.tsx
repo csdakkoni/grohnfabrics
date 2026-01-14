@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Award, Sparkles, Package } from 'lucide-react';
-import Image from 'next/image';
+import NewsletterForm from '@/components/store/NewsletterForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -273,16 +273,7 @@ export default async function HomePage() {
             <p className="text-[var(--foreground-muted)] mb-6">
               Yeni ürünler, kampanyalar ve özel fırsatlardan haberdar olun.
             </p>
-            <form className="flex gap-3">
-              <input 
-                type="email" 
-                placeholder="E-posta adresiniz" 
-                className="input flex-1"
-              />
-              <button type="submit" className="btn btn-primary">
-                Abone Ol
-              </button>
-            </form>
+            <NewsletterForm />
           </div>
         </div>
       </section>
