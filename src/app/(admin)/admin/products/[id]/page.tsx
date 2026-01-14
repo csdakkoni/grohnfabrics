@@ -15,8 +15,7 @@ interface Category {
 
 interface Material {
   id: string;
-  name_tr: string;
-  name_en: string;
+  name: string;
 }
 
 interface Product {
@@ -92,7 +91,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const [productRes, categoriesRes, materialsRes, pricesRes] = await Promise.all([
       supabase.from('products').select('*').eq('id', id).single(),
       supabase.from('categories').select('id, name_tr').eq('is_active', true).order('name_tr'),
-      supabase.from('materials').select('id, name_tr, name_en').order('name_tr'),
+      supabase.from('materials').select('id, name').order('name'),
       supabase.from('product_prices').select('*').eq('product_id', id),
     ]);
 
@@ -642,7 +641,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                   >
                     <option value="">Seçiniz...</option>
                     {materials.map((mat) => (
-                      <option key={mat.id} value={mat.id}>{mat.name_tr}</option>
+                      <option key={mat.id} value={mat.id}>{mat.name}</option>
                     ))}
                   </select>
                 </div>

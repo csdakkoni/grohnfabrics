@@ -14,7 +14,7 @@ interface Category {
 
 interface Material {
   id: string;
-  name_tr: string;
+  name: string;
 }
 
 interface OptionValueTemplate {
@@ -81,8 +81,8 @@ export default function NewProductPage() {
       // Load materials
       const { data: mats } = await supabase
         .from('materials')
-        .select('id, name_tr')
-        .order('name_tr');
+        .select('id, name')
+        .order('name');
       setMaterials(mats || []);
 
       // Load variant templates
@@ -556,7 +556,7 @@ export default function NewProductPage() {
                   >
                     <option value="">Seçiniz...</option>
                     {materials.map((mat) => (
-                      <option key={mat.id} value={mat.id}>{mat.name_tr}</option>
+                      <option key={mat.id} value={mat.id}>{mat.name}</option>
                     ))}
                   </select>
                 </div>
