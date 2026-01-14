@@ -10,7 +10,7 @@ import ProductGallery from '@/components/store/ProductGallery';
 export const dynamic = 'force-dynamic';
 
 async function getProduct(slug: string) {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('products')
     .select(`
       *,
@@ -19,12 +19,15 @@ async function getProduct(slug: string) {
       option_groups:option_groups(
         id, name_tr, name_en, option_type, is_required,
         values:option_values(id, value_tr, value_en, hex_color, price_modifier, is_available)
-      ),
-      material:materials(name, composition, width_cm, care_instructions_tr)
+      )
     `)
     .eq('slug', slug)
     .eq('is_active', true)
     .single();
+
+  if (error) {
+    console.error('Product fetch error:', error);
+  }
 
   return data;
 }
@@ -63,7 +66,7 @@ export default async function ProductPage({
   const basePrice = currentPrice?.price || prices[0]?.price || 0;
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
-  const material = Array.isArray(product.material) ? product.material[0] : product.material;
+  const material = null; // TODO: Re-enable after materials FK is fixed
   const optionGroups = product.option_groups || [];
 
   // Localized labels
