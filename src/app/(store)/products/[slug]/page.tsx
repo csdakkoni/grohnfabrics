@@ -1,8 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
+import ProductPrice from '@/components/store/ProductPrice';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,27 +40,37 @@ export default async function ProductPage({
     notFound();
   }
 
+  // Get market from cookie
+  const cookieStore = await cookies();
+  const market = cookieStore.get('market')?.value || 'TR';
+  const isGlobal = market === 'GLOBAL';
+  const locale = isGlobal ? 'en' : 'tr';
+
   const prices = product.prices || [];
-  const trPrice = prices.find((p: { market_id: string }) => p.market_id === 'TR');
-  const usdPrice = prices.find((p: { market_id: string; currency: string }) => p.market_id === 'GLOBAL' && p.currency === 'USD');
+  const currentPrice = prices.find((p: { market_id: string }) => p.market_id === market);
+  const basePrice = currentPrice?.price || prices[0]?.price || 0;
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
   const material = Array.isArray(product.material) ? product.material[0] : product.material;
   const optionGroups = product.option_groups || [];
 
-  const typeLabels: Record<string, string> = {
-    fabric: 'Kumaş',
-    pillow: 'Yastık Kılıfı',
-    curtain: 'Perde',
-    tablecloth: 'Masa Örtüsü',
-    runner: 'Runner',
+  // Localized labels
+  const typeLabels: Record<string, Record<string, string>> = {
+    fabric: { tr: 'Kumaş', en: 'Fabric' },
+    pillow: { tr: 'Yastık Kılıfı', en: 'Pillow Cover' },
+    curtain: { tr: 'Perde', en: 'Curtain' },
+    tablecloth: { tr: 'Masa Örtüsü', en: 'Tablecloth' },
+    runner: { tr: 'Runner', en: 'Runner' },
   };
 
-  const salesModelLabels: Record<string, string> = {
-    meter: 'Metre ile satılır',
-    unit: 'Adet ile satılır',
-    preset_sizes: 'Hazır ölçülerde satılır',
+  const salesModelLabels: Record<string, Record<string, string>> = {
+    meter: { tr: 'Metre ile satılır', en: 'Sold by meter' },
+    unit: { tr: 'Adet ile satılır', en: 'Sold by unit' },
+    preset_sizes: { tr: 'Hazır ölçülerde satılır', en: 'Sold in preset sizes' },
   };
+
+  // Helper for localized text
+  const t = (tr: string, en: string) => isGlobal ? en : tr;
 
   return (
     <div>
@@ -67,11 +79,11 @@ export default async function ProductPage({
         <div className="container">
           <nav className="flex items-center gap-2 text-sm">
             <Link href="/" className="text-[var(--foreground-muted)] hover:text-[var(--foreground)]">
-              Ana Sayfa
+              {t('Ana Sayfa', 'Home')}
             </Link>
             <ChevronRight className="w-4 h-4 text-[var(--foreground-light)]" />
             <Link href="/products" className="text-[var(--foreground-muted)] hover:text-[var(--foreground)]">
-              Ürünler
+              {t('Ürünler', 'Products')}
             </Link>
             {category && (
               <>
@@ -80,12 +92,12 @@ export default async function ProductPage({
                   href={`/products?category=${category.slug}`} 
                   className="text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                 >
-                  {category.name_tr}
+                  {isGlobal ? category.name_en : category.name_tr}
                 </Link>
               </>
             )}
             <ChevronRight className="w-4 h-4 text-[var(--foreground-light)]" />
-            <span className="text-[var(--foreground)]">{product.name_tr}</span>
+            <span className="text-[var(--foreground)]">{isGlobal ? product.name_en : product.name_tr}</span>
           </nav>
         </div>
       </div>
@@ -124,37 +136,35 @@ export default async function ProductPage({
           <div>
             {/* Type Badge */}
             <span className="inline-block px-3 py-1 text-xs font-medium bg-[var(--background-secondary)] text-[var(--foreground-muted)] rounded-full mb-4">
-              {typeLabels[product.product_type]}
+              {typeLabels[product.product_type]?.[locale] || product.product_type}
             </span>
 
             {/* Title */}
-            <h1 className="text-3xl font-light mb-2">{product.name_tr}</h1>
-            <p className="text-lg text-[var(--foreground-muted)] mb-6">{product.name_en}</p>
+            <h1 className="text-3xl font-light mb-2">
+              {isGlobal ? product.name_en : product.name_tr}
+            </h1>
+            {!isGlobal && product.name_en && (
+              <p className="text-lg text-[var(--foreground-muted)] mb-6">{product.name_en}</p>
+            )}
+            {isGlobal && product.name_tr && (
+              <p className="text-lg text-[var(--foreground-muted)] mb-6">{product.name_tr}</p>
+            )}
 
-            {/* Price */}
+            {/* Price - Market-specific */}
             <div className="mb-8">
-              {trPrice && (
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-semibold text-[var(--brand-primary)]">
-                    ₺{trPrice.price}
-                  </span>
-                  {product.sales_model === 'meter' && (
-                    <span className="text-lg text-[var(--foreground-muted)]">/ metre</span>
-                  )}
-                </div>
-              )}
-              {usdPrice && (
-                <p className="text-sm text-[var(--foreground-light)] mt-1">
-                  Global: ${usdPrice.price} {product.sales_model === 'meter' ? '/ meter' : ''}
-                </p>
-              )}
+              <ProductPrice 
+                prices={prices} 
+                salesModel={product.sales_model}
+                size="lg"
+              />
             </div>
 
             {/* Options & Add to Cart - Client Component */}
             <ProductDetailClient 
               product={product}
               optionGroups={optionGroups}
-              basePrice={trPrice?.price || 0}
+              basePrice={basePrice}
+              locale={locale}
             />
 
             {/* Features */}
@@ -164,8 +174,8 @@ export default async function ProductPage({
                   <Truck className="w-5 h-5 text-[var(--brand-primary)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Hızlı Kargo</p>
-                  <p className="text-xs text-[var(--foreground-muted)]">2-4 iş günü</p>
+                  <p className="text-sm font-medium">{t('Hızlı Kargo', 'Fast Shipping')}</p>
+                  <p className="text-xs text-[var(--foreground-muted)]">{t('2-4 iş günü', '2-4 business days')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -173,18 +183,18 @@ export default async function ProductPage({
                   <Shield className="w-5 h-5 text-[var(--brand-primary)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Güvenli Ödeme</p>
+                  <p className="text-sm font-medium">{t('Güvenli Ödeme', 'Secure Payment')}</p>
                   <p className="text-xs text-[var(--foreground-muted)]">256-bit SSL</p>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            {product.description_tr && (
+            {(isGlobal ? product.description_en : product.description_tr) && (
               <div className="mt-8 pt-8 border-t border-[var(--border)]">
-                <h3 className="text-sm font-semibold mb-4">Ürün Açıklaması</h3>
+                <h3 className="text-sm font-semibold mb-4">{t('Ürün Açıklaması', 'Product Description')}</h3>
                 <div className="prose prose-sm text-[var(--foreground-muted)]">
-                  <p>{product.description_tr}</p>
+                  <p>{isGlobal ? product.description_en : product.description_tr}</p>
                 </div>
               </div>
             )}
@@ -192,29 +202,29 @@ export default async function ProductPage({
             {/* Material Info */}
             {material && (
               <div className="mt-8 pt-8 border-t border-[var(--border)]">
-                <h3 className="text-sm font-semibold mb-4">Materyal Bilgisi</h3>
+                <h3 className="text-sm font-semibold mb-4">{t('Materyal Bilgisi', 'Material Info')}</h3>
                 <dl className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <dt className="text-[var(--foreground-muted)]">Materyal</dt>
+                    <dt className="text-[var(--foreground-muted)]">{t('Materyal', 'Material')}</dt>
                     <dd className="font-medium">{material.name}</dd>
                   </div>
                   {material.composition && (
                     <div>
-                      <dt className="text-[var(--foreground-muted)]">Kompozisyon</dt>
+                      <dt className="text-[var(--foreground-muted)]">{t('Kompozisyon', 'Composition')}</dt>
                       <dd className="font-medium">{material.composition}</dd>
                     </div>
                   )}
                   {material.width_cm && (
                     <div>
-                      <dt className="text-[var(--foreground-muted)]">En</dt>
+                      <dt className="text-[var(--foreground-muted)]">{t('En', 'Width')}</dt>
                       <dd className="font-medium">{material.width_cm} cm</dd>
                     </div>
                   )}
                 </dl>
-                {material.care_instructions_tr && (
+                {(isGlobal ? material.care_instructions_en : material.care_instructions_tr) && (
                   <div className="mt-4">
-                    <dt className="text-[var(--foreground-muted)] text-sm">Bakım Talimatları</dt>
-                    <dd className="text-sm mt-1">{material.care_instructions_tr}</dd>
+                    <dt className="text-[var(--foreground-muted)] text-sm">{t('Bakım Talimatları', 'Care Instructions')}</dt>
+                    <dd className="text-sm mt-1">{isGlobal ? material.care_instructions_en : material.care_instructions_tr}</dd>
                   </div>
                 )}
               </div>
@@ -223,9 +233,9 @@ export default async function ProductPage({
             {/* Sales Model Info */}
             <div className="mt-8 p-4 bg-[var(--background-secondary)] rounded-xl">
               <p className="text-sm text-[var(--foreground-muted)]">
-                <strong>Not:</strong> {salesModelLabels[product.sales_model]}
+                <strong>{t('Not', 'Note')}:</strong> {salesModelLabels[product.sales_model]?.[locale]}
                 {product.sales_model === 'meter' && product.min_order_quantity > 1 && (
-                  <span> • Minimum sipariş: {product.min_order_quantity} metre</span>
+                  <span> • {t('Minimum sipariş', 'Minimum order')}: {product.min_order_quantity} {t('metre', 'meters')}</span>
                 )}
               </p>
             </div>

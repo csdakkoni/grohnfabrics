@@ -1,10 +1,49 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+// Detect market based on location/language
+function detectMarket(request: NextRequest): 'TR' | 'GLOBAL' {
+  // 1. Check if user already has a preference
+  const marketCookie = request.cookies.get('market')?.value;
+  if (marketCookie === 'TR' || marketCookie === 'GLOBAL') {
+    return marketCookie;
+  }
+
+  // 2. Check Vercel's geo header (automatic with Vercel)
+  const country = request.headers.get('x-vercel-ip-country');
+  if (country === 'TR') {
+    return 'TR';
+  }
+
+  // 3. Check Accept-Language header
+  const acceptLanguage = request.headers.get('accept-language') || '';
+  if (acceptLanguage.toLowerCase().startsWith('tr')) {
+    return 'TR';
+  }
+
+  return 'GLOBAL';
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+  
+  // Market detection for store pages
+  if (!request.nextUrl.pathname.startsWith('/admin') && 
+      !request.nextUrl.pathname.startsWith('/api') &&
+      !request.nextUrl.pathname.startsWith('/login')) {
+    const market = detectMarket(request);
+    
+    // Set market cookie if not exists
+    if (!request.cookies.get('market')) {
+      supabaseResponse.cookies.set('market', market, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
+        sameSite: 'lax',
+      });
+    }
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

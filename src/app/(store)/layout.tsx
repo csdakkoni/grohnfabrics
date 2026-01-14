@@ -1,14 +1,21 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { CartProvider } from '@/components/store/CartProvider';
 import CartDrawer from '@/components/store/CartDrawer';
 import StoreHeader from '@/components/store/StoreHeader';
+import { MarketProvider, MarketId } from '@/lib/market/context';
 
-export default function StoreLayout({
+export default async function StoreLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const marketCookie = cookieStore.get('market')?.value as MarketId | undefined;
+  const initialMarket: MarketId = marketCookie === 'GLOBAL' ? 'GLOBAL' : 'TR';
+
   return (
+    <MarketProvider initialMarket={initialMarket}>
     <CartProvider>
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -93,5 +100,6 @@ export default function StoreLayout({
       </footer>
     </div>
     </CartProvider>
+    </MarketProvider>
   );
 }

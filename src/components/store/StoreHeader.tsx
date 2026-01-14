@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { User, Search, Menu, X } from 'lucide-react';
 import CartButton from './CartButton';
 import SearchModal from './SearchModal';
+import MarketSwitcher from './MarketSwitcher';
 
 export default function StoreHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -81,6 +82,9 @@ export default function StoreHeader() {
 
             {/* Actions */}
             <div className="flex items-center gap-1 md:gap-2">
+              {/* Market/Language Switcher */}
+              <MarketSwitcher />
+              
               {/* Search Button */}
               <button 
                 onClick={() => setSearchOpen(true)}

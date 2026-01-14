@@ -37,12 +37,14 @@ interface ProductDetailClientProps {
   product: Product;
   optionGroups: OptionGroup[];
   basePrice: number;
+  locale?: 'tr' | 'en';
 }
 
 export default function ProductDetailClient({ 
   product, 
   optionGroups, 
-  basePrice 
+  basePrice,
+  locale = 'tr'
 }: ProductDetailClientProps) {
   const [selections, setSelections] = useState<Record<string, { valueId: string; valueName: string; priceModifier: number }>>({});
 
