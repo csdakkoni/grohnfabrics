@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { ArrowLeft, Trash2, CheckCircle, Info } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle, Info, Video, X, Loader2, Plus } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
 import VariantManager from '@/components/admin/VariantManager';
 
@@ -29,6 +29,7 @@ interface Product {
   show_in_tr: boolean;
   show_in_global: boolean;
   images: string[];
+  videos: string[];
   thumbnail_url: string | null;
 }
 
@@ -51,7 +52,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [videos, setVideos] = useState<string[]>([]);
   const [prices, setPrices] = useState<ProductPrice[]>([]);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [form, setForm] = useState({
     name_tr: '',
     name_en: '',
@@ -103,6 +106,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         price_eur: '',
       });
       setImages(p.images || []);
+      setVideos(p.videos || []);
     }
 
     if (categoriesRes.data) {
@@ -149,6 +153,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           show_in_tr: form.show_in_tr,
           show_in_global: form.show_in_global,
           images: images,
+          videos: videos,
           thumbnail_url: images[0] || null,
         })
         .eq('id', id);
@@ -343,6 +348,123 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                   folder="products"
                   maxImages={10}
                 />
+              </div>
+            </div>
+
+            {/* Videos */}
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title flex items-center gap-2">
+                  <Video className="w-5 h-5" />
+                  Videolar
+                </h2>
+                <p className="card-description">Ürün tanıtım videoları (MP4, max 100MB)</p>
+              </div>
+              <div className="card-body">
+                {/* Existing Videos */}
+                {videos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {videos.map((videoUrl, idx) => (
+                      <div key={idx} className="relative group">
+                        <video 
+                          src={videoUrl} 
+                          className="w-full aspect-video rounded-lg bg-black object-cover"
+                          controls
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setVideos(videos.filter((_, i) => i !== idx))}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Video */}
+                <div className="flex gap-4">
+                  <label className={`flex-1 border-2 border-dashed border-[var(--border)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--brand-primary)] transition-colors ${videoUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    {videoUploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <Loader2 className="w-8 h-8 text-[var(--brand-primary)] animate-spin" />
+                        <span className="text-sm text-[var(--foreground-muted)]">Video yükleniyor...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <Plus className="w-8 h-8 text-[var(--foreground-muted)]" />
+                        <span className="text-sm text-[var(--foreground-muted)]">Video Yükle</span>
+                        <span className="text-xs text-[var(--foreground-light)]">veya sürükle bırak</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        // Check file size (100MB)
+                        if (file.size > 100 * 1024 * 1024) {
+                          alert('Video 100MB\'dan küçük olmalı');
+                          return;
+                        }
+
+                        setVideoUploading(true);
+                        try {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          formData.append('folder', 'videos');
+
+                          // Upload video directly to R2
+                          const response = await fetch('/api/video/upload', {
+                            method: 'POST',
+                            body: formData,
+                          });
+
+                          const result = await response.json();
+                          
+                          if (result.success && result.url) {
+                            setVideos([...videos, result.url]);
+                          } else {
+                            throw new Error(result.error || 'Video yüklenemedi');
+                          }
+                        } catch (err) {
+                          console.error('Video upload error:', err);
+                          alert('Video yüklenirken hata oluştu');
+                        } finally {
+                          setVideoUploading(false);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {/* URL Input */}
+                  <div className="w-72">
+                    <input
+                      type="text"
+                      placeholder="veya video URL yapıştır"
+                      className="input w-full"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const input = e.target as HTMLInputElement;
+                          const url = input.value.trim();
+                          if (url && (url.endsWith('.mp4') || url.endsWith('.webm') || url.includes('youtube') || url.includes('vimeo'))) {
+                            setVideos([...videos, url]);
+                            input.value = '';
+                          } else if (url) {
+                            alert('Geçerli bir video URL girin (.mp4, .webm veya YouTube/Vimeo)');
+                          }
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-[var(--foreground-light)] mt-1">Enter ile ekle</p>
+                  </div>
+                </div>
               </div>
             </div>
 

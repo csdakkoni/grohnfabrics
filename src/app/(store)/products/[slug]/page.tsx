@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
 import ProductPrice from '@/components/store/ProductPrice';
+import ProductGallery from '@/components/store/ProductGallery';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,33 +117,12 @@ export default async function ProductPage({
 
       <div className="container py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Images */}
-          <div>
-            {product.images && product.images.length > 0 ? (
-              <div className="space-y-4">
-                <div className="aspect-square rounded-2xl overflow-hidden bg-[var(--background-secondary)]">
-                  <img
-                    src={product.images[0]}
-                    alt={product.name_tr}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {product.images.length > 1 && (
-                  <div className="grid grid-cols-4 gap-4">
-                    {product.images.slice(1, 5).map((img: string, i: number) => (
-                      <div key={i} className="aspect-square rounded-lg overflow-hidden bg-[var(--background-secondary)]">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="aspect-square rounded-2xl bg-[var(--background-secondary)] flex items-center justify-center">
-                <Package className="w-24 h-24 text-[var(--foreground-light)]" />
-              </div>
-            )}
-          </div>
+          {/* Images & Videos Gallery */}
+          <ProductGallery 
+            images={product.images || []}
+            videos={product.videos || []}
+            productName={isEnglish ? product.name_en : product.name_tr}
+          />
 
           {/* Product Info */}
           <div>
