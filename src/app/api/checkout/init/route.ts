@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Stripe from 'stripe';
+import crypto from 'crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -144,36 +145,41 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// iyzico REST API helper - npm paketi Vercel'de çalışmadığı için doğrudan API kullanıyoruz
+function generateIyzicoAuthHeader(apiKey: string, secretKey: string, requestBody: string): string {
+  const randomString = Math.random().toString(36).substring(2, 10);
+  const hashString = apiKey + randomString + secretKey + requestBody;
+  const sha1Hash = crypto.createHash('sha1').update(hashString).digest('base64');
+  const authString = apiKey + ':' + sha1Hash;
+  return 'IYZWS ' + Buffer.from(authString).toString('base64') + ':' + randomString;
+}
+
 async function initIyzicoPayment(
   order: { id: string; order_number: string },
   items: CartItem[],
   address: CheckoutRequest['address'],
   total: number
 ) {
-  const Iyzipay = require('iyzipay');
-  
-  const iyzipay = new Iyzipay({
-    apiKey: process.env.IYZICO_API_KEY,
-    secretKey: process.env.IYZICO_SECRET_KEY,
-    uri: process.env.IYZICO_BASE_URL,
-  });
+  const apiKey = process.env.IYZICO_API_KEY!;
+  const secretKey = process.env.IYZICO_SECRET_KEY!;
+  const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
 
-  const basketItems = items.map((item, index) => ({
+  const basketItems = items.map((item) => ({
     id: item.productId,
     name: item.name.substring(0, 50),
     category1: 'Tekstil',
-    itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
+    itemType: 'PHYSICAL',
     price: (item.price * item.quantity).toFixed(2),
   }));
 
   const request = {
-    locale: Iyzipay.LOCALE.TR,
+    locale: 'tr',
     conversationId: order.id,
     price: total.toFixed(2),
     paidPrice: total.toFixed(2),
-    currency: Iyzipay.CURRENCY.TRY,
+    currency: 'TRY',
     basketId: order.order_number,
-    paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+    paymentGroup: 'PRODUCT',
     callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/iyzico/callback`,
     enabledInstallments: [1, 2, 3, 6],
     buyer: {
@@ -182,7 +188,7 @@ async function initIyzicoPayment(
       surname: address.lastName,
       email: address.email,
       gsmNumber: address.phone,
-      identityNumber: '11111111111', // Required by iyzico
+      identityNumber: '11111111111',
       registrationAddress: address.addressLine1,
       city: address.city,
       country: 'Turkey',
@@ -203,21 +209,30 @@ async function initIyzicoPayment(
     basketItems,
   };
 
-  return new Promise<NextResponse>((resolve, reject) => {
-    iyzipay.checkoutFormInitialize.create(request, (err: Error, result: { status: string; errorMessage?: string; checkoutFormContent: string; paymentPageUrl: string }) => {
-      if (err || result.status !== 'success') {
-        console.error('iyzico error:', err || result);
-        const errorDetail = err?.message || result?.errorMessage || 'iyzico bağlantı hatası';
-        reject(new Error(`iyzico: ${errorDetail}`));
-        return;
-      }
+  const requestBody = JSON.stringify(request);
+  const authHeader = generateIyzicoAuthHeader(apiKey, secretKey, requestBody);
 
-      resolve(NextResponse.json({
-        success: true,
-        paymentPageUrl: result.paymentPageUrl,
-        orderId: order.id,
-      }));
-    });
+  const response = await fetch(`${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': authHeader,
+      'x-iyzi-rnd': authHeader.split(':').pop() || '',
+    },
+    body: requestBody,
+  });
+
+  const result = await response.json();
+
+  if (result.status !== 'success') {
+    console.error('iyzico error:', result);
+    throw new Error(`iyzico: ${result.errorMessage || 'Bilinmeyen hata'}`);
+  }
+
+  return NextResponse.json({
+    success: true,
+    paymentPageUrl: result.paymentPageUrl,
+    orderId: order.id,
   });
 }
 
