@@ -48,16 +48,14 @@ export async function POST(request: NextRequest) {
     const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const total = subtotal + shippingCost;
 
-    // Get company based on market
+    // Get company based on market (optional - some setups may not have companies)
     const { data: company } = await supabaseAdmin
       .from('companies')
       .select('id')
       .eq('code', market === 'TR' ? 'TR' : 'US')
-      .single();
+      .maybeSingle(); // Use maybeSingle to allow null
 
-    if (!company) {
-      return NextResponse.json({ error: 'Şirket bulunamadı' }, { status: 500 });
-    }
+    // company_id is optional, continue even if not found
 
     // Create order
     const { data: order, error: orderError } = await supabaseAdmin
@@ -71,7 +69,7 @@ export async function POST(request: NextRequest) {
           phone: address.phone,
         },
         market_id: market,
-        company_id: company.id,
+        company_id: company?.id || null,
         currency: market === 'TR' ? 'TRY' : 'USD',
         subtotal,
         shipping_cost: shippingCost,

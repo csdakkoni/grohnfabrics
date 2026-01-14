@@ -2,7 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Settings, Save } from 'lucide-react';
+import { Save, Building2 } from 'lucide-react';
+
+interface Company {
+  id: string;
+  code: string;
+  name: string;
+  legal_name: string | null;
+  tax_id: string | null;
+  address: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  } | null;
+  contact: {
+    email?: string;
+    phone?: string;
+    website?: string;
+  } | null;
+}
 
 interface SiteSettings {
   general: {
@@ -24,6 +44,8 @@ export default function SettingsPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [settings, setSettings] = useState<SiteSettings>({
     general: { site_name: '', contact_email: '' },
     social: { instagram: '', pinterest: '', facebook: '' },
@@ -35,20 +57,45 @@ export default function SettingsPage() {
   }, []);
 
   async function loadSettings() {
-    const { data } = await supabase
-      .from('site_settings')
-      .select('key, value');
+    const [settingsRes, companiesRes] = await Promise.all([
+      supabase.from('site_settings').select('key, value'),
+      supabase.from('companies').select('*').order('code'),
+    ]);
     
-    if (data) {
+    if (settingsRes.data) {
       const newSettings = { ...settings };
-      data.forEach((row) => {
+      settingsRes.data.forEach((row) => {
         if (row.key === 'general') newSettings.general = row.value as typeof settings.general;
         if (row.key === 'social') newSettings.social = row.value as typeof settings.social;
         if (row.key === 'seo') newSettings.seo = row.value as typeof settings.seo;
       });
       setSettings(newSettings);
     }
+    
+    if (companiesRes.data) {
+      setCompanies(companiesRes.data);
+    }
+    
     setLoading(false);
+  }
+
+  async function saveCompany(company: Company) {
+    setSaving(true);
+    await supabase
+      .from('companies')
+      .update({
+        name: company.name,
+        legal_name: company.legal_name,
+        tax_id: company.tax_id,
+        address: company.address,
+        contact: company.contact,
+      })
+      .eq('id', company.id);
+    
+    setEditingCompany(null);
+    loadSettings();
+    setSaving(false);
+    alert('Şirket bilgileri kaydedildi!');
   }
 
   const handleSave = async () => {
@@ -90,6 +137,209 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-6 max-w-3xl">
+        {/* Companies */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title flex items-center gap-2">
+              <Building2 className="w-5 h-5" />
+              Şirket Bilgileri
+            </h2>
+            <p className="card-description">Fatura ve iletişim bilgileri</p>
+          </div>
+          <div className="card-body">
+            {companies.length > 0 ? (
+              <div className="space-y-4">
+                {companies.map((company) => (
+                  <div key={company.id} className="p-4 border border-[var(--border)] rounded-xl">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <span className="badge badge-primary mb-1">{company.code}</span>
+                        <h4 className="font-medium">{company.name}</h4>
+                        <p className="text-sm text-[var(--foreground-muted)]">{company.legal_name || '-'}</p>
+                      </div>
+                      <button
+                        onClick={() => setEditingCompany(company)}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        Düzenle
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-[var(--foreground-muted)]">Vergi No: </span>
+                        {company.tax_id || '-'}
+                      </div>
+                      <div>
+                        <span className="text-[var(--foreground-muted)]">E-posta: </span>
+                        {company.contact?.email || '-'}
+                      </div>
+                      <div>
+                        <span className="text-[var(--foreground-muted)]">Telefon: </span>
+                        {company.contact?.phone || '-'}
+                      </div>
+                      <div>
+                        <span className="text-[var(--foreground-muted)]">Şehir: </span>
+                        {company.address?.city || '-'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[var(--foreground-muted)]">Şirket kaydı bulunamadı. Veritabanını kontrol edin.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Company Edit Modal */}
+        {editingCompany && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="card w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="card-header">
+                <h2 className="card-title">Şirket Düzenle: {editingCompany.code}</h2>
+              </div>
+              <div className="card-body space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                    <label className="label">Şirket Adı *</label>
+                    <input
+                      type="text"
+                      value={editingCompany.name}
+                      onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Resmi Unvan</label>
+                    <input
+                      type="text"
+                      value={editingCompany.legal_name || ''}
+                      onChange={(e) => setEditingCompany({ ...editingCompany, legal_name: e.target.value })}
+                      className="input"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="label">Vergi Numarası</label>
+                  <input
+                    type="text"
+                    value={editingCompany.tax_id || ''}
+                    onChange={(e) => setEditingCompany({ ...editingCompany, tax_id: e.target.value })}
+                    className="input"
+                  />
+                </div>
+
+                <h4 className="font-medium pt-2">Adres Bilgileri</h4>
+                <div className="form-group">
+                  <label className="label">Adres</label>
+                  <input
+                    type="text"
+                    value={editingCompany.address?.street || ''}
+                    onChange={(e) => setEditingCompany({ 
+                      ...editingCompany, 
+                      address: { ...editingCompany.address, street: e.target.value } 
+                    })}
+                    className="input"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="form-group">
+                    <label className="label">Şehir</label>
+                    <input
+                      type="text"
+                      value={editingCompany.address?.city || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        address: { ...editingCompany.address, city: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Posta Kodu</label>
+                    <input
+                      type="text"
+                      value={editingCompany.address?.postal_code || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        address: { ...editingCompany.address, postal_code: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Ülke</label>
+                    <input
+                      type="text"
+                      value={editingCompany.address?.country || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        address: { ...editingCompany.address, country: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                </div>
+
+                <h4 className="font-medium pt-2">İletişim Bilgileri</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="form-group">
+                    <label className="label">E-posta</label>
+                    <input
+                      type="email"
+                      value={editingCompany.contact?.email || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        contact: { ...editingCompany.contact, email: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Telefon</label>
+                    <input
+                      type="tel"
+                      value={editingCompany.contact?.phone || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        contact: { ...editingCompany.contact, phone: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Website</label>
+                    <input
+                      type="url"
+                      value={editingCompany.contact?.website || ''}
+                      onChange={(e) => setEditingCompany({ 
+                        ...editingCompany, 
+                        contact: { ...editingCompany.contact, website: e.target.value } 
+                      })}
+                      className="input"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="card-footer flex gap-3">
+                <button 
+                  onClick={() => setEditingCompany(null)}
+                  className="btn btn-secondary flex-1"
+                >
+                  İptal
+                </button>
+                <button 
+                  onClick={() => saveCompany(editingCompany)}
+                  disabled={saving}
+                  className="btn btn-primary flex-1"
+                >
+                  {saving ? 'Kaydediliyor...' : 'Kaydet'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* General */}
         <div className="card">
           <div className="card-header">
