@@ -60,7 +60,7 @@ export default function OrderStatusChanger({ orderId, currentStatus }: OrderStat
     
     if (newStatus === 'shipped') {
       updateData.shipped_at = new Date().toISOString();
-      updateData.shipping_provider = 'ups'; // Default
+      updateData.shipping_provider = 'ups'; // UPS for all shipments
       if (trackingNumber) {
         updateData.tracking_number = trackingNumber;
       }

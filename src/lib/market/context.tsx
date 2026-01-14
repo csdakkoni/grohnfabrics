@@ -28,7 +28,7 @@ const REGIONS: Record<RegionId, RegionConfig> = {
     defaultCurrency: 'TRY',
     currencies: ['TRY'],
     currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
-    shipping: ['yurtici', 'aras', 'mng'],
+    shipping: ['ups'],  // UPS for all regions
     payment: ['iyzico'],
   },
   GLOBAL: {
@@ -37,7 +37,7 @@ const REGIONS: Record<RegionId, RegionConfig> = {
     defaultCurrency: 'USD',
     currencies: ['USD', 'EUR'],
     currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
-    shipping: ['ups', 'dhl', 'fedex'],
+    shipping: ['ups'],  // UPS for all regions
     payment: ['stripe'],
   },
 };
