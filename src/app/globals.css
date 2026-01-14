@@ -2,58 +2,59 @@
 
 /* ============================================
    GROHN FABRICS - DESIGN SYSTEM
-   Pastel, Modern, Elegant
+   🌿 Natural & Botanical Theme
+   Pastel, Elegant, Organic
    ============================================ */
 
 :root {
-  /* Brand Colors - Warm & Earthy */
-  --brand-primary: #8B7355;
-  --brand-primary-light: #A89078;
-  --brand-primary-dark: #6B5A45;
+  /* Brand Colors - Sage Green / Adaçayı */
+  --brand-primary: #7A9B76;
+  --brand-primary-light: #A8C4A4;
+  --brand-primary-dark: #5C7A58;
   
-  /* Accent - Soft Sage */
-  --accent: #9CAF88;
-  --accent-light: #B8C9A8;
-  --accent-dark: #7A9066;
+  /* Accent - Terracotta / Toprak */
+  --accent: #C9967E;
+  --accent-light: #E8D4C8;
+  --accent-dark: #A67560;
   
-  /* Neutrals */
-  --background: #FAFAF8;
-  --background-secondary: #F5F3F0;
-  --foreground: #2D2A26;
-  --foreground-muted: #6B6560;
-  --foreground-light: #9A958F;
+  /* Neutrals - Warm Naturals */
+  --background: #FDFBF7;
+  --background-secondary: #F5F2EC;
+  --foreground: #2C3830;
+  --foreground-muted: #5C665E;
+  --foreground-light: #8A9189;
   
-  /* Borders */
-  --border: #E8E4E0;
-  --border-dark: #D4CFC8;
+  /* Borders - Soft Earth */
+  --border: #E5E0D8;
+  --border-dark: #D1CCC4;
   
   /* Cards */
   --card-bg: #FFFFFF;
-  --card-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
-  --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+  --card-shadow: 0 2px 8px rgba(44, 56, 48, 0.04), 0 1px 2px rgba(44, 56, 48, 0.02);
+  --card-shadow-hover: 0 8px 24px rgba(44, 56, 48, 0.08);
   
-  /* Status Colors */
+  /* Status Colors - Natural Palette */
   --success: #6B9B6B;
-  --success-light: #E8F0E8;
-  --warning: #C4A35A;
-  --warning-light: #FDF6E3;
-  --error: #C46B6B;
-  --error-light: #FDE8E8;
-  --info: #6B8BC4;
-  --info-light: #E8EEF8;
+  --success-light: #E8F2E8;
+  --warning: #C9A86C;
+  --warning-light: #FDF8EC;
+  --error: #C47B7B;
+  --error-light: #FDECEC;
+  --info: #7B9BC4;
+  --info-light: #ECF2F8;
   
-  /* Admin Sidebar */
-  --sidebar-bg: #2D2A26;
-  --sidebar-text: #A8A49F;
-  --sidebar-text-hover: #F5F3F0;
-  --sidebar-active: #3D3A36;
+  /* Admin Sidebar - Deep Forest */
+  --sidebar-bg: #2C3830;
+  --sidebar-text: #A8B0A8;
+  --sidebar-text-hover: #F5F2EC;
+  --sidebar-active: #3C4840;
   
   /* Spacing */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
 }
 
 /* Theme setup for Tailwind v4 */

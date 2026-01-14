@@ -24,80 +24,81 @@ export default function StoreHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[var(--border)]">
+      <header className="sticky top-0 z-40 bg-[var(--background)]/95 backdrop-blur-md border-b border-[var(--brand-primary)]/10">
         <div className="container">
           <div className="flex items-center justify-between h-16">
             {/* Mobile Menu Button */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors"
             >
               {mobileMenuOpen ? (
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-[var(--brand-primary)]" />
               ) : (
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 text-[var(--brand-primary)]" />
               )}
             </button>
 
             {/* Logo */}
-            <Link href="/" className="text-xl font-semibold tracking-tight">
-              GROHN FABRICS
+            <Link href="/" className="flex items-center gap-2 text-xl font-semibold tracking-wide text-[var(--foreground)]">
+              <span className="text-[var(--brand-primary)]">GROHN</span>
+              <span className="font-light">FABRICS</span>
             </Link>
 
             {/* Navigation - Desktop */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-6">
               <Link 
                 href="/products" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Tüm Ürünler
+                Koleksiyon
               </Link>
               <Link 
                 href="/products?type=fabric" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 Kumaşlar
               </Link>
               <Link 
                 href="/products?type=curtain" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 Perdeler
               </Link>
               <Link 
                 href="/products?type=pillow" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 Ev Tekstili
               </Link>
               <Link 
                 href="/about" 
-                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Hakkımızda
+                Hikayemiz
               </Link>
             </nav>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1 md:gap-2">
               {/* Search Button */}
               <button 
                 onClick={() => setSearchOpen(true)}
-                className="flex items-center gap-2 p-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors group"
+                className="flex items-center gap-2 p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
               >
-                <Search className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--foreground)]" />
-                <span className="hidden lg:flex items-center gap-1 text-sm text-[var(--foreground-muted)]">
+                <Search className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--brand-primary)]" />
+                <span className="hidden lg:flex items-center gap-1.5 text-sm text-[var(--foreground-muted)]">
                   Ara
-                  <kbd className="px-1.5 py-0.5 bg-[var(--background-secondary)] rounded text-xs font-mono">⌘K</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[var(--brand-primary)]/5 rounded text-xs font-mono text-[var(--brand-primary)]">⌘K</kbd>
                 </span>
               </button>
               
               {/* Account */}
               <Link 
                 href="/account" 
-                className="p-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors"
+                className="p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
               >
-                <User className="w-5 h-5 text-[var(--foreground-muted)]" />
+                <User className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--brand-primary)]" />
               </Link>
               
               {/* Cart */}
@@ -108,48 +109,48 @@ export default function StoreHeader() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[var(--border)] bg-white">
-            <nav className="container py-4 space-y-2">
+          <div className="md:hidden border-t border-[var(--brand-primary)]/10 bg-[var(--background)]">
+            <nav className="container py-4 space-y-1">
               <Link 
                 href="/products"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Tüm Ürünler
+                Koleksiyon
               </Link>
               <Link 
                 href="/products?type=fabric"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 Kumaşlar
               </Link>
               <Link 
                 href="/products?type=curtain"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 Perdeler
               </Link>
               <Link 
                 href="/products?type=pillow"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 Ev Tekstili
               </Link>
-              <hr className="border-[var(--border)]" />
+              <hr className="border-[var(--brand-primary)]/10 my-2" />
               <Link 
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Hakkımızda
+                Hikayemiz
               </Link>
               <Link 
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 İletişim
               </Link>
