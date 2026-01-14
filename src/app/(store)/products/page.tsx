@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { Package } from 'lucide-react';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +10,7 @@ interface SearchParams {
   category?: string;
 }
 
-async function getProducts(searchParams: SearchParams) {
+async function getProducts(searchParams: SearchParams, region: string) {
   let query = supabaseAdmin
     .from('products')
     .select(`
@@ -24,8 +25,14 @@ async function getProducts(searchParams: SearchParams) {
       prices:product_prices(price, currency, market_id)
     `)
     .eq('is_active', true)
-    .eq('show_in_tr', true)
     .order('created_at', { ascending: false });
+
+  // Filter by region visibility
+  if (region === 'TR') {
+    query = query.eq('show_in_tr', true);
+  } else {
+    query = query.eq('show_in_global', true);
+  }
 
   if (searchParams.type) {
     query = query.eq('product_type', searchParams.type);
@@ -38,7 +45,7 @@ async function getProducts(searchParams: SearchParams) {
 async function getCategories() {
   const { data } = await supabaseAdmin
     .from('categories')
-    .select('id, slug, name_tr')
+    .select('id, slug, name_tr, name_en')
     .eq('is_active', true)
     .order('sort_order');
   return data || [];
@@ -50,20 +57,38 @@ export default async function ProductsPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  
+  // Get region and locale from cookies
+  const cookieStore = await cookies();
+  const region = cookieStore.get('region')?.value || 'TR';
+  const locale = (cookieStore.get('locale')?.value || 'tr') as 'tr' | 'en';
+  const isEnglish = locale === 'en';
+  
   const [products, categories] = await Promise.all([
-    getProducts(params),
+    getProducts(params, region),
     getCategories(),
   ]);
 
-  const typeLabels: Record<string, string> = {
-    fabric: 'Kumaşlar',
-    pillow: 'Yastık Kılıfları',
-    curtain: 'Perdeler',
-    tablecloth: 'Masa Örtüleri',
-    runner: 'Runner',
+  // Helper for localized text
+  const t = (tr: string, en: string) => isEnglish ? en : tr;
+
+  const typeLabels: Record<string, { tr: string; en: string }> = {
+    fabric: { tr: 'Kumaşlar', en: 'Fabrics' },
+    pillow: { tr: 'Yastık Kılıfları', en: 'Pillow Covers' },
+    curtain: { tr: 'Perdeler', en: 'Curtains' },
+    tablecloth: { tr: 'Masa Örtüleri', en: 'Tablecloths' },
+    runner: { tr: 'Runner', en: 'Runners' },
   };
 
-  const currentType = params.type ? typeLabels[params.type] : 'Tüm Ürünler';
+  const getTypeLabel = (type: string) => {
+    const label = typeLabels[type];
+    return label ? (isEnglish ? label.en : label.tr) : type;
+  };
+
+  const currentType = params.type ? getTypeLabel(params.type) : t('Tüm Ürünler', 'All Products');
+
+  // Get currency symbol based on region
+  const currencySymbol = region === 'TR' ? '₺' : '$';
 
   return (
     <div>
@@ -72,7 +97,7 @@ export default async function ProductsPage({
         <div className="container">
           <h1 className="text-3xl font-light">{currentType}</h1>
           <p className="text-[var(--foreground-muted)] mt-2">
-            {products.length} ürün bulundu
+            {products.length} {t('ürün bulundu', 'products found')}
           </p>
         </div>
       </div>
@@ -83,14 +108,14 @@ export default async function ProductsPage({
           <aside className="w-64 flex-shrink-0 hidden lg:block">
             {/* Categories */}
             <div className="mb-8">
-              <h3 className="text-sm font-semibold mb-4">Kategoriler</h3>
+              <h3 className="text-sm font-semibold mb-4">{t('Kategoriler', 'Categories')}</h3>
               <ul className="space-y-2">
                 <li>
                   <Link 
                     href="/products"
                     className={`text-sm ${!params.type ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                   >
-                    Tüm Ürünler
+                    {t('Tüm Ürünler', 'All Products')}
                   </Link>
                 </li>
                 {Object.entries(typeLabels).map(([key, label]) => (
@@ -99,7 +124,7 @@ export default async function ProductsPage({
                       href={`/products?type=${key}`}
                       className={`text-sm ${params.type === key ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                     >
-                      {label}
+                      {isEnglish ? label.en : label.tr}
                     </Link>
                   </li>
                 ))}
@@ -109,7 +134,7 @@ export default async function ProductsPage({
             {/* Category Filter */}
             {categories.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold mb-4">Koleksiyonlar</h3>
+                <h3 className="text-sm font-semibold mb-4">{t('Koleksiyonlar', 'Collections')}</h3>
                 <ul className="space-y-2">
                   {categories.map((cat) => (
                     <li key={cat.id}>
@@ -117,7 +142,7 @@ export default async function ProductsPage({
                         href={`/products?category=${cat.slug}`}
                         className="text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                       >
-                        {cat.name_tr}
+                        {isEnglish ? cat.name_en : cat.name_tr}
                       </Link>
                     </li>
                   ))}
@@ -132,8 +157,10 @@ export default async function ProductsPage({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((product) => {
                   const prices = product.prices || [];
-                  const trPrice = prices.find((p: { market_id: string }) => p.market_id === 'TR');
+                  // Get price for current REGION
+                  const regionPrice = prices.find((p: { market_id: string }) => p.market_id === region);
                   const imageUrl = product.thumbnail_url || product.images?.[0];
+                  const productName = isEnglish ? product.name_en : product.name_tr;
                   
                   return (
                     <Link 
@@ -146,7 +173,7 @@ export default async function ProductsPage({
                           {imageUrl ? (
                             <img
                               src={imageUrl}
-                              alt={product.name_tr}
+                              alt={productName}
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -157,14 +184,18 @@ export default async function ProductsPage({
                         </div>
                         <div className="product-card-body">
                           <p className="product-card-category">
-                            {typeLabels[product.product_type]}
+                            {getTypeLabel(product.product_type)}
                           </p>
-                          <h3 className="product-card-title">{product.name_tr}</h3>
+                          <h3 className="product-card-title">{productName}</h3>
                           <div className="flex items-baseline gap-2">
-                            {trPrice && (
+                            {regionPrice && (
                               <span className="product-card-price">
-                                ₺{trPrice.price}
-                                {product.sales_model === 'meter' && <span className="text-sm font-normal text-[var(--foreground-muted)]">/m</span>}
+                                {currencySymbol}{regionPrice.price.toLocaleString()}
+                                {product.sales_model === 'meter' && (
+                                  <span className="text-sm font-normal text-[var(--foreground-muted)]">
+                                    /{t('m', 'm')}
+                                  </span>
+                                )}
                               </span>
                             )}
                           </div>
@@ -177,9 +208,9 @@ export default async function ProductsPage({
             ) : (
               <div className="text-center py-16">
                 <Package className="w-16 h-16 mx-auto text-[var(--foreground-light)] mb-4" />
-                <h3 className="text-lg font-medium mb-2">Ürün bulunamadı</h3>
+                <h3 className="text-lg font-medium mb-2">{t('Ürün bulunamadı', 'No products found')}</h3>
                 <p className="text-[var(--foreground-muted)]">
-                  Bu kategoride henüz ürün bulunmuyor.
+                  {t('Bu kategoride henüz ürün bulunmuyor.', 'No products in this category yet.')}
                 </p>
               </div>
             )}

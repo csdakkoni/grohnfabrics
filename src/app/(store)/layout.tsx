@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { CartProvider } from '@/components/store/CartProvider';
 import CartDrawer from '@/components/store/CartDrawer';
 import StoreHeader from '@/components/store/StoreHeader';
-import { MarketProvider, MarketId } from '@/lib/market/context';
+import { MarketProvider, RegionId, Locale } from '@/lib/market/context';
 
 export default async function StoreLayout({
   children,
@@ -11,11 +11,17 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-  const marketCookie = cookieStore.get('market')?.value as MarketId | undefined;
-  const initialMarket: MarketId = marketCookie === 'GLOBAL' ? 'GLOBAL' : 'TR';
+  
+  // Region is fixed by IP (determines price, shipping, payment)
+  const regionCookie = cookieStore.get('region')?.value as RegionId | undefined;
+  const initialRegion: RegionId = regionCookie === 'GLOBAL' ? 'GLOBAL' : 'TR';
+  
+  // Locale can be changed by user (determines UI language only)
+  const localeCookie = cookieStore.get('locale')?.value as Locale | undefined;
+  const initialLocale: Locale = localeCookie === 'en' ? 'en' : 'tr';
 
   return (
-    <MarketProvider initialMarket={initialMarket}>
+    <MarketProvider initialRegion={initialRegion} initialLocale={initialLocale}>
     <CartProvider>
     <div className="min-h-screen flex flex-col">
       {/* Header */}

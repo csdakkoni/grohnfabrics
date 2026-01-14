@@ -2,80 +2,133 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type MarketId = 'TR' | 'GLOBAL';
+// Region = IP bazlı, değişmez (fiyat, kargo, ödeme)
+export type RegionId = 'TR' | 'GLOBAL';
+
+// Locale = kullanıcı seçimi, sadece UI dili
 export type Locale = 'tr' | 'en';
+
+// Currency options for GLOBAL region
 export type Currency = 'TRY' | 'USD' | 'EUR';
 
-interface MarketConfig {
-  id: MarketId;
-  locale: Locale;
-  currency: Currency;
-  currencySymbol: string;
+interface RegionConfig {
+  id: RegionId;
   name: string;
+  defaultCurrency: Currency;
+  currencies: Currency[];  // Available currencies for this region
+  currencySymbols: Record<Currency, string>;
+  shipping: string[];      // Available shipping providers
+  payment: string[];       // Available payment providers
 }
 
-const MARKETS: Record<MarketId, MarketConfig> = {
+const REGIONS: Record<RegionId, RegionConfig> = {
   TR: {
     id: 'TR',
-    locale: 'tr',
-    currency: 'TRY',
-    currencySymbol: '₺',
     name: 'Türkiye',
+    defaultCurrency: 'TRY',
+    currencies: ['TRY'],
+    currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
+    shipping: ['yurtici', 'aras', 'mng'],
+    payment: ['iyzico'],
   },
   GLOBAL: {
     id: 'GLOBAL',
-    locale: 'en',
-    currency: 'USD',
-    currencySymbol: '$',
-    name: 'Global',
+    name: 'International',
+    defaultCurrency: 'USD',
+    currencies: ['USD', 'EUR'],
+    currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
+    shipping: ['ups', 'dhl', 'fedex'],
+    payment: ['stripe'],
   },
 };
 
 interface MarketContextType {
-  market: MarketConfig;
-  setMarket: (marketId: MarketId) => void;
+  // Region - IP bazlı, değişmez
+  region: RegionConfig;
+  
+  // Locale - kullanıcı değiştirebilir
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  
+  // Currency - GLOBAL için kullanıcı değiştirebilir
+  currency: Currency;
+  setCurrency: (currency: Currency) => void;
+  
+  // Helpers
   t: (tr: string, en: string) => string;
-  formatPrice: (price: number) => string;
+  formatPrice: (price: number, overrideCurrency?: Currency) => string;
 }
 
 const MarketContext = createContext<MarketContextType | undefined>(undefined);
 
 export function MarketProvider({ 
   children, 
-  initialMarket 
+  initialRegion,
+  initialLocale,
 }: { 
   children: ReactNode;
-  initialMarket?: MarketId;
+  initialRegion?: RegionId;
+  initialLocale?: Locale;
 }) {
-  const [marketId, setMarketId] = useState<MarketId>(initialMarket || 'TR');
+  // Region is fixed based on IP (set from server/middleware)
+  const [regionId] = useState<RegionId>(initialRegion || 'TR');
+  const region = REGIONS[regionId];
+  
+  // Locale can be changed by user
+  const [locale, setLocaleState] = useState<Locale>(initialLocale || 'tr');
+  
+  // Currency can be changed by user (only for GLOBAL region)
+  const [currency, setCurrencyState] = useState<Currency>(region.defaultCurrency);
   
   useEffect(() => {
-    // Check localStorage for saved preference
-    const saved = localStorage.getItem('market') as MarketId;
-    if (saved && MARKETS[saved]) {
-      setMarketId(saved);
+    // Load saved locale preference
+    const savedLocale = localStorage.getItem('locale') as Locale;
+    if (savedLocale && (savedLocale === 'tr' || savedLocale === 'en')) {
+      setLocaleState(savedLocale);
     }
-  }, []);
+    
+    // Load saved currency preference (only matters for GLOBAL)
+    const savedCurrency = localStorage.getItem('currency') as Currency;
+    if (savedCurrency && region.currencies.includes(savedCurrency)) {
+      setCurrencyState(savedCurrency);
+    }
+  }, [region.currencies]);
 
-  const setMarket = (id: MarketId) => {
-    setMarketId(id);
-    localStorage.setItem('market', id);
+  const setLocale = (newLocale: Locale) => {
+    setLocaleState(newLocale);
+    localStorage.setItem('locale', newLocale);
   };
 
-  const market = MARKETS[marketId];
+  const setCurrency = (newCurrency: Currency) => {
+    if (region.currencies.includes(newCurrency)) {
+      setCurrencyState(newCurrency);
+      localStorage.setItem('currency', newCurrency);
+    }
+  };
 
-  // Translation helper
+  // Translation helper - based on LOCALE not region
   const t = (tr: string, en: string) => {
-    return market.locale === 'tr' ? tr : en;
+    return locale === 'tr' ? tr : en;
   };
 
-  // Price formatter
-  const formatPrice = (price: number) => {
-    return `${market.currencySymbol}${price.toLocaleString(market.locale === 'tr' ? 'tr-TR' : 'en-US', { minimumFractionDigits: 2 })}`;
+  // Price formatter - based on REGION's currency
+  const formatPrice = (price: number, overrideCurrency?: Currency) => {
+    const curr = overrideCurrency || currency;
+    const symbol = region.currencySymbols[curr];
+    const localeStr = locale === 'tr' ? 'tr-TR' : 'en-US';
+    return `${symbol}${price.toLocaleString(localeStr, { minimumFractionDigits: 2 })}`;
   };
 
   return (
-    <MarketContext.Provider value={{ market, setMarket, t, formatPrice }}>
+    <MarketContext.Provider value={{ 
+      region, 
+      locale, 
+      setLocale, 
+      currency, 
+      setCurrency, 
+      t, 
+      formatPrice 
+    }}>
       {children}
     </MarketContext.Provider>
   );
@@ -89,29 +142,5 @@ export function useMarket() {
   return context;
 }
 
-// Helper to detect market from headers (for server components)
-export function detectMarketFromHeaders(headers: Headers): MarketId {
-  // Check Accept-Language header
-  const acceptLanguage = headers.get('accept-language') || '';
-  
-  // Turkish language preference
-  if (acceptLanguage.toLowerCase().includes('tr')) {
-    return 'TR';
-  }
-  
-  // Check for Cloudflare country header (if using Cloudflare)
-  const cfCountry = headers.get('cf-ipcountry');
-  if (cfCountry === 'TR') {
-    return 'TR';
-  }
-  
-  // Check Vercel's geo header
-  const vercelCountry = headers.get('x-vercel-ip-country');
-  if (vercelCountry === 'TR') {
-    return 'TR';
-  }
-  
-  return 'GLOBAL';
-}
-
-export { MARKETS };
+export { REGIONS };
+export type { RegionConfig };

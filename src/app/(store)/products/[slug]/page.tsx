@@ -40,14 +40,25 @@ export default async function ProductPage({
     notFound();
   }
 
-  // Get market from cookie
+  // Get region and locale from cookies
   const cookieStore = await cookies();
-  const market = cookieStore.get('market')?.value || 'TR';
-  const isGlobal = market === 'GLOBAL';
-  const locale = isGlobal ? 'en' : 'tr';
+  
+  // Region = IP based, determines price/shipping/payment
+  const region = cookieStore.get('region')?.value || 'TR';
+  const isGlobal = region === 'GLOBAL';
+  
+  // Locale = user preference, determines UI language
+  const locale = (cookieStore.get('locale')?.value || 'tr') as 'tr' | 'en';
 
   const prices = product.prices || [];
-  const currentPrice = prices.find((p: { market_id: string }) => p.market_id === market);
+  
+  // Get price for current REGION
+  let currentPrice;
+  if (region === 'TR') {
+    currentPrice = prices.find((p: { market_id: string; currency: string }) => p.market_id === 'TR');
+  } else {
+    currentPrice = prices.find((p: { market_id: string }) => p.market_id === 'GLOBAL');
+  }
   const basePrice = currentPrice?.price || prices[0]?.price || 0;
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
@@ -69,8 +80,9 @@ export default async function ProductPage({
     preset_sizes: { tr: 'Hazır ölçülerde satılır', en: 'Sold in preset sizes' },
   };
 
-  // Helper for localized text
-  const t = (tr: string, en: string) => isGlobal ? en : tr;
+  // Helper for localized text - based on LOCALE not region
+  const isEnglish = locale === 'en';
+  const t = (tr: string, en: string) => isEnglish ? en : tr;
 
   return (
     <div>
@@ -92,12 +104,12 @@ export default async function ProductPage({
                   href={`/products?category=${category.slug}`} 
                   className="text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                 >
-                  {isGlobal ? category.name_en : category.name_tr}
+                  {isEnglish ? category.name_en : category.name_tr}
                 </Link>
               </>
             )}
             <ChevronRight className="w-4 h-4 text-[var(--foreground-light)]" />
-            <span className="text-[var(--foreground)]">{isGlobal ? product.name_en : product.name_tr}</span>
+            <span className="text-[var(--foreground)]">{isEnglish ? product.name_en : product.name_tr}</span>
           </nav>
         </div>
       </div>
@@ -141,12 +153,13 @@ export default async function ProductPage({
 
             {/* Title */}
             <h1 className="text-3xl font-light mb-2">
-              {isGlobal ? product.name_en : product.name_tr}
+              {isEnglish ? product.name_en : product.name_tr}
             </h1>
-            {!isGlobal && product.name_en && (
+            {/* Show alternate language name as subtitle */}
+            {!isEnglish && product.name_en && (
               <p className="text-lg text-[var(--foreground-muted)] mb-6">{product.name_en}</p>
             )}
-            {isGlobal && product.name_tr && (
+            {isEnglish && product.name_tr && (
               <p className="text-lg text-[var(--foreground-muted)] mb-6">{product.name_tr}</p>
             )}
 
@@ -190,11 +203,11 @@ export default async function ProductPage({
             </div>
 
             {/* Description */}
-            {(isGlobal ? product.description_en : product.description_tr) && (
+            {(isEnglish ? product.description_en : product.description_tr) && (
               <div className="mt-8 pt-8 border-t border-[var(--border)]">
                 <h3 className="text-sm font-semibold mb-4">{t('Ürün Açıklaması', 'Product Description')}</h3>
                 <div className="prose prose-sm text-[var(--foreground-muted)]">
-                  <p>{isGlobal ? product.description_en : product.description_tr}</p>
+                  <p>{isEnglish ? product.description_en : product.description_tr}</p>
                 </div>
               </div>
             )}
@@ -221,10 +234,10 @@ export default async function ProductPage({
                     </div>
                   )}
                 </dl>
-                {(isGlobal ? material.care_instructions_en : material.care_instructions_tr) && (
+                {(isEnglish ? material.care_instructions_en : material.care_instructions_tr) && (
                   <div className="mt-4">
                     <dt className="text-[var(--foreground-muted)] text-sm">{t('Bakım Talimatları', 'Care Instructions')}</dt>
-                    <dd className="text-sm mt-1">{isGlobal ? material.care_instructions_en : material.care_instructions_tr}</dd>
+                    <dd className="text-sm mt-1">{isEnglish ? material.care_instructions_en : material.care_instructions_tr}</dd>
                   </div>
                 )}
               </div>

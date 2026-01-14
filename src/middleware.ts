@@ -1,27 +1,35 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Detect market based on location/language
-function detectMarket(request: NextRequest): 'TR' | 'GLOBAL' {
-  // 1. Check if user already has a preference
-  const marketCookie = request.cookies.get('market')?.value;
-  if (marketCookie === 'TR' || marketCookie === 'GLOBAL') {
-    return marketCookie;
-  }
-
-  // 2. Check Vercel's geo header (automatic with Vercel)
+// Detect REGION based on IP location (NOT changeable by user)
+// This determines: price, shipping, payment
+function detectRegion(request: NextRequest): 'TR' | 'GLOBAL' {
+  // Region is ONLY based on IP - user cannot change this
+  // Check Vercel's geo header (automatic with Vercel)
   const country = request.headers.get('x-vercel-ip-country');
   if (country === 'TR') {
     return 'TR';
   }
+  
+  return 'GLOBAL';
+}
 
-  // 3. Check Accept-Language header
-  const acceptLanguage = request.headers.get('accept-language') || '';
-  if (acceptLanguage.toLowerCase().startsWith('tr')) {
-    return 'TR';
+// Detect initial LOCALE preference (user CAN change this later)
+// This determines: UI language only
+function detectInitialLocale(request: NextRequest): 'tr' | 'en' {
+  // 1. Check if user already has a preference
+  const localeCookie = request.cookies.get('locale')?.value;
+  if (localeCookie === 'tr' || localeCookie === 'en') {
+    return localeCookie;
   }
 
-  return 'GLOBAL';
+  // 2. Check Accept-Language header for initial preference
+  const acceptLanguage = request.headers.get('accept-language') || '';
+  if (acceptLanguage.toLowerCase().startsWith('tr')) {
+    return 'tr';
+  }
+
+  return 'en';
 }
 
 export async function middleware(request: NextRequest) {
@@ -29,15 +37,23 @@ export async function middleware(request: NextRequest) {
     request,
   });
   
-  // Market detection for store pages
+  // Region & Locale detection for store pages
   if (!request.nextUrl.pathname.startsWith('/admin') && 
       !request.nextUrl.pathname.startsWith('/api') &&
       !request.nextUrl.pathname.startsWith('/login')) {
-    const market = detectMarket(request);
     
-    // Set market cookie if not exists
-    if (!request.cookies.get('market')) {
-      supabaseResponse.cookies.set('market', market, {
+    // Region is ALWAYS set based on IP (not user preference)
+    const region = detectRegion(request);
+    supabaseResponse.cookies.set('region', region, {
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day (refresh daily in case of travel)
+      sameSite: 'lax',
+    });
+    
+    // Locale is set only if not already set (user can change later)
+    if (!request.cookies.get('locale')) {
+      const locale = detectInitialLocale(request);
+      supabaseResponse.cookies.set('locale', locale, {
         path: '/',
         maxAge: 60 * 60 * 24 * 365, // 1 year
         sameSite: 'lax',

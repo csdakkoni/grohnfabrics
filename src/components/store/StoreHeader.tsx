@@ -6,10 +6,12 @@ import { User, Search, Menu, X } from 'lucide-react';
 import CartButton from './CartButton';
 import SearchModal from './SearchModal';
 import MarketSwitcher from './MarketSwitcher';
+import { useMarket } from '@/lib/market/context';
 
 export default function StoreHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useMarket();
 
   // Keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -52,31 +54,31 @@ export default function StoreHeader() {
                 href="/products" 
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Koleksiyon
+                {t('Koleksiyon', 'Collection')}
               </Link>
               <Link 
                 href="/products?type=fabric" 
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Kumaşlar
+                {t('Kumaşlar', 'Fabrics')}
               </Link>
               <Link 
                 href="/products?type=curtain" 
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Perdeler
+                {t('Perdeler', 'Curtains')}
               </Link>
               <Link 
                 href="/products?type=pillow" 
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Ev Tekstili
+                {t('Ev Tekstili', 'Home Textiles')}
               </Link>
               <Link 
                 href="/about" 
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                Hikayemiz
+                {t('Hikayemiz', 'Our Story')}
               </Link>
             </nav>
 
@@ -92,7 +94,7 @@ export default function StoreHeader() {
               >
                 <Search className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--brand-primary)]" />
                 <span className="hidden lg:flex items-center gap-1.5 text-sm text-[var(--foreground-muted)]">
-                  Ara
+                  {t('Ara', 'Search')}
                   <kbd className="px-1.5 py-0.5 bg-[var(--brand-primary)]/5 rounded text-xs font-mono text-[var(--brand-primary)]">⌘K</kbd>
                 </span>
               </button>
@@ -120,28 +122,28 @@ export default function StoreHeader() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Koleksiyon
+                {t('Koleksiyon', 'Collection')}
               </Link>
               <Link 
                 href="/products?type=fabric"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Kumaşlar
+                {t('Kumaşlar', 'Fabrics')}
               </Link>
               <Link 
                 href="/products?type=curtain"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Perdeler
+                {t('Perdeler', 'Curtains')}
               </Link>
               <Link 
                 href="/products?type=pillow"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Ev Tekstili
+                {t('Ev Tekstili', 'Home Textiles')}
               </Link>
               <hr className="border-[var(--brand-primary)]/10 my-2" />
               <Link 
@@ -149,14 +151,14 @@ export default function StoreHeader() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                Hikayemiz
+                {t('Hikayemiz', 'Our Story')}
               </Link>
               <Link 
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                İletişim
+                {t('İletişim', 'Contact')}
               </Link>
             </nav>
           </div>

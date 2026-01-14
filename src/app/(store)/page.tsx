@@ -1,17 +1,19 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Leaf, Sparkles, Package, Recycle, Heart } from 'lucide-react';
 import NewsletterForm from '@/components/store/NewsletterForm';
 
 export const dynamic = 'force-dynamic';
 
-async function getFeaturedProducts() {
-  const { data } = await supabaseAdmin
+async function getFeaturedProducts(region: string) {
+  let query = supabaseAdmin
     .from('products')
     .select(`
       id,
       slug,
       name_tr,
+      name_en,
       product_type,
       sales_model,
       thumbnail_url,
@@ -22,13 +24,22 @@ async function getFeaturedProducts() {
     .eq('is_featured', true)
     .order('created_at', { ascending: false })
     .limit(6);
+
+  // Filter by region visibility
+  if (region === 'TR') {
+    query = query.eq('show_in_tr', true);
+  } else {
+    query = query.eq('show_in_global', true);
+  }
+
+  const { data } = await query;
   return data || [];
 }
 
 async function getCategories() {
   const { data } = await supabaseAdmin
     .from('categories')
-    .select('id, slug, name_tr, image_url')
+    .select('id, slug, name_tr, name_en, image_url')
     .eq('is_active', true)
     .order('sort_order')
     .limit(4);
@@ -36,15 +47,32 @@ async function getCategories() {
 }
 
 export default async function HomePage() {
+  // Get region and locale from cookies
+  const cookieStore = await cookies();
+  const region = cookieStore.get('region')?.value || 'TR';
+  const locale = (cookieStore.get('locale')?.value || 'tr') as 'tr' | 'en';
+  const isEnglish = locale === 'en';
+
+  // Helper for localized text
+  const t = (tr: string, en: string) => isEnglish ? en : tr;
+
+  // Currency based on REGION (not locale)
+  const currencySymbol = region === 'TR' ? '₺' : '$';
+
   const [featuredProducts, categories] = await Promise.all([
-    getFeaturedProducts(),
+    getFeaturedProducts(region),
     getCategories(),
   ]);
 
-  const typeLabels: Record<string, string> = {
-    fabric: 'Kumaş',
-    curtain: 'Perde',
-    pillow: 'Ev Tekstili',
+  const typeLabels: Record<string, { tr: string; en: string }> = {
+    fabric: { tr: 'Kumaş', en: 'Fabric' },
+    curtain: { tr: 'Perde', en: 'Curtain' },
+    pillow: { tr: 'Ev Tekstili', en: 'Home Textile' },
+  };
+
+  const getTypeLabel = (type: string) => {
+    const label = typeLabels[type];
+    return label ? (isEnglish ? label.en : label.tr) : type;
   };
 
   return (
@@ -61,23 +89,25 @@ export default async function HomePage() {
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-[var(--brand-primary)]/10 text-[var(--brand-primary-dark)] rounded-full border border-[var(--brand-primary)]/20">
               <Sparkles className="w-4 h-4" />
-              Doğal & Premium Tekstil
+              {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-6 tracking-tight">
-              Doğanın Dokusu
-              <span className="block font-medium text-[var(--brand-primary)]">Evinizde</span>
+              {t('Doğanın Dokusu', "Nature's Texture")}
+              <span className="block font-medium text-[var(--brand-primary)]">{t('Evinizde', 'In Your Home')}</span>
             </h1>
             <p className="text-lg text-[var(--foreground-muted)] mb-8 max-w-lg leading-relaxed">
-              Doğal liflerden üretilen premium kumaş, perde ve ev tekstili koleksiyonumuzu keşfedin. 
-              Sürdürülebilir üretim, zamansız tasarım.
+              {t(
+                'Doğal liflerden üretilen premium kumaş, perde ve ev tekstili koleksiyonumuzu keşfedin. Sürdürülebilir üretim, zamansız tasarım.',
+                'Discover our premium fabric, curtain and home textile collection made from natural fibers. Sustainable production, timeless design.'
+              )}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/products" className="btn btn-primary btn-lg group">
-                Koleksiyonu Keşfet
+                {t('Koleksiyonu Keşfet', 'Explore Collection')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link href="/about" className="btn btn-outline btn-lg">
-                Hikayemiz
+                {t('Hikayemiz', 'Our Story')}
               </Link>
             </div>
           </div>
@@ -90,19 +120,19 @@ export default async function HomePage() {
           <div className="flex flex-wrap justify-center gap-8 md:gap-12">
             <div className="flex items-center gap-2.5 text-sm">
               <Leaf className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">Doğal Lifler</span>
+              <span className="text-[var(--foreground)]">{t('Doğal Lifler', 'Natural Fibers')}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Recycle className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">Sürdürülebilir Üretim</span>
+              <span className="text-[var(--foreground)]">{t('Sürdürülebilir Üretim', 'Sustainable Production')}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Truck className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">Hızlı Teslimat</span>
+              <span className="text-[var(--foreground)]">{t('Hızlı Teslimat', 'Fast Delivery')}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Heart className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">El İşçiliği</span>
+              <span className="text-[var(--foreground)]">{t('El İşçiliği', 'Handcrafted')}</span>
             </div>
           </div>
         </div>
@@ -114,18 +144,20 @@ export default async function HomePage() {
           <div className="container">
             <div className="flex items-end justify-between mb-12">
               <div>
-                <h2 className="text-3xl font-light mb-2">Öne Çıkan Ürünler</h2>
-                <p className="text-[var(--foreground-muted)]">En sevilen kumaş ve ev tekstili ürünleri</p>
+                <h2 className="text-3xl font-light mb-2">{t('Öne Çıkan Ürünler', 'Featured Products')}</h2>
+                <p className="text-[var(--foreground-muted)]">{t('En sevilen kumaş ve ev tekstili ürünleri', 'Most loved fabric and home textile products')}</p>
               </div>
               <Link href="/products" className="text-sm font-medium text-[var(--brand-primary)] hover:underline hidden md:flex items-center gap-1">
-                Tümünü Gör <ArrowRight className="w-4 h-4" />
+                {t('Tümünü Gör', 'View All')} <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
               {featuredProducts.map((product) => {
                 const prices = product.prices || [];
-                const trPrice = prices.find((p: { market_id: string }) => p.market_id === 'TR');
+                // Get price for current REGION (not locale)
+                const regionPrice = prices.find((p: { market_id: string }) => p.market_id === region);
                 const imageUrl = product.thumbnail_url || product.images?.[0];
+                const productName = isEnglish ? product.name_en : product.name_tr;
                 
                 return (
                   <Link 
@@ -138,7 +170,7 @@ export default async function HomePage() {
                         {imageUrl ? (
                           <img
                             src={imageUrl}
-                            alt={product.name_tr}
+                            alt={productName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
@@ -149,14 +181,14 @@ export default async function HomePage() {
                       </div>
                       <div className="product-card-body">
                         <p className="product-card-category">
-                          {typeLabels[product.product_type] || product.product_type}
+                          {getTypeLabel(product.product_type)}
                         </p>
-                        <h3 className="product-card-title">{product.name_tr}</h3>
-                        {trPrice && (
+                        <h3 className="product-card-title">{productName}</h3>
+                        {regionPrice && (
                           <span className="product-card-price">
-                            ₺{trPrice.price}
+                            {currencySymbol}{regionPrice.price.toLocaleString()}
                             {product.sales_model === 'meter' && (
-                              <span className="text-sm font-normal text-[var(--foreground-muted)]">/m</span>
+                              <span className="text-sm font-normal text-[var(--foreground-muted)]">/{t('m', 'm')}</span>
                             )}
                           </span>
                         )}
@@ -168,7 +200,7 @@ export default async function HomePage() {
             </div>
             <div className="mt-8 text-center md:hidden">
               <Link href="/products" className="btn btn-outline">
-                Tüm Ürünleri Gör
+                {t('Tüm Ürünleri Gör', 'View All Products')}
               </Link>
             </div>
           </div>
@@ -180,18 +212,18 @@ export default async function HomePage() {
         <div className="container">
           <div className="text-center mb-12">
             <span className="inline-block px-3 py-1 mb-4 text-xs font-medium bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] rounded-full">
-              Koleksiyonlar
+              {t('Koleksiyonlar', 'Collections')}
             </span>
-            <h2 className="text-3xl font-light mb-4">Doğadan İlham</h2>
+            <h2 className="text-3xl font-light mb-4">{t('Doğadan İlham', 'Inspired by Nature')}</h2>
             <p className="text-[var(--foreground-muted)] max-w-md mx-auto">
-              Doğal dokular ve organik tasarımlarla evinize huzur katın
+              {t('Doğal dokular ve organik tasarımlarla evinize huzur katın', 'Bring peace to your home with natural textures and organic designs')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: 'Kumaşlar', slug: 'fabric', description: 'Keten, pamuk ve doğal lifler', bg: 'from-[#7A9B76]' },
-              { name: 'Perdeler', slug: 'curtain', description: 'Işık ve doğa uyumlu tasarımlar', bg: 'from-[#8BA888]' },
-              { name: 'Ev Tekstili', slug: 'pillow', description: 'Organik yastık ve örtüler', bg: 'from-[#9CB898]' },
+              { name: t('Kumaşlar', 'Fabrics'), slug: 'fabric', description: t('Keten, pamuk ve doğal lifler', 'Linen, cotton and natural fibers'), bg: 'from-[#7A9B76]' },
+              { name: t('Perdeler', 'Curtains'), slug: 'curtain', description: t('Işık ve doğa uyumlu tasarımlar', 'Light and nature-friendly designs'), bg: 'from-[#8BA888]' },
+              { name: t('Ev Tekstili', 'Home Textiles'), slug: 'pillow', description: t('Organik yastık ve örtüler', 'Organic pillows and covers'), bg: 'from-[#9CB898]' },
             ].map((category) => (
               <Link 
                 href={`/products?type=${category.slug}`} 
@@ -205,7 +237,7 @@ export default async function HomePage() {
                   <h3 className="text-xl font-medium text-white mb-1">{category.name}</h3>
                   <p className="text-sm text-white/70 mb-4">{category.description}</p>
                   <span className="inline-flex items-center gap-2 text-sm text-white/90 font-medium group-hover:gap-3 transition-all">
-                    Keşfet <ArrowRight className="w-4 h-4" />
+                    {t('Keşfet', 'Explore')} <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
               </Link>
@@ -218,34 +250,34 @@ export default async function HomePage() {
       <section className="py-20 bg-white">
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-light">Neden Grohn?</h2>
+            <h2 className="text-3xl font-light">{t('Neden Grohn?', 'Why Grohn?')}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
               <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
                 <Leaf className="w-7 h-7 text-[var(--brand-primary)]" />
               </div>
-              <h3 className="text-lg font-medium mb-2">Doğal Materyaller</h3>
+              <h3 className="text-lg font-medium mb-2">{t('Doğal Materyaller', 'Natural Materials')}</h3>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                %100 doğal liflerden üretilen, çevre dostu ve sağlıklı kumaşlar
+                {t('%100 doğal liflerden üretilen, çevre dostu ve sağlıklı kumaşlar', '100% natural fiber fabrics that are eco-friendly and healthy')}
               </p>
             </div>
             <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
               <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
                 <Recycle className="w-7 h-7 text-[var(--brand-primary)]" />
               </div>
-              <h3 className="text-lg font-medium mb-2">Sürdürülebilir Üretim</h3>
+              <h3 className="text-lg font-medium mb-2">{t('Sürdürülebilir Üretim', 'Sustainable Production')}</h3>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                Çevreye duyarlı üretim süreçleri ve geri dönüştürülebilir ambalaj
+                {t('Çevreye duyarlı üretim süreçleri ve geri dönüştürülebilir ambalaj', 'Environmentally conscious production processes and recyclable packaging')}
               </p>
             </div>
             <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
               <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
                 <Heart className="w-7 h-7 text-[var(--brand-primary)]" />
               </div>
-              <h3 className="text-lg font-medium mb-2">Usta İşçiliği</h3>
+              <h3 className="text-lg font-medium mb-2">{t('Usta İşçiliği', 'Master Craftsmanship')}</h3>
               <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                Yılların deneyimiyle harmanlanmış geleneksel zanaat ve modern tasarım
+                {t('Yılların deneyimiyle harmanlanmış geleneksel zanaat ve modern tasarım', 'Traditional craftsmanship blended with years of experience and modern design')}
               </p>
             </div>
           </div>
@@ -261,17 +293,19 @@ export default async function HomePage() {
         </div>
         <div className="container text-center relative">
           <span className="inline-block px-4 py-1.5 mb-6 text-xs font-medium bg-white/10 text-white rounded-full border border-white/20">
-            B2B Çözümleri
+            {t('B2B Çözümleri', 'B2B Solutions')}
           </span>
           <h2 className="text-2xl md:text-3xl font-light text-white mb-4">
-            Toptan Satış & İş Ortaklığı
+            {t('Toptan Satış & İş Ortaklığı', 'Wholesale & Partnership')}
           </h2>
           <p className="text-white/75 mb-8 max-w-lg mx-auto leading-relaxed">
-            Otel, restoran ve perakende işletmeleri için özel fiyatlandırma. 
-            Doğal ve kaliteli kumaşlarla mekanınızı farklılaştırın.
+            {t(
+              'Otel, restoran ve perakende işletmeleri için özel fiyatlandırma. Doğal ve kaliteli kumaşlarla mekanınızı farklılaştırın.',
+              'Special pricing for hotels, restaurants and retail businesses. Differentiate your space with natural and quality fabrics.'
+            )}
           </p>
           <Link href="/contact?subject=wholesale" className="btn bg-white text-[var(--brand-primary-dark)] hover:bg-white/95 font-medium">
-            İş Ortağı Olun
+            {t('İş Ortağı Olun', 'Become a Partner')}
           </Link>
         </div>
       </section>
@@ -281,9 +315,12 @@ export default async function HomePage() {
         <div className="container">
           <div className="max-w-xl mx-auto text-center">
             <Leaf className="w-8 h-8 mx-auto mb-4 text-[var(--brand-primary)]" />
-            <h3 className="text-2xl font-light mb-3">Doğadan Haberler</h3>
+            <h3 className="text-2xl font-light mb-3">{t('Doğadan Haberler', 'News from Nature')}</h3>
             <p className="text-[var(--foreground-muted)] mb-6">
-              Yeni koleksiyonlar, mevsimsel trendler ve özel fırsatlardan ilk siz haberdar olun.
+              {t(
+                'Yeni koleksiyonlar, mevsimsel trendler ve özel fırsatlardan ilk siz haberdar olun.',
+                'Be the first to know about new collections, seasonal trends and special offers.'
+              )}
             </p>
             <NewsletterForm />
           </div>
