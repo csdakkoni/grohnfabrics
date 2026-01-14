@@ -160,9 +160,13 @@ async function initIyzicoPayment(
   address: CheckoutRequest['address'],
   total: number
 ) {
-  const apiKey = process.env.IYZICO_API_KEY!;
-  const secretKey = process.env.IYZICO_SECRET_KEY!;
+  const apiKey = process.env.IYZICO_API_KEY;
+  const secretKey = process.env.IYZICO_SECRET_KEY;
   const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
+
+  if (!apiKey || !secretKey) {
+    throw new Error('iyzico API bilgileri eksik. Vercel environment variables kontrol edin: IYZICO_API_KEY, IYZICO_SECRET_KEY');
+  }
 
   const basketItems = items.map((item) => ({
     id: item.productId,
