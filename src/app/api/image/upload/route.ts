@@ -34,38 +34,54 @@ function getStorageProvider(): StorageProvider {
   return isR2Configured ? 'r2' : 'supabase';
 }
 
-// Upload to selected provider
-async function uploadFile(
+// Upload to Supabase Storage
+async function uploadToSupabase(
   path: string,
   buffer: Buffer,
   contentType: string
 ): Promise<{ success: boolean; url: string }> {
-  const provider = getStorageProvider();
+  const { error } = await supabaseAdmin.storage
+    .from('images')
+    .upload(path, buffer, {
+      contentType,
+      cacheControl: '31536000',
+      upsert: true,
+    });
 
-  if (provider === 'r2') {
-    const result = await uploadToR2(path, buffer, contentType);
-    return { success: result.success, url: result.url };
-  } else {
-    // Fallback to Supabase Storage
-    const { error } = await supabaseAdmin.storage
-      .from('images')
-      .upload(path, buffer, {
-        contentType,
-        cacheControl: '31536000',
-        upsert: true,
-      });
-
-    if (error) {
-      console.error('Supabase upload error:', error);
-      return { success: false, url: '' };
-    }
-
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('images')
-      .getPublicUrl(path);
-
-    return { success: true, url: publicUrl };
+  if (error) {
+    console.error('Supabase upload error:', error);
+    return { success: false, url: '' };
   }
+
+  const { data: { publicUrl } } = supabaseAdmin.storage
+    .from('images')
+    .getPublicUrl(path);
+
+  return { success: true, url: publicUrl };
+}
+
+// Upload to selected provider with fallback
+async function uploadFile(
+  path: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<{ success: boolean; url: string; provider: string }> {
+  // Try R2 first if configured
+  if (isR2Configured) {
+    try {
+      const result = await uploadToR2(path, buffer, contentType);
+      if (result.success) {
+        return { success: true, url: result.url, provider: 'r2' };
+      }
+      console.log('R2 failed, falling back to Supabase...');
+    } catch (err) {
+      console.error('R2 error, falling back to Supabase:', err);
+    }
+  }
+
+  // Fallback to Supabase Storage
+  const result = await uploadToSupabase(path, buffer, contentType);
+  return { ...result, provider: 'supabase' };
 }
 
 export async function POST(request: NextRequest) {
@@ -98,16 +114,28 @@ export async function POST(request: NextRequest) {
     const metadata = await sharp(buffer).metadata();
     console.log(`Processing: ${file.name}, ${metadata.width}x${metadata.height}, ${(file.size / 1024 / 1024).toFixed(2)}MB, provider: ${getStorageProvider()}`);
 
-    // Generate unique filename
+    // Generate unique filename (ensure no leading dash)
     const timestamp = Date.now();
-    const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const baseName = file.name
+      .replace(/\.[^/.]+$/, '')  // Remove extension
+      .replace(/[^a-z0-9]/gi, '-')  // Replace special chars
+      .replace(/^-+/, '')  // Remove leading dashes
+      .replace(/-+$/, '')  // Remove trailing dashes
+      .replace(/-+/g, '-')  // Replace multiple dashes
+      .toLowerCase() || 'image';  // Fallback if empty
     const fileName = `${baseName}-${timestamp}`;
 
     const urls: Record<string, string> = {};
     const uploadPromises: Promise<void>[] = [];
 
+    // For variant images, only upload single size (faster)
+    const isVariantUpload = folder.startsWith('variants/');
+    const sizesToProcess = isVariantUpload 
+      ? { medium: SIZE_VARIANTS.medium }  // Only medium for variants
+      : SIZE_VARIANTS;
+
     // Process each size variant
-    for (const [sizeName, config] of Object.entries(SIZE_VARIANTS)) {
+    for (const [sizeName, config] of Object.entries(sizesToProcess)) {
       const processAndUpload = async () => {
         try {
           // Skip if original is smaller than target (except thumb)
@@ -149,25 +177,27 @@ export async function POST(request: NextRequest) {
       uploadPromises.push(processAndUpload());
     }
 
-    // Create WebP version (medium size)
-    uploadPromises.push((async () => {
-      try {
-        const webpBuffer = await sharp(buffer)
-          .rotate()
-          .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-          .webp({ quality: 82 })
-          .toBuffer();
+    // Create WebP version (skip for variant uploads - speed optimization)
+    if (!isVariantUpload) {
+      uploadPromises.push((async () => {
+        try {
+          const webpBuffer = await sharp(buffer)
+            .rotate()
+            .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 82 })
+            .toBuffer();
 
-        const path = `${folder}/webp/${fileName}.webp`;
-        const result = await uploadFile(path, webpBuffer, 'image/webp');
-        
-        if (result.success) {
-          urls.webp = result.url;
+          const path = `${folder}/webp/${fileName}.webp`;
+          const result = await uploadFile(path, webpBuffer, 'image/webp');
+          
+          if (result.success) {
+            urls.webp = result.url;
+          }
+        } catch (err) {
+          console.error('WebP processing error:', err);
         }
-      } catch (err) {
-        console.error('WebP processing error:', err);
-      }
-    })());
+      })());
+    }
 
     // Wait for all uploads
     await Promise.all(uploadPromises);

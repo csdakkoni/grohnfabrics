@@ -12,6 +12,11 @@ interface Category {
   name_tr: string;
 }
 
+interface Material {
+  id: string;
+  name_tr: string;
+}
+
 interface OptionValueTemplate {
   id: string;
   template_id: string;
@@ -38,6 +43,7 @@ export default function NewProductPage() {
   
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [variantTemplates, setVariantTemplates] = useState<OptionGroupTemplate[]>([]);
   const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set());
@@ -48,6 +54,7 @@ export default function NewProductPage() {
     description_tr: '',
     description_en: '',
     category_id: '',
+    material_id: '',
     product_type: 'fabric',
     sales_model: 'meter',
     min_order_quantity: '1',
@@ -70,6 +77,13 @@ export default function NewProductPage() {
         .eq('is_active', true)
         .order('name_tr');
       setCategories(cats || []);
+
+      // Load materials
+      const { data: mats } = await supabase
+        .from('materials')
+        .select('id, name_tr')
+        .order('name_tr');
+      setMaterials(mats || []);
 
       // Load variant templates
       const { data: templates } = await supabase
@@ -136,6 +150,7 @@ export default function NewProductPage() {
           description_tr: form.description_tr || null,
           description_en: form.description_en || null,
           category_id: form.category_id || null,
+          material_id: form.material_id || null,
           product_type: form.product_type,
           sales_model: form.sales_model,
           min_order_quantity: parseFloat(form.min_order_quantity),
@@ -528,6 +543,20 @@ export default function NewProductPage() {
                     <option value="">Seçiniz...</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name_tr}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="label">Materyal</label>
+                  <select
+                    value={form.material_id}
+                    onChange={(e) => setForm({ ...form, material_id: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Seçiniz...</option>
+                    {materials.map((mat) => (
+                      <option key={mat.id} value={mat.id}>{mat.name_tr}</option>
                     ))}
                   </select>
                 </div>
