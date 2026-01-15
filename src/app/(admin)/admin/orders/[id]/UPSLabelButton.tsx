@@ -80,21 +80,27 @@ export default function UPSLabelButton({ orderId, existingLabel, existingTrackin
     if (!labelData) return;
 
     try {
-      const blob = base64ToBlob(labelData);
-      const url = URL.createObjectURL(blob);
+      // data:application/pdf;base64, prefix'ini kaldır (varsa)
+      const base64Data = labelData.replace(/^data:.*?;base64,/, '');
+      
+      // Data URL olarak oluştur
+      const dataUrl = `data:application/pdf;base64,${base64Data}`;
       
       const link = document.createElement('a');
-      link.href = url;
+      link.href = dataUrl;
       link.download = `ups-label-${trackingNumber || orderId}.pdf`;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
       
-      // URL'i temizle
-      URL.revokeObjectURL(url);
+      // Temizlik
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
     } catch (err) {
       console.error('PDF indirilemedi:', err);
-      setError('PDF indirme hatası');
+      // Fallback: yeni sekmede aç, kullanıcı oradan indirebilir
+      setError('İndirme başarısız. "Görüntüle" butonuna tıklayıp tarayıcıdan kaydedin.');
     }
   };
 
