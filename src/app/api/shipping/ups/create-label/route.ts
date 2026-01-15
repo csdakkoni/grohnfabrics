@@ -137,7 +137,8 @@ export async function POST(request: NextRequest) {
             Address: {
               AddressLine: [companyAddress?.street || 'Default Address'],
               City: companyAddress?.city || 'Istanbul',
-              StateProvinceCode: companyAddress?.state || '',
+              // UPS için state zorunlu - yoksa şehri kullan
+              StateProvinceCode: companyAddress?.state || companyAddress?.city || 'Istanbul',
               PostalCode: companyAddress?.postal_code || '34000',
               CountryCode: shipFromCountry,
             },
@@ -151,8 +152,9 @@ export async function POST(request: NextRequest) {
             Address: {
               AddressLine: [shippingAddress.addressLine1, shippingAddress.addressLine2].filter(Boolean),
               City: shippingAddress.city,
-              StateProvinceCode: shippingAddress.state || '',
-              PostalCode: shippingAddress.postalCode,
+              // UPS Türkiye için state olarak şehir adı kullanılır, yoksa şehri kullan
+              StateProvinceCode: shippingAddress.state || shippingAddress.city || 'Istanbul',
+              PostalCode: shippingAddress.postalCode || '34000',
               CountryCode: shipToCountry,
             },
           },
