@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Stripe from 'stripe';
-import crypto from 'crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -145,46 +144,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// iyzico REST API helper - npm paketi Vercel'de çalışmadığı için doğrudan API kullanıyoruz
-function generatePkiString(obj: Record<string, unknown>, prefix = ''): string {
-  let result = prefix ? `${prefix}=[` : '[';
-  
-  for (const [key, value] of Object.entries(obj)) {
-    if (value === null || value === undefined) continue;
-    
-    if (Array.isArray(value)) {
-      result += `${key}=[`;
-      for (const item of value) {
-        if (typeof item === 'object') {
-          result += generatePkiString(item as Record<string, unknown>);
-        } else {
-          result += `${item}, `;
-        }
-      }
-      result = result.replace(/, $/, '');
-      result += '], ';
-    } else if (typeof value === 'object') {
-      result += generatePkiString(value as Record<string, unknown>, key) + ', ';
-    } else {
-      result += `${key}=${value}, `;
-    }
-  }
-  
-  result = result.replace(/, $/, '');
-  result += ']';
-  return result;
-}
-
-function generateIyzicoAuthHeader(apiKey: string, secretKey: string, request: Record<string, unknown>): string {
-  const randomString = Math.random().toString(36).substring(2, 10) + 
-                       Math.random().toString(36).substring(2, 10);
-  const pkiString = generatePkiString(request);
-  const hashString = apiKey + randomString + secretKey + pkiString;
-  const sha1Hash = crypto.createHash('sha1').update(hashString, 'utf8').digest('base64');
-  const authorizationString = Buffer.from(apiKey + ':' + sha1Hash).toString('base64');
-  return `IYZWS ${authorizationString}:${randomString}`;
-}
-
+// iyzipay npm paketi ile ödeme başlatma
 async function initIyzicoPayment(
   order: { id: string; order_number: string },
   items: CartItem[],
@@ -199,22 +159,31 @@ async function initIyzicoPayment(
     throw new Error('iyzico API bilgileri eksik. Vercel environment variables kontrol edin: IYZICO_API_KEY, IYZICO_SECRET_KEY');
   }
 
+  // Dynamic import to avoid bundling issues
+  const Iyzipay = (await import('iyzipay')).default;
+  
+  const iyzipay = new Iyzipay({
+    apiKey: apiKey,
+    secretKey: secretKey,
+    uri: baseUrl,
+  });
+
   const basketItems = items.map((item) => ({
     id: item.productId,
     name: item.name.substring(0, 50),
     category1: 'Tekstil',
-    itemType: 'PHYSICAL',
+    itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
     price: (item.price * item.quantity).toFixed(2),
   }));
 
   const request = {
-    locale: 'tr',
+    locale: Iyzipay.LOCALE.TR,
     conversationId: order.id,
     price: total.toFixed(2),
     paidPrice: total.toFixed(2),
-    currency: 'TRY',
+    currency: Iyzipay.CURRENCY.TRY,
     basketId: order.order_number,
-    paymentGroup: 'PRODUCT',
+    paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
     callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/iyzico/callback`,
     enabledInstallments: [1, 2, 3, 6],
     buyer: {
@@ -227,7 +196,7 @@ async function initIyzicoPayment(
       registrationAddress: address.addressLine1,
       city: address.city,
       country: 'Turkey',
-      ip: '127.0.0.1',
+      ip: '85.111.1.1', // Turkey IP
     },
     shippingAddress: {
       contactName: `${address.firstName} ${address.lastName}`,
@@ -244,34 +213,31 @@ async function initIyzicoPayment(
     basketItems,
   };
 
-  const requestBody = JSON.stringify(request);
-  const authHeader = generateIyzicoAuthHeader(apiKey, secretKey, request as Record<string, unknown>);
-  const randomString = authHeader.split(':').pop() || '';
+  return new Promise<NextResponse>((resolve, reject) => {
+    iyzipay.checkoutFormInitialize.create(request, (err: Error | null, result: { 
+      status: string; 
+      errorCode?: string;
+      errorMessage?: string; 
+      paymentPageUrl?: string;
+    }) => {
+      if (err) {
+        console.error('iyzico SDK error:', err);
+        reject(new Error(`iyzico: ${err.message}`));
+        return;
+      }
+      
+      if (result.status !== 'success') {
+        console.error('iyzico error:', result);
+        reject(new Error(`iyzico: ${result.errorMessage || result.errorCode || 'Bilinmeyen hata'}`));
+        return;
+      }
 
-  console.log('iyzico request URL:', `${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`);
-  console.log('iyzico auth header:', authHeader.substring(0, 50) + '...');
-
-  const response = await fetch(`${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': authHeader,
-      'x-iyzi-rnd': randomString,
-    },
-    body: requestBody,
-  });
-
-  const result = await response.json();
-
-  if (result.status !== 'success') {
-    console.error('iyzico error:', result);
-    throw new Error(`iyzico: ${result.errorMessage || 'Bilinmeyen hata'}`);
-  }
-
-  return NextResponse.json({
-    success: true,
-    paymentPageUrl: result.paymentPageUrl,
-    orderId: order.id,
+      resolve(NextResponse.json({
+        success: true,
+        paymentPageUrl: result.paymentPageUrl,
+        orderId: order.id,
+      }));
+    });
   });
 }
 
