@@ -59,8 +59,10 @@ export default async function ProductsPage({
   const params = await searchParams;
   
   // Get region and locale from cookies
+  // Admin can override via admin_region_override cookie
   const cookieStore = await cookies();
-  const region = cookieStore.get('region')?.value || 'TR';
+  const adminOverride = cookieStore.get('admin_region_override')?.value;
+  const region = adminOverride || cookieStore.get('region')?.value || 'TR';
   const locale = (cookieStore.get('locale')?.value || 'tr') as 'tr' | 'en';
   const isEnglish = locale === 'en';
   

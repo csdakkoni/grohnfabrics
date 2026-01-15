@@ -13,8 +13,10 @@ export default async function StoreLayout({
   const cookieStore = await cookies();
   
   // Region is fixed by IP (determines price, shipping, payment)
+  // Admin can override via admin_region_override cookie
+  const adminOverride = cookieStore.get('admin_region_override')?.value as RegionId | undefined;
   const regionCookie = cookieStore.get('region')?.value as RegionId | undefined;
-  const initialRegion: RegionId = regionCookie === 'GLOBAL' ? 'GLOBAL' : 'TR';
+  const initialRegion: RegionId = adminOverride || (regionCookie === 'GLOBAL' ? 'GLOBAL' : 'TR');
   
   // Locale can be changed by user (determines UI language only)
   const localeCookie = cookieStore.get('locale')?.value as Locale | undefined;

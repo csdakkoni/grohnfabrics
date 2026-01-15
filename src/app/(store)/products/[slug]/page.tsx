@@ -48,7 +48,9 @@ export default async function ProductPage({
   const cookieStore = await cookies();
   
   // Region = IP based, determines price/shipping/payment
-  const region = cookieStore.get('region')?.value || 'TR';
+  // Admin can override via admin_region_override cookie
+  const adminOverride = cookieStore.get('admin_region_override')?.value;
+  const region = adminOverride || cookieStore.get('region')?.value || 'TR';
   const isGlobal = region === 'GLOBAL';
   
   // Locale = user preference, determines UI language
