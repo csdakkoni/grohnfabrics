@@ -66,10 +66,32 @@ declare module 'iyzipay' {
     ): void;
   }
 
+  interface CheckoutFormRetrieveRequest {
+    locale: string;
+    token: string;
+  }
+
+  interface CheckoutFormRetrieveResult {
+    status: string;
+    errorCode?: string;
+    errorMessage?: string;
+    paymentStatus: string;
+    conversationId: string;
+    paymentId: string;
+  }
+
+  interface CheckoutForm {
+    retrieve(
+      request: CheckoutFormRetrieveRequest,
+      callback: (err: Error | null, result: CheckoutFormRetrieveResult) => void
+    ): void;
+  }
+
   class Iyzipay {
     constructor(config: IyzipayConfig);
     
     checkoutFormInitialize: CheckoutFormInitialize;
+    checkoutForm: CheckoutForm;
     
     static LOCALE: {
       TR: string;
