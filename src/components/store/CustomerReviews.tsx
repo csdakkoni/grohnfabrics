@@ -91,6 +91,8 @@ export default function CustomerReviews({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   // Fetch reviews if not provided as props
   useEffect(() => {
@@ -131,6 +133,28 @@ export default function CustomerReviews({
   const goToNext = () => {
     setIsAutoPlaying(false);
     setCurrentIndex((prev) => (prev + 1) % reviews.length);
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        goToNext(); // Swipe left -> next
+      } else {
+        goToPrev(); // Swipe right -> prev
+      }
+    }
   };
 
   if (reviews.length === 0) return null;
@@ -201,7 +225,12 @@ export default function CustomerReviews({
           )}
 
           {/* Reviews Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             {visibleReviews.map((review, idx) => (
               <div
                 key={`${review.id}-${idx}`}

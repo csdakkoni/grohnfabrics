@@ -62,20 +62,26 @@ async function importReviews() {
   // Her yorumu ekle (upsert - aynı order_id varsa güncelle)
   for (const review of reviews) {
     try {
+      // Her yorum için benzersiz bir ID oluştur (order_id + comment hash)
+      const commentHash = review.message 
+        ? review.message.substring(0, 20).replace(/\s/g, '_') 
+        : 'no_comment';
+      const uniqueEtsyId = `${review.order_id}_${commentHash}`;
+
       const { error } = await supabase
         .from('reviews')
         .upsert({
-          etsy_order_id: review.order_id,
+          etsy_order_id: null, // Artık unique constraint yok
           reviewer_name: review.reviewer,
           rating: review.star_rating,
           comment: review.message || null,
           review_date: parseDate(review.date_reviewed),
           source: 'etsy',
           is_approved: true,
-          // 5 yıldızlı yorumları featured olarak işaretle
           is_featured: review.star_rating === 5 && review.message && review.message.length > 50,
         }, {
-          onConflict: 'etsy_order_id',
+          // ID bazlı upsert kullanmıyoruz, her zaman insert
+          ignoreDuplicates: false,
         });
 
       if (error) {
