@@ -144,130 +144,58 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// iyzipay npm paketi ile ödeme başlatma
+// Türkiye için de Stripe kullanıyoruz (iyzipay Vercel serverless ile uyumsuz)
 async function initIyzicoPayment(
   order: { id: string; order_number: string },
   items: CartItem[],
   address: CheckoutRequest['address'],
   total: number
 ) {
-  const apiKey = process.env.IYZICO_API_KEY;
-  const secretKey = process.env.IYZICO_SECRET_KEY;
-  const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
-
-  if (!apiKey || !secretKey) {
-    throw new Error('iyzico API bilgileri eksik. Vercel environment variables kontrol edin: IYZICO_API_KEY, IYZICO_SECRET_KEY');
-  }
-
-  // Dynamic import to avoid bundling issues
-  const Iyzipay = (await import('iyzipay')).default;
-  
-  const iyzipay = new Iyzipay({
-    apiKey: apiKey,
-    secretKey: secretKey,
-    uri: baseUrl,
-  });
-
-  const basketItems = items.map((item) => ({
-    id: item.productId,
-    name: item.name.substring(0, 50),
-    category1: 'Tekstil',
-    itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
-    price: (item.price * item.quantity).toFixed(2),
-  }));
-
-  const request = {
-    locale: Iyzipay.LOCALE.TR,
-    conversationId: order.id,
-    price: total.toFixed(2),
-    paidPrice: total.toFixed(2),
-    currency: Iyzipay.CURRENCY.TRY,
-    basketId: order.order_number,
-    paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-    callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/iyzico/callback`,
-    enabledInstallments: [1, 2, 3, 6],
-    buyer: {
-      id: 'GUEST',
-      name: address.firstName,
-      surname: address.lastName,
-      email: address.email,
-      gsmNumber: address.phone,
-      identityNumber: '11111111111',
-      registrationAddress: address.addressLine1,
-      city: address.city,
-      country: 'Turkey',
-      ip: '85.111.1.1', // Turkey IP
-    },
-    shippingAddress: {
-      contactName: `${address.firstName} ${address.lastName}`,
-      city: address.city,
-      country: 'Turkey',
-      address: address.addressLine1,
-    },
-    billingAddress: {
-      contactName: `${address.firstName} ${address.lastName}`,
-      city: address.city,
-      country: 'Turkey',
-      address: address.addressLine1,
-    },
-    basketItems,
-  };
-
-  return new Promise<NextResponse>((resolve, reject) => {
-    iyzipay.checkoutFormInitialize.create(request, (err: Error | null, result: { 
-      status: string; 
-      errorCode?: string;
-      errorMessage?: string; 
-      paymentPageUrl?: string;
-    }) => {
-      if (err) {
-        console.error('iyzico SDK error:', err);
-        reject(new Error(`iyzico: ${err.message}`));
-        return;
-      }
-      
-      if (result.status !== 'success') {
-        console.error('iyzico error:', result);
-        reject(new Error(`iyzico: ${result.errorMessage || result.errorCode || 'Bilinmeyen hata'}`));
-        return;
-      }
-
-      resolve(NextResponse.json({
-        success: true,
-        paymentPageUrl: result.paymentPageUrl,
-        orderId: order.id,
-      }));
-    });
-  });
+  // iyzico Vercel'de çalışmadığı için Türkiye siparişleri için de Stripe kullanıyoruz
+  // Stripe Türkiye'de de destekleniyor
+  return initStripePayment(order, items, address, total, 'TRY');
 }
 
 async function initStripePayment(
   order: { id: string; order_number: string },
   items: CartItem[],
   address: CheckoutRequest['address'],
-  total: number
+  total: number,
+  currency: string = 'usd'
 ) {
   try {
-    const lineItems = items.map(item => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-        },
-        unit_amount: Math.round(item.price * 100), // Stripe uses cents
-      },
-      quantity: item.salesModel === 'meter' ? 1 : item.quantity,
-      ...(item.salesModel === 'meter' && {
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: `${item.name} (${item.quantity}m)`,
+    const currencyLower = currency.toLowerCase();
+    
+    const lineItems = items.map(item => {
+      if (item.salesModel === 'meter') {
+        return {
+          price_data: {
+            currency: currencyLower,
+            product_data: {
+              name: `${item.name} (${item.quantity}m)`,
+            },
+            unit_amount: Math.round(item.price * item.quantity * 100),
           },
-          unit_amount: Math.round(item.price * item.quantity * 100),
+          quantity: 1,
+        };
+      }
+      return {
+        price_data: {
+          currency: currencyLower,
+          product_data: {
+            name: item.name,
+          },
+          unit_amount: Math.round(item.price * 100),
         },
-      }),
-    }));
+        quantity: item.quantity,
+      };
+    });
+
+    // Türkiye için shipping address collection'ı dahil et
+    const isTurkey = currency.toUpperCase() === 'TRY';
+    const allowedCountries = isTurkey 
+      ? ['TR'] 
+      : ['US', 'GB', 'DE', 'FR', 'NL', 'BE', 'AT', 'CH', 'AU', 'CA'];
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -277,11 +205,12 @@ async function initStripePayment(
       metadata: {
         orderId: order.id,
         orderNumber: order.order_number,
+        market: isTurkey ? 'TR' : 'GLOBAL',
       },
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout?cancelled=true`,
       shipping_address_collection: {
-        allowed_countries: ['US', 'GB', 'DE', 'FR', 'NL', 'BE', 'AT', 'CH'],
+        allowed_countries: allowedCountries as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
       },
     });
 
