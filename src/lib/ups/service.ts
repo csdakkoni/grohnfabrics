@@ -164,16 +164,20 @@ export async function calculateRate(request: UPSRateRequest): Promise<UPSRateRes
             },
           },
           Package: request.packages.map(pkg => ({
-            PackagingType: { Code: '02' }, // Customer Supplied Package
+            Description: 'Textile Products',
+            Packaging: {
+              Code: '02',
+              Description: 'Customer Supplied',
+            },
             Dimensions: {
-              UnitOfMeasurement: { Code: 'CM' },
+              UnitOfMeasurement: { Code: 'CM', Description: 'Centimeters' },
               Length: String(pkg.length),
               Width: String(pkg.width),
               Height: String(pkg.height),
             },
             PackageWeight: {
-              UnitOfMeasurement: { Code: 'KGS' },
-              Weight: String(pkg.weight),
+              UnitOfMeasurement: { Code: 'KGS', Description: 'Kilograms' },
+              Weight: pkg.weight.toFixed(1),
             },
           })),
         },
@@ -314,16 +318,20 @@ export async function createShipment(
             Description: serviceName,
           },
           Package: packages.map(pkg => ({
-            PackagingType: { Code: '02' },
+            Description: 'Textile Products',
+            Packaging: {
+              Code: '02',
+              Description: 'Customer Supplied',
+            },
             Dimensions: {
-              UnitOfMeasurement: { Code: 'CM' },
+              UnitOfMeasurement: { Code: 'CM', Description: 'Centimeters' },
               Length: String(pkg.length || 30),
               Width: String(pkg.width || 20),
               Height: String(pkg.height || 10),
             },
             PackageWeight: {
-              UnitOfMeasurement: { Code: 'KGS' },
-              Weight: String(pkg.weight || 1),
+              UnitOfMeasurement: { Code: 'KGS', Description: 'Kilograms' },
+              Weight: (pkg.weight || 1).toFixed(1), // "1.0" format
             },
           })),
         },
