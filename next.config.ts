@@ -30,9 +30,9 @@ const nextConfig: NextConfig = {
   // Standalone output for better Vercel compatibility
   output: 'standalone',
   
-  // iyzipay resources klasörünü Vercel'e dahil et
+  // Tüm iyzipay kütüphanesini Vercel'e dahil et
   outputFileTracingIncludes: {
-    '/api/**/*': ['./node_modules/iyzipay/lib/resources/**/*'],
+    '/api/**/*': ['./node_modules/iyzipay/**/*'],
   },
   
   // Redirects

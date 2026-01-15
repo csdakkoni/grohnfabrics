@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Stripe from 'stripe';
-import path from 'path';
 
-// iyzipay resources klasörünü Vercel'e hissettirmek için
-const _iyzipayResourcesPath = path.join(process.cwd(), 'node_modules/iyzipay/lib/resources');
+// iyzipay dosyalarını Vercel'e dahil ettirmek için manuel import
+// @ts-ignore
+import Iyzipay from 'iyzipay';
+// @ts-ignore
+import 'iyzipay/lib/IyzipayResource';
+// @ts-ignore  
+import 'iyzipay/lib/resources/CheckoutFormInitialize';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -163,9 +167,6 @@ async function initIyzicoPayment(
     throw new Error('iyzico API bilgileri eksik');
   }
 
-  // Dynamic import
-  const Iyzipay = (await import('iyzipay')).default;
-  
   const iyzipay = new Iyzipay({
     apiKey: apiKey,
     secretKey: secretKey,
