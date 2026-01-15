@@ -20,7 +20,7 @@ export default function UPSLabelButton({ orderId, existingLabel, existingTrackin
     setError(null);
 
     try {
-      const response = await fetch('/api/shipping/ups/create-label', {
+      const response = await fetch('/api/shipping/ups/ship', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId }),
