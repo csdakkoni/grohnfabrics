@@ -44,7 +44,7 @@ export default function AddToCartButton({
   const [added, setAdded] = useState(false);
   
   // Market bilgisini belirle
-  const market = region === 'TR' ? 'TR' : 'GLOBAL';
+  const market = region.id === 'TR' ? 'TR' : 'GLOBAL';
   const cartCurrency = currency || (market === 'TR' ? 'TRY' : 'USD');
 
   const decreaseQty = () => {
