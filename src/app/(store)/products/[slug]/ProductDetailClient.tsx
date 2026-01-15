@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import ProductOptions from '@/components/store/ProductOptions';
 import AddToCartButton from '@/components/store/AddToCartButton';
-import { useMarket } from '@/lib/market/context';
 
 interface OptionValue {
   id: string;
@@ -38,6 +37,7 @@ interface ProductDetailClientProps {
   product: Product;
   optionGroups: OptionGroup[];
   basePrice: number;
+  baseCurrency: string;
   locale?: 'tr' | 'en';
 }
 
@@ -45,9 +45,11 @@ export default function ProductDetailClient({
   product, 
   optionGroups, 
   basePrice,
+  baseCurrency,
   locale = 'tr'
 }: ProductDetailClientProps) {
-  const { region, currency } = useMarket();
+  // Currency comes from server (based on region cookie)
+  const currency = baseCurrency;
   const [selections, setSelections] = useState<Record<string, { valueId: string; valueName: string; priceModifier: number }>>({});
 
   // Calculate total price including option modifiers

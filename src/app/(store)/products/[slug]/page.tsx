@@ -64,6 +64,7 @@ export default async function ProductPage({
     currentPrice = prices.find((p: { market_id: string }) => p.market_id === 'GLOBAL');
   }
   const basePrice = currentPrice?.price || prices[0]?.price || 0;
+  const baseCurrency = currentPrice?.currency || (region === 'TR' ? 'TRY' : 'USD');
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
   const optionGroups = product.option_groups || [];
@@ -159,6 +160,7 @@ export default async function ProductPage({
               product={product}
               optionGroups={optionGroups}
               basePrice={basePrice}
+              baseCurrency={baseCurrency}
               locale={locale}
             />
 

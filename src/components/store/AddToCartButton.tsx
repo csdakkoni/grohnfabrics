@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from './CartProvider';
-import { useMarket } from '@/lib/market/context';
 import { setCartMarket } from '@/lib/cart';
 
 interface Product {
@@ -20,7 +19,7 @@ interface Product {
 interface AddToCartButtonProps {
   product: Product;
   price: number;
-  currency: string;
+  currency: string; // Currency comes from server (based on region cookie)
   selectedOptions?: Record<string, string>;
   variantId?: string;
 }
@@ -33,7 +32,6 @@ export default function AddToCartButton({
   variantId 
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
-  const { region } = useMarket();
   
   const isMeter = product.sales_model === 'meter';
   const minQty = product.min_order_quantity || 1;
@@ -43,9 +41,9 @@ export default function AddToCartButton({
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   
-  // Market bilgisini belirle
-  const market = region.id === 'TR' ? 'TR' : 'GLOBAL';
-  const cartCurrency = currency || (market === 'TR' ? 'TRY' : 'USD');
+  // Market'ı currency'den belirle - TRY ise TR, değilse GLOBAL
+  const market = currency === 'TRY' ? 'TR' : 'GLOBAL';
+  const cartCurrency = currency;
 
   const decreaseQty = () => {
     if (quantity > minQty) {

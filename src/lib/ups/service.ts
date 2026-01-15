@@ -32,8 +32,12 @@ function sanitizePhone(phone: string): string {
 }
 
 // Get company info from Supabase
-async function getCompanyInfo(marketId: 'TR' | 'GLOBAL'): Promise<CompanyInfo> {
-  const companyCode = marketId === 'TR' ? 'TR' : 'US';
+// ÖNEMLİ: Fiziki gönderim her zaman Türkiye'den yapılır
+// Bu nedenle ShipFrom için HER ZAMAN TR şirketi kullanılır
+// (marketId sadece fatura için kullanılır, kargo için değil)
+async function getCompanyInfo(): Promise<CompanyInfo> {
+  // Türkiye UPS hesabı kullanıldığı için ShipFrom her zaman TR
+  const companyCode = 'TR';
   
   const { data: company, error } = await supabaseAdmin
     .from('companies')
@@ -45,7 +49,7 @@ async function getCompanyInfo(marketId: 'TR' | 'GLOBAL'): Promise<CompanyInfo> {
     throw new UPSError(
       'MISSING_COMPANY',
       `Company with code ${companyCode} not found`,
-      `${companyCode} şirket bilgileri bulunamadı. Admin panelinden şirket bilgilerini ekleyin.`
+      'TR şirket bilgileri bulunamadı. Admin panelinden Türkiye şirket bilgilerini ekleyin.'
     );
   }
   
@@ -226,17 +230,19 @@ export async function calculateRate(request: UPSRateRequest): Promise<UPSRateRes
 
 /**
  * Create a shipment and get shipping label
+ * NOT: Fiziki gönderim her zaman Türkiye'den yapılır (TR UPS hesabı)
+ * marketId parametresi artık kullanılmıyor - ShipFrom her zaman TR
  */
 export async function createShipment(
   orderId: string,
-  marketId: 'TR' | 'GLOBAL',
+  _marketId: 'TR' | 'GLOBAL', // Artık kullanılmıyor, uyumluluk için tutuldu
   shipTo: UPSAddress,
   packages: UPSPackage[],
   description: string
 ): Promise<UPSShipmentResponse> {
   try {
-    // Get company info from database
-    const company = await getCompanyInfo(marketId);
+    // Get company info from database (her zaman TR şirketi)
+    const company = await getCompanyInfo();
     const shipFrom = buildShipFromAddress(company);
     
     const token = await getAccessToken();
