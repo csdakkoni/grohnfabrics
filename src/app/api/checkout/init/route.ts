@@ -232,6 +232,8 @@ async function initIyzicoPayment(
       errorCode?: string;
       errorMessage?: string;
       paymentPageUrl?: string;
+      checkoutFormContent?: string;
+      token?: string;
     }) => {
       console.log('iyzico callback - err:', err);
       console.log('iyzico callback - result:', JSON.stringify(result));
@@ -251,6 +253,8 @@ async function initIyzicoPayment(
       resolve(NextResponse.json({
         success: true,
         paymentPageUrl: result.paymentPageUrl,
+        checkoutFormContent: result.checkoutFormContent,
+        token: result.token,
         orderId: order.id,
       }));
     });

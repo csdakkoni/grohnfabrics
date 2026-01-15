@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Package, Truck, CreditCard, User, MapPin } from 'lucide-react';
 import OrderStatusChanger from './OrderStatusChanger';
+import UPSLabelButton from './UPSLabelButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -292,23 +293,36 @@ export default async function OrderDetailPage({
               <Truck className="w-5 h-5 text-[var(--brand-primary)]" />
               <h3 className="card-title">Kargo</h3>
             </div>
-            <div className="card-body text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-[var(--foreground-muted)]">Sağlayıcı</span>
-                <span className="font-medium">
-                  {order.shipping_provider || 'Belirlenmedi'}
-                </span>
-              </div>
-              {order.tracking_number && (
+            <div className="card-body text-sm space-y-4">
+              <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-[var(--foreground-muted)]">Takip No</span>
-                  <span className="font-mono">{order.tracking_number}</span>
+                  <span className="text-[var(--foreground-muted)]">Sağlayıcı</span>
+                  <span className="font-medium">
+                    {order.shipping_provider || 'UPS'}
+                  </span>
                 </div>
-              )}
-              {order.shipped_at && (
-                <div className="flex justify-between">
-                  <span className="text-[var(--foreground-muted)]">Gönderim</span>
-                  <span>{new Date(order.shipped_at).toLocaleDateString('tr-TR')}</span>
+                {order.tracking_number && (
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground-muted)]">Takip No</span>
+                    <span className="font-mono">{order.tracking_number}</span>
+                  </div>
+                )}
+                {order.shipped_at && (
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground-muted)]">Gönderim</span>
+                    <span>{new Date(order.shipped_at).toLocaleDateString('tr-TR')}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* UPS Kargo Etiketi */}
+              {(order.status === 'paid' || order.status === 'processing') && (
+                <div className="pt-3 border-t border-[var(--border)]">
+                  <UPSLabelButton 
+                    orderId={order.id} 
+                    existingLabel={order.shipping_label_url}
+                    existingTrackingNumber={order.tracking_number}
+                  />
                 </div>
               )}
             </div>
