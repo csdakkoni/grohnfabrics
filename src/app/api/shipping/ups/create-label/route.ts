@@ -126,7 +126,30 @@ export async function POST(request: NextRequest) {
     const shipperState = getStateCode(companyAddress?.state, companyAddress?.city, shipFromCountry);
     const shipToState = getStateCode(shippingAddress.state, shippingAddress.city, shipToCountry);
 
-    console.log('Ship From:', { country: shipFromCountry, state: shipperState, city: companyAddress?.city });
+    // Türkçe karakterleri ASCII'ye çevir (UPS bazen sorun çıkarıyor)
+    const sanitizeName = (name: string): string => {
+      return name
+        .replace(/ş/g, 's').replace(/Ş/g, 'S')
+        .replace(/ı/g, 'i').replace(/İ/g, 'I')
+        .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+        .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+        .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+        .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+        .trim()
+        .substring(0, 35); // UPS max 35 karakter
+    };
+
+    // Gönderici bilgileri - boş olmamalı
+    const shipperName = sanitizeName(company.name || 'Grohn Fabrics');
+    const shipperAttentionName = sanitizeName(company.legal_name || company.name || 'Operations Manager');
+
+    console.log('Ship From:', { 
+      country: shipFromCountry, 
+      state: shipperState, 
+      city: companyAddress?.city,
+      name: shipperName,
+      attentionName: shipperAttentionName
+    });
     console.log('Ship To:', { country: shipToCountry, state: shipToState, city: shippingAddress.city });
 
     // UPS Shipment Request
@@ -139,31 +162,33 @@ export async function POST(request: NextRequest) {
           },
         },
         Shipment: {
-          Description: `Order ${order.order_number}`,
+          Description: `Order ${order.order_number}`.substring(0, 50),
           Shipper: {
-            Name: company.name,
-            AttentionName: company.legal_name || company.name,
+            Name: shipperName,
+            AttentionName: shipperAttentionName,
             Phone: {
               Number: (companyContact?.phone || '5551234567').replace(/[^0-9]/g, '').slice(-10),
             },
             ShipperNumber: accountNumber,
             Address: {
-              AddressLine: [companyAddress?.street || 'Default Address'],
-              City: companyAddress?.city || 'Istanbul',
-              StateProvinceCode: shipperState,
+              AddressLine: [sanitizeName(companyAddress?.street || 'Default Address')],
+              City: sanitizeName(companyAddress?.city || 'Istanbul'),
+              StateProvinceCode: sanitizeName(shipperState),
               PostalCode: companyAddress?.postal_code || '34000',
               CountryCode: shipFromCountry,
             },
           },
           ShipTo: {
-            Name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            AttentionName: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+            Name: sanitizeName(`${shippingAddress.firstName || 'Customer'} ${shippingAddress.lastName || ''}`),
+            AttentionName: sanitizeName(`${shippingAddress.firstName || 'Customer'} ${shippingAddress.lastName || ''}`),
             Phone: {
-              Number: (order.guest_info?.phone || '5551234567').replace(/[^0-9]/g, '').slice(-10),
+              Number: (order.guest_info?.phone || shippingAddress.phone || '5551234567').replace(/[^0-9]/g, '').slice(-10),
             },
             Address: {
-              AddressLine: [shippingAddress.addressLine1, shippingAddress.addressLine2].filter(Boolean),
-              City: shippingAddress.city || 'Istanbul',
+              AddressLine: [shippingAddress.addressLine1, shippingAddress.addressLine2]
+                .filter(Boolean)
+                .map(line => sanitizeName(line || '')),
+              City: sanitizeName(shippingAddress.city || 'Istanbul'),
               StateProvinceCode: shipToState,
               PostalCode: shippingAddress.postalCode || '34000',
               CountryCode: shipToCountry,
