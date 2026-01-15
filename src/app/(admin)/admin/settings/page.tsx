@@ -52,6 +52,18 @@ export default function SettingsPage() {
     seo: { default_title: '', default_description: '' },
   });
 
+  // Modal açıkken arka planın scroll olmasını engelle
+  useEffect(() => {
+    if (editingCompany) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [editingCompany]);
+
   useEffect(() => {
     loadSettings();
   }, []);
@@ -193,8 +205,9 @@ export default function SettingsPage() {
 
         {/* Company Edit Modal */}
         {editingCompany && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="card w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
+            <div className="min-h-full flex items-center justify-center p-4">
+              <div className="card w-full max-w-2xl">
               <div className="card-header">
                 <h2 className="card-title">Şirket Düzenle: {editingCompany.code}</h2>
               </div>
@@ -335,6 +348,7 @@ export default function SettingsPage() {
                 >
                   {saving ? 'Kaydediliyor...' : 'Kaydet'}
                 </button>
+              </div>
               </div>
             </div>
           </div>
