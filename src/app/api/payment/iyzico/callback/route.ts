@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+// iyzipay dosyalarını Vercel'e dahil ettirmek için manuel import
+// @ts-ignore
+import Iyzipay from 'iyzipay';
+// @ts-ignore
+import 'iyzipay/lib/IyzipayResource';
+// @ts-ignore
+import 'iyzipay/lib/resources/CheckoutFormRetrieve';
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -9,8 +17,6 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL('/checkout?error=no_token', process.env.NEXT_PUBLIC_SITE_URL!));
     }
-
-    const Iyzipay = require('iyzipay');
     
     const iyzipay = new Iyzipay({
       apiKey: process.env.IYZICO_API_KEY,
