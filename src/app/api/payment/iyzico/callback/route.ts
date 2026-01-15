@@ -7,7 +7,7 @@ import Iyzipay from 'iyzipay';
 // @ts-ignore
 import 'iyzipay/lib/IyzipayResource';
 // @ts-ignore
-import 'iyzipay/lib/resources/CheckoutFormRetrieve';
+import 'iyzipay/lib/resources/CheckoutForm';
 
 export async function POST(request: NextRequest) {
   try {
