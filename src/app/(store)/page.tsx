@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Leaf, Sparkles, Package, Recycle, Heart } from 'lucide-react';
 import NewsletterForm from '@/components/store/NewsletterForm';
+import CustomerReviews from '@/components/store/CustomerReviews';
 
 export const dynamic = 'force-dynamic';
 
@@ -282,6 +283,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Customer Reviews */}
+      <CustomerReviews />
 
       {/* B2B Banner */}
       <section className="py-20 bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary-dark)] to-[#4A6346] relative overflow-hidden">
