@@ -7,6 +7,9 @@ import Link from 'next/link';
 export default function CartDrawer() {
   const { cart, isOpen, closeCart, updateQuantity, removeItem, total, itemCount } = useCart();
 
+  // Currency symbol based on cart currency
+  const currencySymbol = cart.currency === 'TRY' ? '₺' : cart.currency === 'EUR' ? '€' : '$';
+
   if (!isOpen) return null;
 
   return (
@@ -72,7 +75,7 @@ export default function CartDrawer() {
                       </p>
                     )}
                     <p className="text-sm font-semibold text-[var(--brand-primary)] mt-1">
-                      ₺{item.price}
+                      {currencySymbol}{item.price}
                       {item.salesModel === 'meter' && <span className="font-normal text-[var(--foreground-muted)]">/m</span>}
                     </p>
 
@@ -106,7 +109,7 @@ export default function CartDrawer() {
 
                   {/* Line Total */}
                   <div className="text-right">
-                    <p className="font-semibold">₺{(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-semibold">{currencySymbol}{(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
@@ -120,7 +123,7 @@ export default function CartDrawer() {
             {/* Subtotal */}
             <div className="flex justify-between text-lg">
               <span className="text-[var(--foreground-muted)]">Ara Toplam</span>
-              <span className="font-semibold">₺{total.toFixed(2)}</span>
+              <span className="font-semibold">{currencySymbol}{total.toFixed(2)}</span>
             </div>
             <p className="text-xs text-[var(--foreground-muted)]">
               Kargo ücreti checkout&apos;ta hesaplanacaktır.
