@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       iyzipay.checkoutForm.retrieve({
         locale: Iyzipay.LOCALE.TR,
         token,
-      }, async (err: Error, result: { 
+      }, async (err: Error | null, result: { 
         status: string; 
         paymentStatus: string;
         conversationId: string;
