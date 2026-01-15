@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     }
     
     const iyzipay = new Iyzipay({
-      apiKey: process.env.IYZICO_API_KEY,
-      secretKey: process.env.IYZICO_SECRET_KEY,
-      uri: process.env.IYZICO_BASE_URL,
+      apiKey: process.env.IYZICO_API_KEY!,
+      secretKey: process.env.IYZICO_SECRET_KEY!,
+      uri: process.env.IYZICO_BASE_URL!,
     });
 
     return new Promise<NextResponse>((resolve) => {
