@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import ProductOptions from '@/components/store/ProductOptions';
 import AddToCartButton from '@/components/store/AddToCartButton';
+import { useMarket } from '@/lib/market/context';
 
 interface OptionValue {
   id: string;
@@ -46,6 +47,7 @@ export default function ProductDetailClient({
   basePrice,
   locale = 'tr'
 }: ProductDetailClientProps) {
+  const { region, currency } = useMarket();
   const [selections, setSelections] = useState<Record<string, { valueId: string; valueName: string; priceModifier: number }>>({});
 
   // Calculate total price including option modifiers
@@ -83,10 +85,10 @@ export default function ProductDetailClient({
       {Object.values(selections).some(s => s.priceModifier > 0) && (
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-semibold text-[var(--brand-primary)]">
-            ₺{totalPrice.toFixed(2)}
+            {currency === 'TRY' ? '₺' : '$'}{totalPrice.toFixed(2)}
           </span>
           <span className="text-sm text-[var(--foreground-muted)] line-through">
-            ₺{basePrice.toFixed(2)}
+            {currency === 'TRY' ? '₺' : '$'}{basePrice.toFixed(2)}
           </span>
           {product.sales_model === 'meter' && (
             <span className="text-sm text-[var(--foreground-muted)]">/ metre</span>
@@ -106,6 +108,7 @@ export default function ProductDetailClient({
       <AddToCartButton 
         product={product}
         price={totalPrice}
+        currency={currency}
         selectedOptions={selectedOptions}
         variantId={variantId}
       />

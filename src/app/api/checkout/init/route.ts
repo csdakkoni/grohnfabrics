@@ -173,7 +173,8 @@ async function initIyzicoPayment(
     uri: baseUrl,
   });
 
-  const basketItems = items.map((item) => ({
+  // Ürün basketItems
+  const productBasketItems = items.map((item) => ({
     id: item.productId.substring(0, 50),
     name: item.name.substring(0, 50),
     category1: 'Tekstil',
@@ -181,6 +182,24 @@ async function initIyzicoPayment(
     itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
     price: (item.price * item.quantity).toFixed(2),
   }));
+
+  // Kargo maliyetini de ekle (iyzico için tüm kırılımlar toplamı = price olmalı)
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shippingCostForIyzico = total - subtotal;
+  
+  const basketItems = shippingCostForIyzico > 0 
+    ? [
+        ...productBasketItems,
+        {
+          id: 'SHIPPING',
+          name: 'Kargo Ücreti',
+          category1: 'Hizmet',
+          category2: 'Kargo',
+          itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+          price: shippingCostForIyzico.toFixed(2),
+        }
+      ]
+    : productBasketItems;
 
   const request = {
     locale: Iyzipay.LOCALE.TR,

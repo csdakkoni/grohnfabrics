@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from './CartProvider';
+import { useMarket } from '@/lib/market/context';
+import { setCartMarket } from '@/lib/cart';
 
 interface Product {
   id: string;
@@ -18,17 +20,20 @@ interface Product {
 interface AddToCartButtonProps {
   product: Product;
   price: number;
+  currency: string;
   selectedOptions?: Record<string, string>;
   variantId?: string;
 }
 
 export default function AddToCartButton({ 
   product, 
-  price, 
+  price,
+  currency,
   selectedOptions,
   variantId 
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const { region } = useMarket();
   
   const isMeter = product.sales_model === 'meter';
   const minQty = product.min_order_quantity || 1;
@@ -37,6 +42,10 @@ export default function AddToCartButton({
   const [quantity, setQuantity] = useState(minQty);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  
+  // Market bilgisini belirle
+  const market = region === 'TR' ? 'TR' : 'GLOBAL';
+  const cartCurrency = currency || (market === 'TR' ? 'TRY' : 'USD');
 
   const decreaseQty = () => {
     if (quantity > minQty) {
@@ -54,6 +63,9 @@ export default function AddToCartButton({
     // Small delay for UX
     await new Promise(resolve => setTimeout(resolve, 300));
     
+    // Önce cart'ın market bilgisini güncelle
+    setCartMarket(market, cartCurrency);
+    
     addToCart({
       productId: product.id,
       variantId,
@@ -62,7 +74,7 @@ export default function AddToCartButton({
       image: product.thumbnail_url || product.images?.[0],
       quantity,
       price,
-      currency: 'TRY',
+      currency: cartCurrency,
       salesModel: product.sales_model as 'meter' | 'unit' | 'preset_sizes',
       options: selectedOptions,
     });
@@ -107,7 +119,9 @@ export default function AddToCartButton({
           {/* Total */}
           <div className="text-lg">
             <span className="text-[var(--foreground-muted)]">=</span>
-            <span className="ml-2 font-semibold">₺{total.toFixed(2)}</span>
+            <span className="ml-2 font-semibold">
+              {cartCurrency === 'TRY' ? '₺' : '$'}{total.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
