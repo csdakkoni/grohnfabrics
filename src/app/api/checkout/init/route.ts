@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Stripe from 'stripe';
+import crypto from 'crypto';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -144,16 +145,140 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Türkiye için de Stripe kullanıyoruz (iyzipay Vercel serverless ile uyumsuz)
+// iyzico REST API - npm paketi yerine doğrudan API kullanıyoruz
+function generateIyzicoAuth(apiKey: string, secretKey: string, randomString: string, request: object): string {
+  // iyzico PKI string formatı
+  function toPkiString(obj: object): string {
+    let result = '[';
+    const entries = Object.entries(obj);
+    
+    for (let i = 0; i < entries.length; i++) {
+      const [key, value] = entries[i];
+      
+      if (value === null || value === undefined) continue;
+      
+      if (Array.isArray(value)) {
+        result += `${key}=[`;
+        for (let j = 0; j < value.length; j++) {
+          if (typeof value[j] === 'object') {
+            result += toPkiString(value[j]);
+          } else {
+            result += String(value[j]);
+          }
+          if (j < value.length - 1) result += ', ';
+        }
+        result += ']';
+      } else if (typeof value === 'object') {
+        result += `${key}=${toPkiString(value)}`;
+      } else {
+        result += `${key}=${value}`;
+      }
+      
+      if (i < entries.length - 1) result += ', ';
+    }
+    
+    result += ']';
+    return result;
+  }
+  
+  const pkiString = toPkiString(request);
+  const dataToHash = apiKey + randomString + secretKey + pkiString;
+  const hash = crypto.createHash('sha1').update(dataToHash, 'utf8').digest('base64');
+  const authorization = Buffer.from(apiKey + ':' + hash).toString('base64');
+  
+  return `IYZWS ${authorization}`;
+}
+
 async function initIyzicoPayment(
   order: { id: string; order_number: string },
   items: CartItem[],
   address: CheckoutRequest['address'],
   total: number
 ) {
-  // iyzico Vercel'de çalışmadığı için Türkiye siparişleri için de Stripe kullanıyoruz
-  // Stripe Türkiye'de de destekleniyor
-  return initStripePayment(order, items, address, total, 'TRY');
+  const apiKey = process.env.IYZICO_API_KEY;
+  const secretKey = process.env.IYZICO_SECRET_KEY;
+  const baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
+
+  if (!apiKey || !secretKey) {
+    throw new Error('iyzico API bilgileri eksik');
+  }
+
+  const randomString = Date.now().toString() + Math.random().toString(36).substring(2, 8);
+
+  const basketItems = items.map((item) => ({
+    id: item.productId.substring(0, 50),
+    name: item.name.substring(0, 50),
+    category1: 'Tekstil',
+    itemType: 'PHYSICAL',
+    price: (item.price * item.quantity).toFixed(2),
+  }));
+
+  const request = {
+    locale: 'tr',
+    conversationId: order.id,
+    price: total.toFixed(2),
+    paidPrice: total.toFixed(2),
+    currency: 'TRY',
+    basketId: order.order_number,
+    paymentGroup: 'PRODUCT',
+    callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/iyzico/callback`,
+    enabledInstallments: [1, 2, 3, 6],
+    buyer: {
+      id: 'BY' + order.id.substring(0, 20),
+      name: address.firstName,
+      surname: address.lastName,
+      gsmNumber: address.phone || '+905551234567',
+      email: address.email,
+      identityNumber: '11111111111',
+      registrationAddress: address.addressLine1.substring(0, 100),
+      ip: '85.34.78.112',
+      city: address.city,
+      country: 'Turkey',
+    },
+    shippingAddress: {
+      contactName: `${address.firstName} ${address.lastName}`,
+      city: address.city,
+      country: 'Turkey',
+      address: address.addressLine1.substring(0, 100),
+    },
+    billingAddress: {
+      contactName: `${address.firstName} ${address.lastName}`,
+      city: address.city,
+      country: 'Turkey',
+      address: address.addressLine1.substring(0, 100),
+    },
+    basketItems,
+  };
+
+  const authHeader = generateIyzicoAuth(apiKey, secretKey, randomString, request);
+
+  console.log('iyzico API call:', baseUrl);
+  
+  const response = await fetch(`${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': authHeader,
+      'x-iyzi-rnd': randomString,
+    },
+    body: JSON.stringify(request),
+  });
+
+  const result = await response.json();
+  
+  console.log('iyzico response status:', result.status);
+
+  if (result.status !== 'success') {
+    console.error('iyzico error:', JSON.stringify(result));
+    throw new Error(result.errorMessage || result.errorCode || 'iyzico hatası');
+  }
+
+  return NextResponse.json({
+    success: true,
+    paymentPageUrl: result.paymentPageUrl,
+    orderId: order.id,
+  });
 }
 
 async function initStripePayment(
