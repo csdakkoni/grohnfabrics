@@ -183,8 +183,7 @@ export async function POST(request: NextRequest) {
           },
           Package: {
             PackagingType: {
-              Code: '02', // Customer Supplied Package
-              Description: 'Package',
+              Code: '02', // 02 = Customer Supplied Package
             },
             Dimensions: {
               UnitOfMeasurement: {

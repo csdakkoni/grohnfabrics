@@ -74,10 +74,17 @@ export default function CheckoutPage() {
     country: 'TR',
   });
 
-  // Determine market based on country
-  const market = address.country === 'TR' ? 'TR' : 'GLOBAL';
+  // Cart yüklendiğinde ülkeyi market'a göre güncelle
+  useEffect(() => {
+    if (cart.market === 'GLOBAL' && address.country === 'TR') {
+      setAddress(prev => ({ ...prev, country: 'US' }));
+    }
+  }, [cart.market]);
+
+  // Market ve currency sepetten al (ürün eklenirken belirleniyor)
+  const market = cart.market || 'TR';
+  const currency = cart.currency || 'TRY';
   const paymentProvider = market === 'TR' ? 'iyzico' : 'stripe';
-  const currency = market === 'TR' ? 'TRY' : 'USD';
 
   useEffect(() => {
     // Fetch shipping rate for selected country
