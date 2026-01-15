@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // External packages that shouldn't be bundled
-  serverExternalPackages: ['sharp', 'iyzipay'],
+  serverExternalPackages: ['sharp', 'iyzipay', 'postman-request'],
   
   // Image optimization
   images: {
@@ -27,9 +27,12 @@ const nextConfig: NextConfig = {
     },
   },
   
-  // iyzipay dosyalarını Vercel'e dahil et (Next.js 16+ format)
+  // iyzipay ve bağımlılıklarını Vercel'e dahil et (Next.js 16+ format)
   outputFileTracingIncludes: {
-    '/api/**/*': ['./node_modules/iyzipay/**/*'],
+    '/api/**/*': [
+      './node_modules/iyzipay/**/*',
+      './node_modules/postman-request/**/*',
+    ],
   },
   
   // Standalone output for better Vercel compatibility
