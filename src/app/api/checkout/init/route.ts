@@ -146,12 +146,43 @@ export async function POST(request: NextRequest) {
 }
 
 // iyzico REST API helper - npm paketi Vercel'de çalışmadığı için doğrudan API kullanıyoruz
-function generateIyzicoAuthHeader(apiKey: string, secretKey: string, requestBody: string): string {
-  const randomString = Math.random().toString(36).substring(2, 10);
-  const hashString = apiKey + randomString + secretKey + requestBody;
-  const sha1Hash = crypto.createHash('sha1').update(hashString).digest('base64');
-  const authString = apiKey + ':' + sha1Hash;
-  return 'IYZWS ' + Buffer.from(authString).toString('base64') + ':' + randomString;
+function generatePkiString(obj: Record<string, unknown>, prefix = ''): string {
+  let result = prefix ? `${prefix}=[` : '[';
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) continue;
+    
+    if (Array.isArray(value)) {
+      result += `${key}=[`;
+      for (const item of value) {
+        if (typeof item === 'object') {
+          result += generatePkiString(item as Record<string, unknown>);
+        } else {
+          result += `${item}, `;
+        }
+      }
+      result = result.replace(/, $/, '');
+      result += '], ';
+    } else if (typeof value === 'object') {
+      result += generatePkiString(value as Record<string, unknown>, key) + ', ';
+    } else {
+      result += `${key}=${value}, `;
+    }
+  }
+  
+  result = result.replace(/, $/, '');
+  result += ']';
+  return result;
+}
+
+function generateIyzicoAuthHeader(apiKey: string, secretKey: string, request: Record<string, unknown>): string {
+  const randomString = Math.random().toString(36).substring(2, 10) + 
+                       Math.random().toString(36).substring(2, 10);
+  const pkiString = generatePkiString(request);
+  const hashString = apiKey + randomString + secretKey + pkiString;
+  const sha1Hash = crypto.createHash('sha1').update(hashString, 'utf8').digest('base64');
+  const authorizationString = Buffer.from(apiKey + ':' + sha1Hash).toString('base64');
+  return `IYZWS ${authorizationString}:${randomString}`;
 }
 
 async function initIyzicoPayment(
@@ -214,14 +245,18 @@ async function initIyzicoPayment(
   };
 
   const requestBody = JSON.stringify(request);
-  const authHeader = generateIyzicoAuthHeader(apiKey, secretKey, requestBody);
+  const authHeader = generateIyzicoAuthHeader(apiKey, secretKey, request as Record<string, unknown>);
+  const randomString = authHeader.split(':').pop() || '';
+
+  console.log('iyzico request URL:', `${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`);
+  console.log('iyzico auth header:', authHeader.substring(0, 50) + '...');
 
   const response = await fetch(`${baseUrl}/payment/iyzipos/checkoutform/initialize/auth/ecom`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': authHeader,
-      'x-iyzi-rnd': authHeader.split(':').pop() || '',
+      'x-iyzi-rnd': randomString,
     },
     body: requestBody,
   });
