@@ -376,9 +376,18 @@ export async function createShipment(
     }
     
     const trackingNumber = shipmentResults.ShipmentIdentificationNumber;
-    const labelImage = shipmentResults.PackageResults?.[0]?.ShippingLabel?.GraphicImage;
+    
+    // Debug: Log full response structure
+    console.log('[UPS Ship] ShipmentResults keys:', Object.keys(shipmentResults));
+    console.log('[UPS Ship] PackageResults:', JSON.stringify(shipmentResults.PackageResults, null, 2));
+    
+    // Try different paths for label
+    const packageResult = shipmentResults.PackageResults?.[0] || shipmentResults.PackageResults;
+    const shippingLabel = packageResult?.ShippingLabel;
+    const labelImage = shippingLabel?.GraphicImage || shippingLabel?.Image?.GraphicImage;
     
     console.log('[UPS Ship] Success - Tracking:', trackingNumber);
+    console.log('[UPS Ship] Label found:', !!labelImage, 'Length:', labelImage?.length || 0);
     
     return {
       success: true,
