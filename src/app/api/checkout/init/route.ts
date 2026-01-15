@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Stripe from 'stripe';
+import path from 'path';
+
+// iyzipay resources klasörünü Vercel'e hissettirmek için
+const _iyzipayResourcesPath = path.join(process.cwd(), 'node_modules/iyzipay/lib/resources');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 

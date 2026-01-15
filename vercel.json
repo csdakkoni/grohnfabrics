@@ -1,7 +1,10 @@
 {
   "functions": {
-    "src/app/api/**/*": {
-      "includeFiles": "node_modules/iyzipay/**/*"
+    "src/app/api/**/*.ts": {
+      "includeFiles": "node_modules/iyzipay/lib/resources/**"
+    },
+    "app/api/**/*.ts": {
+      "includeFiles": "node_modules/iyzipay/lib/resources/**"
     }
   }
 }
