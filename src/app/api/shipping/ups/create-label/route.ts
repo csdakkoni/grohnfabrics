@@ -116,11 +116,24 @@ export async function POST(request: NextRequest) {
     const shipToCountry = countryCodeMap[shippingAddress.country] || shippingAddress.country?.substring(0, 2).toUpperCase() || 'TR';
     const shipFromCountry = countryCodeMap[companyAddress?.country || 'Turkey'] || 'TR';
 
+    // State değerlerini belirle - US için zorunlu, diğerleri için şehir kullan
+    const getStateCode = (state: string | undefined, city: string | undefined, country: string): string => {
+      if (state && state.trim()) return state.trim();
+      if (country === 'US') return 'NY'; // US için default
+      return city || 'Istanbul'; // Diğer ülkeler için şehir adı
+    };
+
+    const shipperState = getStateCode(companyAddress?.state, companyAddress?.city, shipFromCountry);
+    const shipToState = getStateCode(shippingAddress.state, shippingAddress.city, shipToCountry);
+
+    console.log('Ship From:', { country: shipFromCountry, state: shipperState, city: companyAddress?.city });
+    console.log('Ship To:', { country: shipToCountry, state: shipToState, city: shippingAddress.city });
+
     // UPS Shipment Request
     const shipmentRequest = {
       ShipmentRequest: {
         Request: {
-          RequestOption: 'validate',
+          RequestOption: 'nonvalidate', // validate yerine nonvalidate - daha esnek
           TransactionReference: {
             CustomerContext: order.order_number,
           },
@@ -131,14 +144,13 @@ export async function POST(request: NextRequest) {
             Name: company.name,
             AttentionName: company.legal_name || company.name,
             Phone: {
-              Number: companyContact?.phone || '5551234567',
+              Number: (companyContact?.phone || '5551234567').replace(/[^0-9]/g, '').slice(-10),
             },
             ShipperNumber: accountNumber,
             Address: {
               AddressLine: [companyAddress?.street || 'Default Address'],
               City: companyAddress?.city || 'Istanbul',
-              // UPS için state zorunlu - yoksa şehri kullan
-              StateProvinceCode: companyAddress?.state || companyAddress?.city || 'Istanbul',
+              StateProvinceCode: shipperState,
               PostalCode: companyAddress?.postal_code || '34000',
               CountryCode: shipFromCountry,
             },
@@ -147,13 +159,12 @@ export async function POST(request: NextRequest) {
             Name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
             AttentionName: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
             Phone: {
-              Number: order.guest_info?.phone || '5551234567',
+              Number: (order.guest_info?.phone || '5551234567').replace(/[^0-9]/g, '').slice(-10),
             },
             Address: {
               AddressLine: [shippingAddress.addressLine1, shippingAddress.addressLine2].filter(Boolean),
-              City: shippingAddress.city,
-              // UPS Türkiye için state olarak şehir adı kullanılır, yoksa şehri kullan
-              StateProvinceCode: shippingAddress.state || shippingAddress.city || 'Istanbul',
+              City: shippingAddress.city || 'Istanbul',
+              StateProvinceCode: shipToState,
               PostalCode: shippingAddress.postalCode || '34000',
               CountryCode: shipToCountry,
             },
