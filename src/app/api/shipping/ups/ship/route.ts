@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       trackingNumber: result.trackingNumber,
-      labelUrl: result.labelUrl,
+      labelImage: result.labelImage, // Raw Base64 for frontend rendering
+      labelUrl: result.labelUrl, // data: URL for backward compatibility
       message: 'Kargo etiketi oluşturuldu',
     });
 
