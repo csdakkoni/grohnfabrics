@@ -94,7 +94,13 @@ export function removeFromCart(productId: string, variantId?: string): Cart {
 }
 
 export function clearCart(): void {
-  saveCart({ items: [], market: 'TR', currency: 'TRY' });
+  // Mevcut market bilgisini koru, sadece ürünleri temizle
+  const currentCart = getCart();
+  saveCart({ 
+    items: [], 
+    market: currentCart.market, 
+    currency: currentCart.currency 
+  });
 }
 
 export function getCartTotal(cart: Cart): number {
