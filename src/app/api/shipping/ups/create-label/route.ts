@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+// UPS Base URL - Test: https://wwwcie.ups.com, Live: https://onlinetools.ups.com
+const UPS_BASE_URL = process.env.UPS_BASE_URL || 'https://wwwcie.ups.com';
+
 // UPS OAuth token al
 async function getUPSToken(): Promise<string> {
   const clientId = process.env.UPS_CLIENT_ID;
@@ -12,7 +15,7 @@ async function getUPSToken(): Promise<string> {
 
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-  const response = await fetch('https://onlinetools.ups.com/security/v1/oauth/token', {
+  const response = await fetch(`${UPS_BASE_URL}/security/v1/oauth/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -201,7 +204,7 @@ export async function POST(request: NextRequest) {
     console.log('UPS Request:', JSON.stringify(shipmentRequest, null, 2));
 
     // UPS API'ye istek gönder
-    const upsResponse = await fetch('https://onlinetools.ups.com/api/shipments/v1/ship', {
+    const upsResponse = await fetch(`${UPS_BASE_URL}/api/shipments/v1/ship`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
