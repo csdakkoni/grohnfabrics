@@ -25,7 +25,14 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '20mb',
     },
+    // iyzipay dosyalarını Vercel'e dahil et
+    outputFileTracingIncludes: {
+      '/api/**/*': ['./node_modules/iyzipay/**/*'],
+    },
   },
+  
+  // Standalone output for better Vercel compatibility
+  output: 'standalone',
   
   // Redirects
   async redirects() {
