@@ -3,9 +3,11 @@
 import { useCart } from './CartProvider';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { useMarket } from '@/lib/market/context';
 
 export default function CartDrawer() {
   const { cart, isOpen, closeCart, updateQuantity, removeItem, total, itemCount } = useCart();
+  const { t } = useMarket();
 
   // Currency symbol based on cart currency
   const currencySymbol = cart.currency === 'TRY' ? '₺' : cart.currency === 'EUR' ? '€' : '$';
@@ -26,7 +28,7 @@ export default function CartDrawer() {
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5" />
-            <h2 className="text-lg font-semibold">Sepet</h2>
+            <h2 className="text-lg font-semibold">{t('Sepet', 'Cart')}</h2>
             {itemCount > 0 && (
               <span className="px-2 py-0.5 text-xs font-medium bg-[var(--brand-primary)] text-white rounded-full">
                 {itemCount}
@@ -43,12 +45,12 @@ export default function CartDrawer() {
           {cart.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingBag className="w-16 h-16 text-[var(--foreground-light)] mb-4" />
-              <h3 className="text-lg font-medium mb-2">Sepetiniz boş</h3>
+              <h3 className="text-lg font-medium mb-2">{t('Sepetiniz boş', 'Your cart is empty')}</h3>
               <p className="text-sm text-[var(--foreground-muted)] mb-6">
-                Alışverişe başlamak için ürünlere göz atın.
+                {t('Alışverişe başlamak için ürünlere göz atın.', 'Browse products to start shopping.')}
               </p>
               <button onClick={closeCart} className="btn btn-primary">
-                Alışverişe Başla
+                {t('Alışverişe Başla', 'Start Shopping')}
               </button>
             </div>
           ) : (
@@ -122,11 +124,11 @@ export default function CartDrawer() {
           <div className="border-t border-[var(--border)] p-4 space-y-4">
             {/* Subtotal */}
             <div className="flex justify-between text-lg">
-              <span className="text-[var(--foreground-muted)]">Ara Toplam</span>
+              <span className="text-[var(--foreground-muted)]">{t('Ara Toplam', 'Subtotal')}</span>
               <span className="font-semibold">{currencySymbol}{total.toFixed(2)}</span>
             </div>
             <p className="text-xs text-[var(--foreground-muted)]">
-              Kargo ücreti checkout&apos;ta hesaplanacaktır.
+              {t('Kargo ücreti checkout\'ta hesaplanacaktır.', 'Shipping will be calculated at checkout.')}
             </p>
 
             {/* Actions */}
@@ -136,13 +138,13 @@ export default function CartDrawer() {
                 onClick={closeCart}
                 className="btn btn-primary w-full"
               >
-                Ödemeye Geç
+                {t('Ödemeye Geç', 'Proceed to Checkout')}
               </Link>
               <button
                 onClick={closeCart}
                 className="btn btn-secondary w-full"
               >
-                Alışverişe Devam Et
+                {t('Alışverişe Devam Et', 'Continue Shopping')}
               </button>
             </div>
           </div>

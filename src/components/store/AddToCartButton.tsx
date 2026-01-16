@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ShoppingBag, Minus, Plus } from 'lucide-react';
 import { useCart } from './CartProvider';
 import { setCartMarket } from '@/lib/cart';
+import { useMarket } from '@/lib/market/context';
 
 interface Product {
   id: string;
@@ -32,6 +33,7 @@ export default function AddToCartButton({
   variantId 
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const { t } = useMarket();
   
   const isMeter = product.sales_model === 'meter';
   const minQty = product.min_order_quantity || 1;
@@ -92,7 +94,7 @@ export default function AddToCartButton({
       {/* Quantity Selector */}
       <div>
         <label className="block text-sm font-medium mb-3">
-          Miktar {isMeter ? '(metre)' : '(adet)'}
+          {t('Miktar', 'Quantity')} {isMeter ? t('(metre)', '(meters)') : t('(adet)', '(units)')}
         </label>
         <div className="flex items-center gap-4">
           <div className="flex items-center border border-[var(--border)] rounded-lg">
@@ -139,19 +141,19 @@ export default function AddToCartButton({
         {adding ? (
           <>
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Ekleniyor...
+            {t('Ekleniyor...', 'Adding...')}
           </>
         ) : added ? (
           <>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Sepete Eklendi!
+            {t('Sepete Eklendi!', 'Added to Cart!')}
           </>
         ) : (
           <>
             <ShoppingBag className="w-5 h-5" />
-            Sepete Ekle
+            {t('Sepete Ekle', 'Add to Cart')}
           </>
         )}
       </button>

@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { CheckCircle, Loader2 } from 'lucide-react';
+import { useMarket } from '@/lib/market/context';
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useMarket();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +42,7 @@ export default function NewsletterForm() {
     return (
       <div className="flex items-center justify-center gap-3 p-4 bg-green-50 rounded-xl">
         <CheckCircle className="w-5 h-5 text-green-600" />
-        <span className="text-green-800">Bültenimize başarıyla abone oldunuz!</span>
+        <span className="text-green-800">{t('Bültenimize başarıyla abone oldunuz!', 'Successfully subscribed to our newsletter!')}</span>
       </div>
     );
   }
@@ -52,7 +54,7 @@ export default function NewsletterForm() {
           type="email" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="E-posta adresiniz" 
+          placeholder={t('E-posta adresiniz', 'Your email address')}
           className="input flex-1"
           required
         />
@@ -64,7 +66,7 @@ export default function NewsletterForm() {
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            'Abone Ol'
+            t('Abone Ol', 'Subscribe')
           )}
         </button>
       </div>
