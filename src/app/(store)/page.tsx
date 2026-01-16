@@ -4,8 +4,47 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Leaf, Sparkles, Package, Recycle, Heart } from 'lucide-react';
 import NewsletterForm from '@/components/store/NewsletterForm';
 import CustomerReviews from '@/components/store/CustomerReviews';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+// Generate metadata based on locale
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'tr';
+  const isEnglish = locale === 'en';
+
+  return {
+    title: isEnglish 
+      ? 'Grohn Fabrics - Premium Textiles & Home Decor'
+      : 'Grohn Fabrics - Premium Kumaş & Ev Tekstili',
+    description: isEnglish
+      ? 'Shop premium quality fabrics, curtains, and home textiles. Natural fibers, sustainable production, handcrafted in Turkey. Free worldwide shipping.'
+      : 'Premium kalite kumaş, perde ve ev tekstili. Doğal lifler, sürdürülebilir üretim, Türkiye\'den el işçiliği. Dünya genelinde ücretsiz kargo.',
+    openGraph: {
+      title: isEnglish 
+        ? 'Grohn Fabrics - Premium Textiles & Home Decor'
+        : 'Grohn Fabrics - Premium Kumaş & Ev Tekstili',
+      description: isEnglish
+        ? 'Shop premium quality fabrics, curtains, and home textiles from Turkey.'
+        : 'Premium kalite kumaş, perde ve ev tekstili. Türkiye\'den.',
+      images: [{ url: 'https://grohnfabrics.com/og-image.jpg', width: 1200, height: 630 }],
+      type: 'website',
+      locale: isEnglish ? 'en_US' : 'tr_TR',
+      siteName: 'Grohn Fabrics',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Grohn Fabrics',
+      description: isEnglish 
+        ? 'Premium textiles from Turkey' 
+        : 'Türkiye\'den premium tekstil',
+    },
+    alternates: {
+      canonical: 'https://grohnfabrics.com',
+    },
+  };
+}
 
 async function getFeaturedProducts(region: string) {
   let query = supabaseAdmin

@@ -2,8 +2,30 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { cookies } from 'next/headers';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'tr';
+  const isEnglish = locale === 'en';
+
+  return {
+    title: isEnglish ? 'Collection' : 'Koleksiyon',
+    description: isEnglish
+      ? 'Browse our premium collection of fabrics, curtains, and home textiles. Natural materials, sustainable production.'
+      : 'Premium kumaş, perde ve ev tekstili koleksiyonumuzu keşfedin. Doğal materyaller, sürdürülebilir üretim.',
+    openGraph: {
+      title: isEnglish ? 'Collection | Grohn Fabrics' : 'Koleksiyon | Grohn Fabrics',
+      description: isEnglish
+        ? 'Premium fabrics and home textiles from Turkey'
+        : 'Türkiye\'den premium kumaş ve ev tekstili',
+      type: 'website',
+      locale: isEnglish ? 'en_US' : 'tr_TR',
+    },
+  };
+}
 
 interface SearchParams {
   type?: string;

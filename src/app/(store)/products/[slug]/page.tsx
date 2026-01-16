@@ -6,8 +6,63 @@ import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
 import ProductPrice from '@/components/store/ProductPrice';
 import ProductGallery from '@/components/store/ProductGallery';
+import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
+
+// Generate dynamic metadata for SEO
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  
+  const { data: product } = await supabaseAdmin
+    .from('products')
+    .select('name_tr, name_en, description_tr, description_en, thumbnail_url, images, product_type')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+
+  if (!product) {
+    return {
+      title: 'Ürün Bulunamadı',
+    };
+  }
+
+  const cookieStore = await cookies();
+  const locale = cookieStore.get('locale')?.value || 'tr';
+  const isEnglish = locale === 'en';
+
+  const title = isEnglish ? product.name_en : product.name_tr;
+  const description = isEnglish 
+    ? (product.description_en || `Shop ${product.name_en} at Grohn Fabrics. Premium quality textiles from Turkey.`)
+    : (product.description_tr || `${product.name_tr} - Grohn Fabrics'te premium kalite tekstil ürünleri.`);
+  const image = product.thumbnail_url || product.images?.[0] || 'https://grohnfabrics.com/og-image.jpg';
+
+  return {
+    title,
+    description: description.substring(0, 160),
+    openGraph: {
+      title,
+      description: description.substring(0, 160),
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      type: 'website',
+      locale: isEnglish ? 'en_US' : 'tr_TR',
+      siteName: 'Grohn Fabrics',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: description.substring(0, 160),
+      images: [image],
+    },
+    alternates: {
+      canonical: `https://grohnfabrics.com/products/${slug}`,
+    },
+  };
+}
 
 async function getProduct(slug: string) {
   const { data, error } = await supabaseAdmin
