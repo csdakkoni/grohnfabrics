@@ -79,10 +79,10 @@ async function getOrder(id: string): Promise<Order | null> {
   return data as Order;
 }
 
-export default async function OrderDetailPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
+export default async function OrderDetailPage({
+  params
+}: {
+  params: Promise<{ id: string }>
 }) {
   const { id } = await params;
   const order = await getOrder(id);
@@ -113,11 +113,11 @@ export default async function OrderDetailPage({
   };
 
   const customer = Array.isArray(order.customer) ? order.customer[0] : order.customer;
-  const customerName = customer 
+  const customerName = customer
     ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
     : order.guest_info
-    ? `${order.guest_info.firstName || ''} ${order.guest_info.lastName || ''}`.trim()
-    : 'Misafir';
+      ? `${order.guest_info.firstName || ''} ${order.guest_info.lastName || ''}`.trim()
+      : 'Misafir';
   const customerEmail = customer?.email || order.guest_email;
   const customerPhone = customer?.phone || order.guest_info?.phone;
 
@@ -126,8 +126,8 @@ export default async function OrderDetailPage({
       <div className="container">
         {/* Header */}
         <div className="mb-8">
-          <Link 
-            href="/account" 
+          <Link
+            href="/account"
             className="inline-flex items-center gap-2 text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)] mb-4"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -146,13 +146,12 @@ export default async function OrderDetailPage({
                 })}
               </p>
             </div>
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              isCancelled 
+            <span className={`px-4 py-2 rounded-full text-sm font-medium ${isCancelled
                 ? 'bg-red-100 text-red-800'
                 : order.status === 'delivered'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-blue-100 text-blue-800'
-            }`}>
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
               {statusLabels[order.status] || order.status}
             </span>
           </div>
@@ -166,24 +165,24 @@ export default async function OrderDetailPage({
               <div className="relative">
                 {/* Progress Line */}
                 <div className="absolute top-5 left-0 right-0 h-0.5 bg-[var(--border)]" />
-                <div 
+                <div
                   className="absolute top-5 left-0 h-0.5 bg-[var(--brand-primary)] transition-all duration-500"
                   style={{ width: `${Math.max(0, (currentStepIndex / (statusSteps.length - 1)) * 100)}%` }}
                 />
-                
+
                 {/* Steps */}
                 <div className="relative flex justify-between">
                   {statusSteps.map((step, index) => {
                     const isCompleted = index <= currentStepIndex;
                     const isCurrent = index === currentStepIndex;
                     const Icon = step.icon;
-                    
+
                     return (
                       <div key={step.key} className="flex flex-col items-center">
                         <div className={`
                           w-10 h-10 rounded-full flex items-center justify-center z-10 transition-colors
-                          ${isCompleted 
-                            ? 'bg-[var(--brand-primary)] text-white' 
+                          ${isCompleted
+                            ? 'bg-[var(--brand-primary)] text-white'
                             : 'bg-[var(--background-secondary)] text-[var(--foreground-muted)] border-2 border-[var(--border)]'
                           }
                           ${isCurrent ? 'ring-4 ring-[var(--brand-primary)]/20' : ''}
@@ -206,15 +205,27 @@ export default async function OrderDetailPage({
               {order.tracking_number && (
                 <div className="mt-8 p-4 bg-[var(--background-secondary)] rounded-xl">
                   <p className="text-sm text-[var(--foreground-muted)] mb-1">Kargo Takip Numarası</p>
-                  <p className="font-medium">{order.tracking_number}</p>
+                  <p className="font-medium font-mono">{order.tracking_number}</p>
                   {order.shipping_provider && (
                     <p className="text-sm text-[var(--foreground-muted)] mt-1">
                       {order.shipping_provider === 'yurtici_kargo' ? 'Yurtiçi Kargo' :
-                       order.shipping_provider === 'aras_kargo' ? 'Aras Kargo' :
-                       order.shipping_provider === 'ups' ? 'UPS' :
-                       order.shipping_provider === 'dhl' ? 'DHL' :
-                       order.shipping_provider}
+                        order.shipping_provider === 'aras_kargo' ? 'Aras Kargo' :
+                          order.shipping_provider === 'ups' ? 'UPS' :
+                            order.shipping_provider === 'dhl' ? 'DHL' :
+                              order.shipping_provider}
                     </p>
+                  )}
+                  {/* UPS Tracking Link */}
+                  {(order.shipping_provider === 'ups' || !order.shipping_provider) && (
+                    <a
+                      href={`https://www.ups.com/track?tracknum=${order.tracking_number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-[#351C15] text-white text-sm font-medium rounded-lg hover:bg-[#4A2A1F] transition-colors"
+                    >
+                      <Truck className="w-4 h-4" />
+                      UPS'de Kargoyu Takip Et
+                    </a>
                   )}
                 </div>
               )}
@@ -234,7 +245,7 @@ export default async function OrderDetailPage({
                 {order.order_items?.map((item) => {
                   const product = Array.isArray(item.product) ? item.product[0] : item.product;
                   const imageUrl = product?.thumbnail_url || product?.images?.[0];
-                  
+
                   return (
                     <div key={item.id} className="p-4 flex gap-4">
                       <div className="w-20 h-20 rounded-lg bg-[var(--background-secondary)] overflow-hidden flex-shrink-0">
@@ -255,8 +266,8 @@ export default async function OrderDetailPage({
                           <p className="font-medium">{item.product_name}</p>
                         )}
                         <p className="text-sm text-[var(--foreground-muted)] mt-1">
-                          {item.unit_type === 'meter' 
-                            ? `${item.quantity.toFixed(1)} metre` 
+                          {item.unit_type === 'meter'
+                            ? `${item.quantity.toFixed(1)} metre`
                             : `${item.quantity} adet`
                           }
                           {' × '}
