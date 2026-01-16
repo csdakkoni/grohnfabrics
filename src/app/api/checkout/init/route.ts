@@ -336,6 +336,14 @@ async function initStripePayment(
       shipping_address_collection: {
         allowed_countries: allowedCountries as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
       },
+      // Automatic tax calculation (requires Stripe Tax to be enabled in Dashboard)
+      automatic_tax: { enabled: true },
+      // Auto-create invoice after payment
+      invoice_creation: { enabled: true },
+      // Allow EU customers to enter VAT numbers
+      tax_id_collection: { enabled: true },
+      // Auto-update customer info from checkout
+      customer_update: { address: 'auto', name: 'auto' },
     });
 
     // Update order with Stripe session ID

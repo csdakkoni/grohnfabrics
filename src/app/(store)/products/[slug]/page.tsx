@@ -6,6 +6,7 @@ import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
 import ProductPrice from '@/components/store/ProductPrice';
 import ProductGallery from '@/components/store/ProductGallery';
+import AskQuestionForm from '@/components/store/AskQuestionForm';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -220,6 +221,14 @@ export default async function ProductPage({
               baseCurrency={baseCurrency}
               locale={locale}
             />
+
+            {/* Ask a Question */}
+            <div className="mt-6">
+              <AskQuestionForm 
+                productId={product.id} 
+                productName={isEnglish ? (product.name_en || product.name_tr) : product.name_tr} 
+              />
+            </div>
 
             {/* Features */}
             <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-[var(--border)]">
