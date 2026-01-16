@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured') === 'true';
     const productId = searchParams.get('productId');
     const minRating = parseInt(searchParams.get('minRating') || '4');
+    const category = searchParams.get('category'); // curtain, fabric, sample, general
 
     let query = supabaseAdmin
       .from('reviews')
@@ -25,6 +26,11 @@ export async function GET(request: NextRequest) {
     // Filter by product if specified
     if (productId) {
       query = query.eq('product_id', productId);
+    }
+
+    // Filter by category keyword (for product pages)
+    if (category) {
+      query = query.eq('category_keyword', category);
     }
 
     // Only get reviews with comments for carousel
@@ -45,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const stats = {
       total: allReviews?.length || 0,
-      averageRating: allReviews 
+      averageRating: allReviews
         ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length).toFixed(1)
         : '5.0',
       fiveStarCount: allReviews?.filter(r => r.rating === 5).length || 0,

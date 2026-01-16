@@ -33,13 +33,14 @@ interface CustomerReviewsProps {
   reviews?: Review[];
   title?: string;
   showEtsyLink?: boolean;
+  category?: 'curtain' | 'fabric' | 'sample' | 'general'; // Filter by category
 }
 
 // Etsy logo SVG
 const EtsyBadge = () => (
   <div className="flex items-center gap-1.5 text-xs text-[var(--foreground-muted)]">
     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#F56400]">
-      <path d="M8.56 5.45c-.4 0-.75.06-1.04.18-.28.12-.5.3-.65.53-.16.23-.26.51-.32.84-.06.33-.09.7-.09 1.12v1.88H9.5c.08 0 .15.03.2.08.06.06.09.12.09.2v1.43c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H6.46v8.45c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H4.15c-.08 0-.14-.03-.2-.09-.05-.05-.09-.12-.09-.2V12h-1.5c-.08 0-.15-.03-.2-.09-.06-.05-.09-.12-.09-.2V10.28c0-.08.03-.14.09-.2.05-.05.12-.08.2-.08h1.5V8c0-.7.09-1.32.26-1.87.17-.55.44-1.02.8-1.4.36-.38.82-.67 1.37-.87.55-.2 1.2-.3 1.95-.3h1.5c.08 0 .15.03.2.09.06.05.09.12.09.2v1.51c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H8.56zm11.9 4.83c-.08 0-.14-.03-.2-.09-.05-.05-.09-.12-.09-.2V8.47c0-.08.03-.14.09-.2.06-.05.12-.08.2-.08h2.07c.08 0 .15.03.2.08.06.06.09.12.09.2v1.52c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09h-2.07zm.09 10.17c-.08 0-.15-.03-.2-.09-.06-.05-.09-.12-.09-.2V12c0-.08.03-.14.09-.2.05-.05.12-.08.2-.08h2.07c.08 0 .14.03.2.08.05.06.08.12.08.2v8.16c0 .08-.03.15-.08.2-.06.06-.12.09-.2.09h-2.07z"/>
+      <path d="M8.56 5.45c-.4 0-.75.06-1.04.18-.28.12-.5.3-.65.53-.16.23-.26.51-.32.84-.06.33-.09.7-.09 1.12v1.88H9.5c.08 0 .15.03.2.08.06.06.09.12.09.2v1.43c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H6.46v8.45c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H4.15c-.08 0-.14-.03-.2-.09-.05-.05-.09-.12-.09-.2V12h-1.5c-.08 0-.15-.03-.2-.09-.06-.05-.09-.12-.09-.2V10.28c0-.08.03-.14.09-.2.05-.05.12-.08.2-.08h1.5V8c0-.7.09-1.32.26-1.87.17-.55.44-1.02.8-1.4.36-.38.82-.67 1.37-.87.55-.2 1.2-.3 1.95-.3h1.5c.08 0 .15.03.2.09.06.05.09.12.09.2v1.51c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09H8.56zm11.9 4.83c-.08 0-.14-.03-.2-.09-.05-.05-.09-.12-.09-.2V8.47c0-.08.03-.14.09-.2.06-.05.12-.08.2-.08h2.07c.08 0 .15.03.2.08.06.06.09.12.09.2v1.52c0 .08-.03.15-.09.2-.05.06-.12.09-.2.09h-2.07zm.09 10.17c-.08 0-.15-.03-.2-.09-.06-.05-.09-.12-.09-.2V12c0-.08.03-.14.09-.2.05-.05.12-.08.2-.08h2.07c.08 0 .14.03.2.08.05.06.08.12.08.2v8.16c0 .08-.03.15-.08.2-.06.06-.12.09-.2.09h-2.07z" />
     </svg>
     <span className="font-medium">Verified Etsy Purchase</span>
   </div>
@@ -51,11 +52,10 @@ const StarRating = ({ rating }: { rating: number }) => (
     {[1, 2, 3, 4, 5].map((star) => (
       <Star
         key={star}
-        className={`w-4 h-4 ${
-          star <= rating 
-            ? 'fill-amber-400 text-amber-400' 
+        className={`w-4 h-4 ${star <= rating
+            ? 'fill-amber-400 text-amber-400'
             : 'fill-gray-200 text-gray-200'
-        }`}
+          }`}
       />
     ))}
   </div>
@@ -81,10 +81,11 @@ const Avatar = ({ name }: { name: string }) => {
   );
 };
 
-export default function CustomerReviews({ 
-  reviews: propReviews, 
+export default function CustomerReviews({
+  reviews: propReviews,
   title,
-  showEtsyLink = true 
+  showEtsyLink = true,
+  category,
 }: CustomerReviewsProps) {
   const { t, locale } = useMarket();
   const [reviews, setReviews] = useState<Review[]>(propReviews || []);
@@ -97,7 +98,16 @@ export default function CustomerReviews({
   // Fetch reviews if not provided as props
   useEffect(() => {
     if (!propReviews) {
-      fetch('/api/reviews?limit=20&featured=true')
+      // Build API URL with optional category filter
+      const params = new URLSearchParams({
+        limit: '20',
+        featured: 'true',
+      });
+      if (category) {
+        params.set('category', category);
+      }
+
+      fetch(`/api/reviews?${params.toString()}`)
         .then(res => res.json())
         .then(data => {
           if (data.reviews && data.reviews.length > 0) {
@@ -112,7 +122,7 @@ export default function CustomerReviews({
           setReviews(STATIC_REVIEWS);
         });
     }
-  }, [propReviews]);
+  }, [propReviews, category]);
 
   // Auto-scroll
   useEffect(() => {
@@ -176,7 +186,7 @@ export default function CustomerReviews({
           <h2 className="text-3xl md:text-4xl font-light text-[var(--foreground)] mb-4">
             {title || defaultTitle}
           </h2>
-          
+
           {/* Stats */}
           <div className="flex items-center justify-center gap-4 text-sm text-[var(--foreground-muted)]">
             <div className="flex items-center gap-2">
@@ -225,7 +235,7 @@ export default function CustomerReviews({
           )}
 
           {/* Reviews Grid */}
-          <div 
+          <div
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -255,7 +265,7 @@ export default function CustomerReviews({
                       <StarRating rating={review.rating} />
                     </div>
                   </div>
-                  
+
                   {review.source === 'etsy' && <EtsyBadge />}
                 </div>
               </div>
@@ -272,11 +282,10 @@ export default function CustomerReviews({
                     setIsAutoPlaying(false);
                     setCurrentIndex(idx * 3);
                   }}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    Math.floor(currentIndex / 3) === idx
+                  className={`w-2 h-2 rounded-full transition-colors ${Math.floor(currentIndex / 3) === idx
                       ? 'bg-[var(--brand-primary)]'
                       : 'bg-[var(--border)]'
-                  }`}
+                    }`}
                   aria-label={`Go to review set ${idx + 1}`}
                 />
               ))}
