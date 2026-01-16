@@ -13,6 +13,10 @@ import {
     generateShipmentNotificationEmail,
     getShipmentNotificationSubject
 } from './templates/shipment-notification';
+import {
+    generateReviewRequestEmail,
+    getReviewRequestSubject
+} from './templates/review-request';
 
 // Types
 interface OrderEmailData {
@@ -101,5 +105,35 @@ export async function sendShipmentNotificationEmail(data: ShipmentEmailData) {
     });
 }
 
+interface ReviewRequestEmailData {
+    orderId: string;
+    orderNumber: string;
+    customerEmail: string;
+    customerName: string;
+    locale?: 'tr' | 'en';
+}
+
+/**
+ * Yorum isteği emaili gönder
+ * Sipariş "delivered" durumuna geçtiğinde çağrılır
+ */
+export async function sendReviewRequestEmail(data: ReviewRequestEmailData) {
+    const html = generateReviewRequestEmail({
+        orderId: data.orderId,
+        orderNumber: data.orderNumber,
+        customerName: data.customerName,
+        locale: data.locale,
+    });
+
+    const subject = getReviewRequestSubject(data.locale);
+
+    return sendEmail({
+        to: data.customerEmail,
+        subject,
+        html,
+    });
+}
+
 // Re-export
-export type { OrderEmailData, ShipmentEmailData };
+export type { OrderEmailData, ShipmentEmailData, ReviewRequestEmailData };
+
