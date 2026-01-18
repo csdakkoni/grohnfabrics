@@ -11,7 +11,7 @@ export default function FavoritesPage() {
   const { t, region, locale } = useMarket();
   const { addToCart } = useCart();
   const isEnglish = locale === 'en';
-  const currencySymbol = region === 'TR' ? '₺' : '$';
+  const currencySymbol = region.id === 'TR' ? '₺' : '$';
 
   const typeLabels: Record<string, { tr: string; en: string }> = {
     fabric: { tr: 'Kumaş', en: 'Fabric' },
@@ -26,7 +26,7 @@ export default function FavoritesPage() {
 
   const handleAddToCart = (item: typeof items[0]) => {
     const product = item.product;
-    const price = product.prices?.find(p => p.market_id === region);
+    const price = product.prices?.find(p => p.market_id === region.id);
     
     if (!price) return;
 
@@ -72,7 +72,7 @@ export default function FavoritesPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {items.map((item) => {
             const product = item.product;
-            const price = product.prices?.find(p => p.market_id === region);
+            const price = product.prices?.find(p => p.market_id === region.id);
             const imageUrl = product.thumbnail_url || product.images?.[0];
             const productName = isEnglish ? (product.name_en || product.name_tr) : product.name_tr;
 
