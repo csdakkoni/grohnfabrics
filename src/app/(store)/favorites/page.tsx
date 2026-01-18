@@ -8,7 +8,7 @@ import { useCart } from '@/components/store/CartProvider';
 
 export default function FavoritesPage() {
   const { items, loading, removeFromWishlist } = useWishlist();
-  const { t, region, locale } = useMarket();
+  const { t, region, locale, currency } = useMarket();
   const { addToCart } = useCart();
   const isEnglish = locale === 'en';
   const currencySymbol = region.id === 'TR' ? '₺' : '$';
@@ -36,6 +36,7 @@ export default function FavoritesPage() {
       price: price.price,
       quantity: 1,
       image: product.thumbnail_url || product.images?.[0],
+      currency,
       salesModel: product.sales_model as 'meter' | 'unit' | 'preset_sizes',
     });
   };
