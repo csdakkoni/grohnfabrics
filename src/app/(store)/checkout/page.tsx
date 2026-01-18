@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/store/CartProvider';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { ShoppingBag, ChevronLeft, CreditCard, Truck } from 'lucide-react';
+import { ShoppingBag, ChevronLeft, CreditCard, Truck, Ticket, X, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface ShippingAddress {
@@ -49,6 +49,14 @@ const COUNTRIES = [
   { code: 'AE', name: 'Birleşik Arap Emirlikleri' },
 ];
 
+interface AppliedCoupon {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  discountAmount: number;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, total, clear } = useCart();
@@ -57,6 +65,12 @@ export default function CheckoutPage() {
   const [shippingCost, setShippingCost] = useState(0);
   const [shippingCurrency, setShippingCurrency] = useState('TRY');
   const [estimatedDays, setEstimatedDays] = useState<{ min: number; max: number } | null>(null);
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   
   const supabase = createClient();
   const { t } = useTranslation();
@@ -151,7 +165,50 @@ export default function CheckoutPage() {
     fetchShippingRate();
   }, [address.country, total]);
 
-  const grandTotal = total + shippingCost;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const grandTotal = total + shippingCost - discountAmount;
+
+  // Validate and apply coupon
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    
+    setCouponLoading(true);
+    setCouponError('');
+
+    try {
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          email: address.email || 'guest@temp.com',
+          orderTotal: total,
+          market,
+          currency,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.valid) {
+        setCouponError(data.error || t('checkout.coupon_invalid'));
+        return;
+      }
+
+      setAppliedCoupon(data.coupon);
+      setCouponCode('');
+    } catch (error) {
+      console.error('Coupon validation error:', error);
+      setCouponError(t('checkout.coupon_error'));
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +230,11 @@ export default function CheckoutPage() {
           address,
           market,
           shippingCost,
+          coupon: appliedCoupon ? {
+            id: appliedCoupon.id,
+            code: appliedCoupon.code,
+            discountAmount: appliedCoupon.discountAmount,
+          } : null,
         }),
       });
 
@@ -496,6 +558,68 @@ export default function CheckoutPage() {
 
                 <hr className="border-[var(--border)]" />
 
+                {/* Coupon Input */}
+                <div className="space-y-2">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-[var(--success-light)] rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-[var(--success)]" />
+                        <span className="text-sm font-medium text-[var(--success)]">
+                          {appliedCoupon.code}
+                        </span>
+                        <span className="text-xs text-[var(--success)]">
+                          ({appliedCoupon.discountType === 'percentage' 
+                            ? `%${appliedCoupon.discountValue}` 
+                            : `${currency === 'TRY' ? '₺' : '$'}${appliedCoupon.discountValue}`})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        className="p-1 hover:bg-[var(--success)]/10 rounded"
+                      >
+                        <X className="w-4 h-4 text-[var(--success)]" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-light)]" />
+                          <input
+                            type="text"
+                            value={couponCode}
+                            onChange={(e) => {
+                              setCouponCode(e.target.value.toUpperCase());
+                              setCouponError('');
+                            }}
+                            placeholder={t('checkout.coupon_placeholder')}
+                            className="input pl-9 text-sm"
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponCode.trim()}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          {couponLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            t('checkout.apply')
+                          )}
+                        </button>
+                      </div>
+                      {couponError && (
+                        <p className="text-xs text-[var(--error)] mt-1">{couponError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <hr className="border-[var(--border)]" />
+
                 {/* Totals */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -511,6 +635,12 @@ export default function CheckoutPage() {
                       }
                     </span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-[var(--success)]">
+                      <span>{t('checkout.discount')}</span>
+                      <span>-{currency === 'TRY' ? '₺' : '$'}{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   {estimatedDays && (
                     <div className="flex justify-between text-xs">
                       <span className="text-[var(--foreground-muted)]">{t('checkout.estimated_delivery')}</span>

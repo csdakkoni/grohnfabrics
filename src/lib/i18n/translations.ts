@@ -75,6 +75,11 @@ export const translations = {
     'checkout.iyzico_desc': 'iyzico güvenli ödeme ile devam edeceksiniz',
     'checkout.stripe_desc': 'Stripe güvenli ödeme ile devam edeceksiniz',
     'checkout.card_desc': 'Kredi kartı, banka kartı veya banka havalesi',
+    'checkout.coupon_placeholder': 'Kupon kodu',
+    'checkout.apply': 'Uygula',
+    'checkout.discount': 'İndirim',
+    'checkout.coupon_invalid': 'Geçersiz kupon kodu',
+    'checkout.coupon_error': 'Kupon doğrulanamadı',
     
     // Hesap
     'account.title': 'Hesabım',
@@ -230,6 +235,11 @@ export const translations = {
     'checkout.iyzico_desc': 'You will continue with iyzico secure payment',
     'checkout.stripe_desc': 'You will continue with Stripe secure payment',
     'checkout.card_desc': 'Credit card, debit card, or bank transfer',
+    'checkout.coupon_placeholder': 'Coupon code',
+    'checkout.apply': 'Apply',
+    'checkout.discount': 'Discount',
+    'checkout.coupon_invalid': 'Invalid coupon code',
+    'checkout.coupon_error': 'Could not validate coupon',
     
     // Account
     'account.title': 'My Account',

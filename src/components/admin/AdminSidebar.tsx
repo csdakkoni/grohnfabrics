@@ -14,7 +14,8 @@ import {
   LogOut,
   FileEdit,
   Layers,
-  Truck
+  Truck,
+  Ticket
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Varyantlar', href: '/admin/variants', icon: Layers },
   { name: 'Kategoriler', href: '/admin/categories', icon: Boxes },
   { name: 'Siparişler', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Kuponlar', href: '/admin/coupons', icon: Ticket },
   { name: 'Müşteriler', href: '/admin/customers', icon: Users },
   { name: 'Materyaller', href: '/admin/materials', icon: Palette },
   { name: 'Kargo', href: '/admin/shipping', icon: Truck },

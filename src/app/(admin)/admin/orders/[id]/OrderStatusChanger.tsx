@@ -78,6 +78,19 @@ export default function OrderStatusChanger({ orderId, currentStatus }: OrderStat
     if (error) {
       alert('Durum güncellenemedi: ' + error.message);
     } else {
+      // Send shipping notification email when status changes to shipped
+      if (newStatus === 'shipped') {
+        try {
+          await fetch(`/api/orders/${orderId}/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'shipping' }),
+          });
+        } catch (emailError) {
+          console.error('Failed to send shipping notification:', emailError);
+          // Don't fail the status update if email fails
+        }
+      }
       router.refresh();
     }
 

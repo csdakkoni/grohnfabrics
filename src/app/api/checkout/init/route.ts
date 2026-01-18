@@ -41,12 +41,17 @@ interface CheckoutRequest {
   };
   market: 'TR' | 'GLOBAL';
   shippingCost: number;
+  coupon?: {
+    id: string;
+    code: string;
+    discountAmount: number;
+  } | null;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: CheckoutRequest = await request.json();
-    const { cart, address, market, shippingCost } = body;
+    const { cart, address, market, shippingCost, coupon } = body;
 
     if (!cart.items || cart.items.length === 0) {
       return NextResponse.json({ error: 'Sepet boş' }, { status: 400 });
@@ -54,7 +59,8 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals
     const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const total = subtotal + shippingCost;
+    const discountAmount = coupon?.discountAmount || 0;
+    const total = subtotal + shippingCost - discountAmount;
 
     // Get company based on market (optional - some setups may not have companies)
     const { data: company } = await supabaseAdmin
@@ -82,12 +88,14 @@ export async function POST(request: NextRequest) {
         subtotal,
         shipping_cost: shippingCost,
         tax_amount: 0, // Simplified for now
-        discount_amount: 0,
+        discount_amount: discountAmount,
         total_amount: total,
         status: 'pending',
         shipping_address: address,
         billing_address: address,
         payment_provider: market === 'TR' ? 'iyzico' : 'stripe',
+        coupon_id: coupon?.id || null,
+        coupon_code: coupon?.code || null,
       })
       .select()
       .single();
@@ -95,6 +103,18 @@ export async function POST(request: NextRequest) {
     if (orderError || !order) {
       console.error('Order creation error:', orderError);
       return NextResponse.json({ error: 'Sipariş oluşturulamadı' }, { status: 500 });
+    }
+
+    // Record coupon usage if coupon was applied
+    if (coupon?.id) {
+      await supabaseAdmin
+        .from('coupon_usages')
+        .insert({
+          coupon_id: coupon.id,
+          order_id: order.id,
+          customer_email: address.email.toLowerCase(),
+          discount_applied: discountAmount,
+        });
     }
 
     // Create order items

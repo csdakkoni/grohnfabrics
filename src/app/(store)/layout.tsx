@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { CartProvider } from '@/components/store/CartProvider';
+import { WishlistProvider } from '@/components/store/WishlistProvider';
 import CartDrawer from '@/components/store/CartDrawer';
 import StoreHeader from '@/components/store/StoreHeader';
 import StoreFooter from '@/components/store/StoreFooter';
@@ -25,6 +26,7 @@ export default async function StoreLayout({
   return (
     <MarketProvider initialRegion={initialRegion} initialLocale={initialLocale}>
     <CartProvider>
+    <WishlistProvider>
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <StoreHeader />
@@ -40,6 +42,7 @@ export default async function StoreLayout({
       {/* Footer */}
       <StoreFooter />
     </div>
+    </WishlistProvider>
     </CartProvider>
     </MarketProvider>
   );

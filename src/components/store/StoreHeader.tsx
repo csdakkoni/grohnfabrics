@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Search, Menu, X, Settings } from 'lucide-react';
+import { User, Search, Menu, X, Settings, Heart } from 'lucide-react';
 import CartButton from './CartButton';
 import SearchModal from './SearchModal';
 import MarketSwitcher from './MarketSwitcher';
 import { useMarket } from '@/lib/market/context';
+import { useWishlist } from './WishlistProvider';
 
 export default function StoreHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t, isAdminMode } = useMarket();
+  const { items: wishlistItems } = useWishlist();
 
   // Keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -110,6 +112,19 @@ export default function StoreHeader() {
                 </span>
               </button>
               
+              {/* Wishlist */}
+              <Link 
+                href="/favorites" 
+                className="relative p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
+              >
+                <Heart className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--error)]" />
+                {wishlistItems.length > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[var(--error)] text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+                    {wishlistItems.length > 9 ? '9+' : wishlistItems.length}
+                  </span>
+                )}
+              </Link>
+
               {/* Account */}
               <Link 
                 href="/account" 

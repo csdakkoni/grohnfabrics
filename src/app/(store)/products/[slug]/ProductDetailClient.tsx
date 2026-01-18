@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import ProductOptions from '@/components/store/ProductOptions';
 import AddToCartButton from '@/components/store/AddToCartButton';
+import WishlistButton from '@/components/store/WishlistButton';
 
 interface OptionValue {
   id: string;
@@ -106,14 +107,19 @@ export default function ProductDetailClient({
         />
       )}
 
-      {/* Add to Cart */}
-      <AddToCartButton 
-        product={product}
-        price={totalPrice}
-        currency={currency}
-        selectedOptions={selectedOptions}
-        variantId={variantId}
-      />
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <AddToCartButton 
+            product={product}
+            price={totalPrice}
+            currency={currency}
+            selectedOptions={selectedOptions}
+            variantId={variantId}
+          />
+        </div>
+        <WishlistButton productId={product.id} size="lg" variant="icon" className="shadow-md" />
+      </div>
     </div>
   );
 }
