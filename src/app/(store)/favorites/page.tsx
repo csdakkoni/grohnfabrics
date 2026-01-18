@@ -9,7 +9,7 @@ import { useCart } from '@/components/store/CartProvider';
 export default function FavoritesPage() {
   const { items, loading, removeFromWishlist } = useWishlist();
   const { t, region, locale } = useMarket();
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
   const isEnglish = locale === 'en';
   const currencySymbol = region === 'TR' ? '₺' : '$';
 
@@ -30,7 +30,7 @@ export default function FavoritesPage() {
     
     if (!price) return;
 
-    addItem({
+    addToCart({
       productId: product.id,
       name: isEnglish ? (product.name_en || product.name_tr) : product.name_tr,
       price: price.price,
