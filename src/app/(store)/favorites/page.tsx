@@ -34,9 +34,9 @@ export default function FavoritesPage() {
       productId: product.id,
       name: isEnglish ? (product.name_en || product.name_tr) : product.name_tr,
       price: price.price,
-      quantity: product.sales_model === 'meter' ? 1 : 1,
+      quantity: 1,
       image: product.thumbnail_url || product.images?.[0],
-      salesModel: product.sales_model,
+      salesModel: product.sales_model as 'meter' | 'unit' | 'preset_sizes',
     });
   };
 
