@@ -156,7 +156,9 @@ async function getTopProducts() {
   const productStats: Record<string, { name: string; revenue: number; quantity: number }> = {};
   
   (data || []).forEach((item) => {
-    const order = item.order as { status: string; currency: string } | null;
+    // order is returned as array from Supabase join, get first element
+    const orderArr = item.order as Array<{ status: string; currency: string }> | null;
+    const order = Array.isArray(orderArr) ? orderArr[0] : orderArr;
     if (order?.status === 'cancelled') return;
     
     if (!productStats[item.product_id]) {
