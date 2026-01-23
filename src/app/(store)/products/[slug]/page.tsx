@@ -2,11 +2,13 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Truck, Shield, Package } from 'lucide-react';
+import { ChevronRight, Truck, Shield, Package, Ruler, Scale, Droplets, Scissors } from 'lucide-react';
 import ProductDetailClient from './ProductDetailClient';
 import ProductPrice from '@/components/store/ProductPrice';
 import ProductGallery from '@/components/store/ProductGallery';
 import AskQuestionForm from '@/components/store/AskQuestionForm';
+import CustomerReviews from '@/components/store/CustomerReviews';
+import SwatchRequestForm from '@/components/store/SwatchRequestForm';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -71,6 +73,7 @@ async function getProduct(slug: string) {
     .select(`
       *,
       category:categories(name_tr, name_en, slug),
+      material:materials(id, name, composition, width_cm, weight_gsm, shrinkage_percent, care_instructions_tr, care_instructions_en),
       prices:product_prices(id, price, currency, market_id),
       option_groups:option_groups(
         id, name_tr, name_en, option_type, is_required,
@@ -125,6 +128,7 @@ export default async function ProductPage({
   const baseCurrency = currentPrice?.currency || (region === 'TR' ? 'TRY' : 'USD');
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
+  const material = Array.isArray(product.material) ? product.material[0] : product.material;
   const optionGroups = product.option_groups || [];
 
   // Localized labels
@@ -222,6 +226,30 @@ export default async function ProductPage({
               locale={locale}
             />
 
+            {/* Swatch Request - Only for fabric products */}
+            {product.product_type === 'fabric' && (
+              <div className="mt-6">
+                <SwatchRequestForm 
+                  productId={product.id}
+                  productName={isEnglish ? (product.name_en || product.name_tr) : product.name_tr}
+                  productImage={product.thumbnail_url || product.images?.[0]}
+                  colorOptions={
+                    optionGroups
+                      .filter((g: { option_type: string }) => g.option_type === 'color')
+                      .flatMap((g: { values: Array<{ id: string; value_tr: string; value_en: string; hex_color?: string; is_available: boolean }> }) => 
+                        g.values
+                          .filter((v: { is_available: boolean }) => v.is_available)
+                          .map((v: { id: string; value_tr: string; value_en: string; hex_color?: string }) => ({
+                            id: v.id,
+                            name: isEnglish ? v.value_en : v.value_tr,
+                            hex: v.hex_color,
+                          }))
+                      )
+                  }
+                />
+              </div>
+            )}
+
             {/* Ask a Question */}
             <div className="mt-6">
               <AskQuestionForm 
@@ -262,7 +290,66 @@ export default async function ProductPage({
               </div>
             )}
 
-            {/* Material Info - TODO: Re-enable after materials FK is fixed */}
+            {/* Technical Specifications */}
+            {material && (
+              <div className="mt-8 pt-8 border-t border-[var(--border)]">
+                <h3 className="text-sm font-semibold mb-4">{t('Teknik Özellikler', 'Technical Specifications')}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {material.composition && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] flex items-center justify-center flex-shrink-0">
+                        <Droplets className="w-4 h-4 text-[var(--brand-primary)]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-[var(--foreground-muted)]">{t('Kompozisyon', 'Composition')}</p>
+                        <p className="text-sm font-medium">{material.composition}</p>
+                      </div>
+                    </div>
+                  )}
+                  {material.width_cm && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] flex items-center justify-center flex-shrink-0">
+                        <Ruler className="w-4 h-4 text-[var(--brand-primary)]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-[var(--foreground-muted)]">{t('Kumaş Eni', 'Fabric Width')}</p>
+                        <p className="text-sm font-medium">{material.width_cm} cm</p>
+                      </div>
+                    </div>
+                  )}
+                  {material.weight_gsm && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] flex items-center justify-center flex-shrink-0">
+                        <Scale className="w-4 h-4 text-[var(--brand-primary)]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-[var(--foreground-muted)]">{t('Gramaj', 'Weight')}</p>
+                        <p className="text-sm font-medium">{material.weight_gsm} GSM</p>
+                      </div>
+                    </div>
+                  )}
+                  {material.shrinkage_percent && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] flex items-center justify-center flex-shrink-0">
+                        <Scissors className="w-4 h-4 text-[var(--brand-primary)]" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-[var(--foreground-muted)]">{t('Çekme Oranı', 'Shrinkage')}</p>
+                        <p className="text-sm font-medium">%{material.shrinkage_percent}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Care Instructions */}
+                {(isEnglish ? material.care_instructions_en : material.care_instructions_tr) && (
+                  <div className="mt-4 p-4 bg-[var(--background-secondary)] rounded-xl">
+                    <p className="text-xs text-[var(--foreground-muted)] mb-1">{t('Bakım Talimatları', 'Care Instructions')}</p>
+                    <p className="text-sm">{isEnglish ? material.care_instructions_en : material.care_instructions_tr}</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Sales Model Info */}
             <div className="mt-8 p-4 bg-[var(--background-secondary)] rounded-xl">
@@ -276,6 +363,12 @@ export default async function ProductPage({
           </div>
         </div>
       </div>
+
+      {/* Customer Reviews Section */}
+      <CustomerReviews 
+        category={product.product_type === 'fabric' ? 'fabric' : 'curtain'}
+        showEtsyLink={true}
+      />
     </div>
   );
 }

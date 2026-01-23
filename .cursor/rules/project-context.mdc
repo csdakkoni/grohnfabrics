@@ -1,0 +1,120 @@
+---
+description: Grohn Fabrics - E-ticaret platformu bağlamı ve kurallar
+alwaysApply: true
+---
+
+# Grohn Fabrics
+
+Premium tekstil e-ticaret platformu. İki pazarda (TR + Global) faaliyet gösterir.
+
+## ÖNEMLİ: Oturum Başlangıç Protokolü
+
+**Her yeni konuşmada MUTLAKA şunu yap:**
+
+1. `CURRENT_WORK.md` dosyasını oku
+2. Kullanıcıya kaldığımız yeri özetle
+3. Yarım kalan işler varsa hatırlat
+
+**Her oturum sonunda veya kullanıcı istediğinde:**
+
+1. `CURRENT_WORK.md` dosyasını güncelle
+2. Kullanıcıya özet ver
+
+**Kullanıcı "kaydet", "güncelle", "not al" derse:** CURRENT_WORK.md'yi güncelle.
+
+## Teknoloji Stack
+
+- **Frontend:** Next.js 16 (App Router) + React 19
+- **Dil:** TypeScript (strict mode)
+- **Stil:** Tailwind CSS v4
+- **Veritabanı:** PostgreSQL (Supabase)
+- **Auth:** Supabase Auth
+- **Storage:** Cloudflare R2 + Supabase Storage
+- **Görsel İşleme:** Sharp
+- **Ödeme:** iyzico (TR) + Stripe (Global)
+- **Kargo:** UPS (Global) + Yurtiçi Kargo (TR)
+- **E-posta:** Resend
+
+## Çift Market Mimarisi
+
+### MARKET_TR (Türkiye)
+- **Para birimi:** TRY
+- **Ödeme:** iyzico
+- **Kargo:** Yurtiçi Kargo + UPS
+
+### MARKET_GLOBAL (Dünya)
+- **Para birimi:** USD / EUR
+- **Ödeme:** Stripe
+- **Kargo:** UPS (ShipFrom HER ZAMAN Türkiye!)
+
+## Proje Yapısı
+
+```
+src/
+├── app/
+│   ├── (store)/          # Mağaza sayfaları (müşteri)
+│   │   ├── products/     # Ürün listesi ve detay
+│   │   ├── checkout/     # Ödeme sayfası
+│   │   ├── account/      # Kullanıcı hesabı
+│   │   └── order/        # Sipariş takibi
+│   ├── (admin)/          # Admin paneli
+│   │   └── admin/
+│   │       ├── products/ # Ürün yönetimi
+│   │       ├── orders/   # Sipariş yönetimi
+│   │       ├── stock/    # Stok (rulo bazlı)
+│   │       └── settings/ # Ayarlar
+│   ├── api/              # API routes
+│   │   ├── checkout/     # Ödeme başlatma
+│   │   ├── payment/      # Webhook'lar (iyzico + Stripe)
+│   │   └── shipping/     # UPS entegrasyonu
+│   └── login/            # Giriş sayfası
+├── components/
+│   ├── store/            # Mağaza bileşenleri
+│   └── admin/            # Admin bileşenleri
+├── lib/
+│   ├── supabase/         # Supabase client (admin + client)
+│   ├── ups/              # UPS API servisi
+│   ├── email/            # E-posta şablonları
+│   ├── i18n/             # Çoklu dil desteği
+│   ├── cart.ts           # Sepet yönetimi
+│   └── r2.ts             # Cloudflare R2
+└── types/                # TypeScript tipleri
+```
+
+## Ürün Tipleri
+
+| Tip | Birim | Stok Takibi |
+|-----|-------|-------------|
+| Fabric (Kumaş) | Metre | Rulo bazlı |
+| Pillow (Yastık) | Adet | Normal |
+| Curtain (Perde) | Preset boyutlar | Normal |
+
+## Kritik Kurallar
+
+1. **UPS ShipFrom:** HER ZAMAN Türkiye (CountryCode: "TR")
+2. **Currency Lock:** Sepetteki para birimi checkout'ta değişmez
+3. **TR Market:** Sadece iyzico kullan
+4. **Global Market:** Sadece Stripe kullan
+5. **Stock:** Kumaşlar rulo bazlı takip edilir
+
+## Supabase Migrations
+
+`supabase/migrations/` klasöründe sıralı SQL dosyaları var.
+
+## Sık Kullanılan Komutlar
+
+```bash
+npm run dev      # Geliştirme (localhost:3000)
+npm run build    # Production build
+npm run lint     # ESLint kontrolü
+```
+
+## Kullanıcı Kısayolları
+
+| Komut | Anlam |
+|-------|-------|
+| "nerede kalmıştık" | CURRENT_WORK.md oku, özetle |
+| "kaydet" / "not al" | CURRENT_WORK.md güncelle |
+| "yarın devam" | Durumu kaydet, özet ver |
+| "ne yaptık" | Son değişiklikleri listele |
+| "öncelikler ne" | Yarım kalan işleri listele |
