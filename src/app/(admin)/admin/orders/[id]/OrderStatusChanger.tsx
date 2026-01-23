@@ -91,6 +91,21 @@ export default function OrderStatusChanger({ orderId, currentStatus }: OrderStat
           // Don't fail the status update if email fails
         }
       }
+
+      // Send review request email when status changes to delivered
+      if (newStatus === 'delivered') {
+        try {
+          await fetch(`/api/orders/${orderId}/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'review_request' }),
+          });
+        } catch (emailError) {
+          console.error('Failed to send review request:', emailError);
+          // Don't fail the status update if email fails
+        }
+      }
+      
       router.refresh();
     }
 

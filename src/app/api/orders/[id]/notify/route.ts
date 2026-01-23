@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { sendShippingNotificationEmail } from '@/lib/email';
+import { Resend } from 'resend';
+import { generateShipmentNotificationEmail, getShipmentNotificationSubject } from '@/lib/email/templates/shipment-notification';
+import { generateReviewRequestEmail, getReviewRequestSubject } from '@/lib/email/templates/review-request';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(
   request: NextRequest,
@@ -8,93 +12,79 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { type } = await request.json();
+    const body = await request.json();
+    const { type } = body; // 'shipping' or 'review_request'
 
-    if (type !== 'shipping') {
-      return NextResponse.json({ error: 'Unknown notification type' }, { status: 400 });
-    }
-
-    // Fetch order with items
-    const { data: order, error } = await supabaseAdmin
+    // Get order details
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .select(`
-        order_number,
-        guest_email,
-        guest_info,
-        subtotal,
-        shipping_cost,
-        discount_amount,
-        total_amount,
-        currency,
-        shipping_address,
-        tracking_number,
-        market_id,
-        order_items:order_items(product_name, quantity, unit_price, unit_type)
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
-    if (error || !order) {
+    if (orderError || !order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (!order.guest_email) {
-      return NextResponse.json({ error: 'No email address' }, { status: 400 });
+    // Get customer email
+    const customerEmail = order.guest_email || order.guest_info?.email;
+    const customerName = order.guest_info?.firstName || order.shipping_address?.first_name || 'Customer';
+    
+    if (!customerEmail) {
+      return NextResponse.json({ error: 'No email found for order' }, { status: 400 });
     }
 
-    const shippingAddress = order.shipping_address as { 
-      addressLine1: string; 
-      city: string; 
-      country: string; 
-      postalCode: string;
-    };
-    const guestInfo = order.guest_info as { firstName: string; lastName: string };
-
-    // Determine locale based on market
+    // Determine locale from order
     const locale = order.market_id === 'TR' ? 'tr' : 'en';
 
-    // Generate UPS tracking URL
-    const trackingUrl = order.tracking_number 
-      ? `https://www.ups.com/track?tracknum=${order.tracking_number}`
-      : undefined;
+    let emailHtml: string;
+    let subject: string;
 
-    const result = await sendShippingNotificationEmail({
-      orderNumber: order.order_number,
-      customerName: `${guestInfo?.firstName || ''} ${guestInfo?.lastName || ''}`.trim() || (locale === 'tr' ? 'Müşteri' : 'Customer'),
-      email: order.guest_email,
-      items: (order.order_items || []).map((item: { 
-        product_name: string; 
-        quantity: number; 
-        unit_price: number; 
-        unit_type: string;
-      }) => ({
-        name: item.product_name,
-        quantity: item.quantity,
-        price: item.unit_price * item.quantity,
-        unit: item.unit_type === 'meter' ? 'm' : (locale === 'tr' ? 'adet' : 'pcs'),
-      })),
-      subtotal: order.subtotal,
-      shippingCost: order.shipping_cost,
-      discount: order.discount_amount || 0,
-      total: order.total_amount,
-      currency: order.currency,
-      shippingAddress: {
-        addressLine1: shippingAddress?.addressLine1 || '',
-        city: shippingAddress?.city || '',
-        country: shippingAddress?.country || '',
-        postalCode: shippingAddress?.postalCode || '',
-      },
-      trackingNumber: order.tracking_number || undefined,
-      trackingUrl,
-    }, locale);
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+    if (type === 'shipping') {
+      // Shipping notification
+      emailHtml = generateShipmentNotificationEmail({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        customerName,
+        trackingNumber: order.tracking_number,
+        shippingProvider: order.shipping_provider || 'ups',
+        locale,
+      });
+      subject = getShipmentNotificationSubject(order.order_number, locale);
+    } else if (type === 'review_request') {
+      // Review request email
+      emailHtml = generateReviewRequestEmail({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        customerName,
+        locale,
+      });
+      subject = getReviewRequestSubject(locale);
+    } else {
+      return NextResponse.json({ error: 'Invalid notification type' }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    // Send email
+    const { data, error: emailError } = await resend.emails.send({
+      from: 'Grohn Fabrics <noreply@grohnfabrics.com>',
+      to: [customerEmail],
+      subject,
+      html: emailHtml,
+    });
+
+    if (emailError) {
+      console.error('Email send error:', emailError);
+      return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      messageId: data?.id,
+      type,
+    });
+
   } catch (error) {
-    console.error('Notification error:', error);
-    return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 });
+    console.error('Notify API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
