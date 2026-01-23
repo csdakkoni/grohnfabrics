@@ -68,12 +68,12 @@ export async function generateMetadata({
 }
 
 async function getProduct(slug: string) {
-  const { data, error } = await supabaseAdmin
+  // First get the product
+  const { data: product, error } = await supabaseAdmin
     .from('products')
     .select(`
       *,
       category:categories(name_tr, name_en, slug),
-      material:materials(id, name, composition, width_cm, weight_gsm, shrinkage_percent, care_instructions_tr, care_instructions_en),
       prices:product_prices(id, price, currency, market_id),
       option_groups:option_groups(
         id, name_tr, name_en, option_type, is_required,
@@ -86,9 +86,21 @@ async function getProduct(slug: string) {
 
   if (error) {
     console.error('Product fetch error:', error);
+    return null;
   }
 
-  return data;
+  // If product has material_id, fetch material separately
+  let material = null;
+  if (product?.material_id) {
+    const { data: materialData } = await supabaseAdmin
+      .from('materials')
+      .select('id, name, composition, width_cm, weight_gsm, shrinkage_percent, care_instructions_tr, care_instructions_en')
+      .eq('id', product.material_id)
+      .single();
+    material = materialData;
+  }
+
+  return { ...product, material };
 }
 
 export default async function ProductPage({
@@ -128,7 +140,7 @@ export default async function ProductPage({
   const baseCurrency = currentPrice?.currency || (region === 'TR' ? 'TRY' : 'USD');
   
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
-  const material = Array.isArray(product.material) ? product.material[0] : product.material;
+  const material = product.material; // Already fetched separately
   const optionGroups = product.option_groups || [];
 
   // Localized labels
