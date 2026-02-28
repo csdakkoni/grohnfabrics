@@ -102,10 +102,13 @@ export default async function HomePage() {
   // Currency based on REGION (not locale)
   const currencySymbol = region === 'TR' ? '₺' : '$';
 
-  const [featuredProducts, categories] = await Promise.all([
+  const [featuredProducts, categories, homepageImagesRes] = await Promise.all([
     getFeaturedProducts(region),
     getCategories(),
+    supabaseAdmin.from('site_settings').select('value').eq('key', 'homepage_images').single(),
   ]);
+
+  const homepageImages = homepageImagesRes.data?.value as { before_after_before?: string; before_after_after?: string } | null;
 
   const typeLabels: Record<string, { tr: string; en: string }> = {
     fabric: { tr: 'Kumaş', en: 'Fabric' },
@@ -307,6 +310,8 @@ export default async function HomePage() {
             <BeforeAfterSlider
               beforeLabel={t('ÖNCE', 'BEFORE')}
               afterLabel={t('SONRA', 'AFTER')}
+              beforeImage={homepageImages?.before_after_before || null}
+              afterImage={homepageImages?.before_after_after || null}
             />
           </div>
         </div>

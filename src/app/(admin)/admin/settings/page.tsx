@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Save, Building2 } from 'lucide-react';
+import { Save, Building2, Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface Company {
   id: string;
@@ -38,6 +38,10 @@ interface SiteSettings {
     default_title: string;
     default_description: string;
   };
+  homepage_images: {
+    before_after_before: string;
+    before_after_after: string;
+  };
 }
 
 export default function SettingsPage() {
@@ -50,7 +54,12 @@ export default function SettingsPage() {
     general: { site_name: '', contact_email: '' },
     social: { instagram: '', pinterest: '', facebook: '' },
     seo: { default_title: '', default_description: '' },
+    homepage_images: { before_after_before: '', before_after_after: '' },
   });
+  const [uploadingBefore, setUploadingBefore] = useState(false);
+  const [uploadingAfter, setUploadingAfter] = useState(false);
+  const beforeInputRef = useRef<HTMLInputElement>(null);
+  const afterInputRef = useRef<HTMLInputElement>(null);
 
   // Modal açıkken arka planın scroll olmasını engelle
   useEffect(() => {
@@ -73,21 +82,22 @@ export default function SettingsPage() {
       supabase.from('site_settings').select('key, value'),
       supabase.from('companies').select('*').order('code'),
     ]);
-    
+
     if (settingsRes.data) {
       const newSettings = { ...settings };
       settingsRes.data.forEach((row) => {
         if (row.key === 'general') newSettings.general = row.value as typeof settings.general;
         if (row.key === 'social') newSettings.social = row.value as typeof settings.social;
         if (row.key === 'seo') newSettings.seo = row.value as typeof settings.seo;
+        if (row.key === 'homepage_images') newSettings.homepage_images = row.value as typeof settings.homepage_images;
       });
       setSettings(newSettings);
     }
-    
+
     if (companiesRes.data) {
       setCompanies(companiesRes.data);
     }
-    
+
     setLoading(false);
   }
 
@@ -103,7 +113,7 @@ export default function SettingsPage() {
         contact: company.contact,
       })
       .eq('id', company.id);
-    
+
     setEditingCompany(null);
     loadSettings();
     setSaving(false);
@@ -112,11 +122,12 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    
+
     await Promise.all([
       supabase.from('site_settings').upsert({ key: 'general', value: settings.general }),
       supabase.from('site_settings').upsert({ key: 'social', value: settings.social }),
       supabase.from('site_settings').upsert({ key: 'seo', value: settings.seo }),
+      supabase.from('site_settings').upsert({ key: 'homepage_images', value: settings.homepage_images }),
     ]);
 
     setSaving(false);
@@ -208,152 +219,304 @@ export default function SettingsPage() {
           <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto">
             <div className="min-h-full flex items-center justify-center p-4">
               <div className="card w-full max-w-2xl">
-              <div className="card-header">
-                <h2 className="card-title">Şirket Düzenle: {editingCompany.code}</h2>
-              </div>
-              <div className="card-body space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="card-header">
+                  <h2 className="card-title">Şirket Düzenle: {editingCompany.code}</h2>
+                </div>
+                <div className="card-body space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-group">
+                      <label className="label">Şirket Adı *</label>
+                      <input
+                        type="text"
+                        value={editingCompany.name}
+                        onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })}
+                        className="input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="label">Resmi Unvan</label>
+                      <input
+                        type="text"
+                        value={editingCompany.legal_name || ''}
+                        onChange={(e) => setEditingCompany({ ...editingCompany, legal_name: e.target.value })}
+                        className="input"
+                      />
+                    </div>
+                  </div>
                   <div className="form-group">
-                    <label className="label">Şirket Adı *</label>
+                    <label className="label">Vergi Numarası</label>
                     <input
                       type="text"
-                      value={editingCompany.name}
-                      onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })}
+                      value={editingCompany.tax_id || ''}
+                      onChange={(e) => setEditingCompany({ ...editingCompany, tax_id: e.target.value })}
                       className="input"
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="label">Resmi Unvan</label>
-                    <input
-                      type="text"
-                      value={editingCompany.legal_name || ''}
-                      onChange={(e) => setEditingCompany({ ...editingCompany, legal_name: e.target.value })}
-                      className="input"
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="label">Vergi Numarası</label>
-                  <input
-                    type="text"
-                    value={editingCompany.tax_id || ''}
-                    onChange={(e) => setEditingCompany({ ...editingCompany, tax_id: e.target.value })}
-                    className="input"
-                  />
-                </div>
 
-                <h4 className="font-medium pt-2">Adres Bilgileri</h4>
-                <div className="form-group">
-                  <label className="label">Adres</label>
-                  <input
-                    type="text"
-                    value={editingCompany.address?.street || ''}
-                    onChange={(e) => setEditingCompany({ 
-                      ...editingCompany, 
-                      address: { ...editingCompany.address, street: e.target.value } 
-                    })}
-                    className="input"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
+                  <h4 className="font-medium pt-2">Adres Bilgileri</h4>
                   <div className="form-group">
-                    <label className="label">Şehir</label>
+                    <label className="label">Adres</label>
                     <input
                       type="text"
-                      value={editingCompany.address?.city || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        address: { ...editingCompany.address, city: e.target.value } 
+                      value={editingCompany.address?.street || ''}
+                      onChange={(e) => setEditingCompany({
+                        ...editingCompany,
+                        address: { ...editingCompany.address, street: e.target.value }
                       })}
                       className="input"
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="label">Posta Kodu</label>
-                    <input
-                      type="text"
-                      value={editingCompany.address?.postal_code || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        address: { ...editingCompany.address, postal_code: e.target.value } 
-                      })}
-                      className="input"
-                    />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="form-group">
+                      <label className="label">Şehir</label>
+                      <input
+                        type="text"
+                        value={editingCompany.address?.city || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          address: { ...editingCompany.address, city: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="label">Posta Kodu</label>
+                      <input
+                        type="text"
+                        value={editingCompany.address?.postal_code || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          address: { ...editingCompany.address, postal_code: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="label">Ülke</label>
+                      <input
+                        type="text"
+                        value={editingCompany.address?.country || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          address: { ...editingCompany.address, country: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="label">Ülke</label>
-                    <input
-                      type="text"
-                      value={editingCompany.address?.country || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        address: { ...editingCompany.address, country: e.target.value } 
-                      })}
-                      className="input"
-                    />
-                  </div>
-                </div>
 
-                <h4 className="font-medium pt-2">İletişim Bilgileri</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="form-group">
-                    <label className="label">E-posta</label>
-                    <input
-                      type="email"
-                      value={editingCompany.contact?.email || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        contact: { ...editingCompany.contact, email: e.target.value } 
-                      })}
-                      className="input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="label">Telefon</label>
-                    <input
-                      type="tel"
-                      value={editingCompany.contact?.phone || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        contact: { ...editingCompany.contact, phone: e.target.value } 
-                      })}
-                      className="input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="label">Website</label>
-                    <input
-                      type="url"
-                      value={editingCompany.contact?.website || ''}
-                      onChange={(e) => setEditingCompany({ 
-                        ...editingCompany, 
-                        contact: { ...editingCompany.contact, website: e.target.value } 
-                      })}
-                      className="input"
-                    />
+                  <h4 className="font-medium pt-2">İletişim Bilgileri</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="form-group">
+                      <label className="label">E-posta</label>
+                      <input
+                        type="email"
+                        value={editingCompany.contact?.email || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          contact: { ...editingCompany.contact, email: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="label">Telefon</label>
+                      <input
+                        type="tel"
+                        value={editingCompany.contact?.phone || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          contact: { ...editingCompany.contact, phone: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="label">Website</label>
+                      <input
+                        type="url"
+                        value={editingCompany.contact?.website || ''}
+                        onChange={(e) => setEditingCompany({
+                          ...editingCompany,
+                          contact: { ...editingCompany.contact, website: e.target.value }
+                        })}
+                        className="input"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="card-footer flex gap-3">
-                <button 
-                  onClick={() => setEditingCompany(null)}
-                  className="btn btn-secondary flex-1"
-                >
-                  İptal
-                </button>
-                <button 
-                  onClick={() => saveCompany(editingCompany)}
-                  disabled={saving}
-                  className="btn btn-primary flex-1"
-                >
-                  {saving ? 'Kaydediliyor...' : 'Kaydet'}
-                </button>
-              </div>
+                <div className="card-footer flex gap-3">
+                  <button
+                    onClick={() => setEditingCompany(null)}
+                    className="btn btn-secondary flex-1"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={() => saveCompany(editingCompany)}
+                    disabled={saving}
+                    className="btn btn-primary flex-1"
+                  >
+                    {saving ? 'Kaydediliyor...' : 'Kaydet'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
+        {/* Homepage Images - Before/After */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" />
+              Ana Sayfa Görselleri
+            </h2>
+            <p className="card-description">Before/After slider için görseller yükleyin</p>
+          </div>
+          <div className="card-body">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Before Image */}
+              <div>
+                <label className="label">Önce (Before) Görseli</label>
+                <p className="text-xs text-[var(--foreground-muted)] mb-3">Perdesiz oda fotoğrafı</p>
+                {settings.homepage_images.before_after_before ? (
+                  <div className="relative rounded-xl overflow-hidden border border-[var(--border)] aspect-video">
+                    <img
+                      src={settings.homepage_images.before_after_before}
+                      alt="Before"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => setSettings({
+                        ...settings,
+                        homepage_images: { ...settings.homepage_images, before_after_before: '' }
+                      })}
+                      className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => beforeInputRef.current?.click()}
+                    disabled={uploadingBefore}
+                    className="w-full aspect-video border-2 border-dashed border-[var(--border)] rounded-xl flex flex-col items-center justify-center gap-2 hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/2 transition-colors cursor-pointer"
+                  >
+                    {uploadingBefore ? (
+                      <div className="animate-spin w-6 h-6 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full" />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-[var(--foreground-light)]" />
+                        <span className="text-sm text-[var(--foreground-muted)]">Görsel Yükle</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <input
+                  ref={beforeInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingBefore(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      formData.append('folder', 'homepage');
+                      const res = await fetch('/api/image/upload', { method: 'POST', body: formData });
+                      const data = await res.json();
+                      if (data.url) {
+                        setSettings({
+                          ...settings,
+                          homepage_images: { ...settings.homepage_images, before_after_before: data.url }
+                        });
+                      }
+                    } catch (err) {
+                      console.error('Upload error:', err);
+                      alert('Yükleme hatası!');
+                    }
+                    setUploadingBefore(false);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+
+              {/* After Image */}
+              <div>
+                <label className="label">Sonra (After) Görseli</label>
+                <p className="text-xs text-[var(--foreground-muted)] mb-3">Perdeli oda fotoğrafı</p>
+                {settings.homepage_images.before_after_after ? (
+                  <div className="relative rounded-xl overflow-hidden border border-[var(--border)] aspect-video">
+                    <img
+                      src={settings.homepage_images.before_after_after}
+                      alt="After"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => setSettings({
+                        ...settings,
+                        homepage_images: { ...settings.homepage_images, before_after_after: '' }
+                      })}
+                      className="absolute top-2 right-2 w-7 h-7 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => afterInputRef.current?.click()}
+                    disabled={uploadingAfter}
+                    className="w-full aspect-video border-2 border-dashed border-[var(--border)] rounded-xl flex flex-col items-center justify-center gap-2 hover:border-[var(--brand-primary)]/50 hover:bg-[var(--brand-primary)]/2 transition-colors cursor-pointer"
+                  >
+                    {uploadingAfter ? (
+                      <div className="animate-spin w-6 h-6 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full" />
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 text-[var(--foreground-light)]" />
+                        <span className="text-sm text-[var(--foreground-muted)]">Görsel Yükle</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <input
+                  ref={afterInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingAfter(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      formData.append('folder', 'homepage');
+                      const res = await fetch('/api/image/upload', { method: 'POST', body: formData });
+                      const data = await res.json();
+                      if (data.url) {
+                        setSettings({
+                          ...settings,
+                          homepage_images: { ...settings.homepage_images, before_after_after: data.url }
+                        });
+                      }
+                    } catch (err) {
+                      console.error('Upload error:', err);
+                      alert('Yükleme hatası!');
+                    }
+                    setUploadingAfter(false);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-[var(--foreground-muted)] mt-4">
+              💡 İpucu: Aynı odanın perdesiz ve perdeli halini çekin. En boy oranı 16:9 ideal. Yükledikten sonra &quot;Kaydet&quot; butonuna basmayı unutmayın.
+            </p>
+          </div>
+        </div>
         {/* General */}
         <div className="card">
           <div className="card-header">
