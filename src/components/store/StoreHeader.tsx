@@ -33,7 +33,7 @@ export default function StoreHeader() {
         <div className="container">
           <div className="flex items-center justify-between h-16">
             {/* Mobile Menu Button */}
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors"
             >
@@ -52,35 +52,41 @@ export default function StoreHeader() {
 
             {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center gap-6">
-              <Link 
-                href="/products" 
+              <Link
+                href="/products"
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Koleksiyon', 'Collection')}
               </Link>
-              <Link 
-                href="/products?type=fabric" 
+              <Link
+                href="/products?type=fabric"
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Kumaşlar', 'Fabrics')}
               </Link>
-              <Link 
-                href="/products?type=curtain" 
+              <Link
+                href="/products?type=curtain"
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Perdeler', 'Curtains')}
               </Link>
-              <Link 
-                href="/products?type=pillow" 
+              <Link
+                href="/measurement-tool"
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                {t('Ev Tekstili', 'Home Textiles')}
+                {t('Ölçü Aracı', 'Measure')}
               </Link>
-              <Link 
-                href="/about" 
+              <Link
+                href="/design-service"
                 className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
               >
-                {t('Hikayemiz', 'Our Story')}
+                {t('Tasarım', 'Design')}
+              </Link>
+              <Link
+                href="/gallery"
+                className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
+              >
+                {t('Galeri', 'Gallery')}
               </Link>
             </nav>
 
@@ -88,7 +94,7 @@ export default function StoreHeader() {
             <div className="flex items-center gap-1 md:gap-2">
               {/* Admin Panel Link - Only for admins */}
               {isAdminMode && (
-                <Link 
+                <Link
                   href="/admin/dashboard"
                   className="flex items-center gap-2 px-3 py-2 text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg transition-colors"
                 >
@@ -96,12 +102,12 @@ export default function StoreHeader() {
                   <span className="hidden sm:inline">Admin</span>
                 </Link>
               )}
-              
+
               {/* Market/Language Switcher */}
               <MarketSwitcher />
-              
+
               {/* Search Button */}
-              <button 
+              <button
                 onClick={() => setSearchOpen(true)}
                 className="flex items-center gap-2 p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
               >
@@ -111,10 +117,10 @@ export default function StoreHeader() {
                   <kbd className="px-1.5 py-0.5 bg-[var(--brand-primary)]/5 rounded text-xs font-mono text-[var(--brand-primary)]">⌘K</kbd>
                 </span>
               </button>
-              
+
               {/* Wishlist */}
-              <Link 
-                href="/favorites" 
+              <Link
+                href="/favorites"
                 className="relative p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
               >
                 <Heart className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--error)]" />
@@ -126,13 +132,13 @@ export default function StoreHeader() {
               </Link>
 
               {/* Account */}
-              <Link 
-                href="/account" 
+              <Link
+                href="/account"
                 className="p-2 hover:bg-[var(--brand-primary)]/5 rounded-lg transition-colors group"
               >
                 <User className="w-5 h-5 text-[var(--foreground-muted)] group-hover:text-[var(--brand-primary)]" />
               </Link>
-              
+
               {/* Cart */}
               <CartButton />
             </div>
@@ -143,43 +149,58 @@ export default function StoreHeader() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[var(--brand-primary)]/10 bg-[var(--background)]">
             <nav className="container py-4 space-y-1">
-              <Link 
+              <Link
                 href="/products"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Koleksiyon', 'Collection')}
               </Link>
-              <Link 
+              <Link
                 href="/products?type=fabric"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Kumaşlar', 'Fabrics')}
               </Link>
-              <Link 
+              <Link
                 href="/products?type=curtain"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Perdeler', 'Curtains')}
               </Link>
-              <Link 
-                href="/products?type=pillow"
+              <hr className="border-[var(--brand-primary)]/10 my-2" />
+              <Link
+                href="/measurement-tool"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
-                {t('Ev Tekstili', 'Home Textiles')}
+                📐 {t('Ölçü Hesaplayıcı', 'Measurement Tool')}
+              </Link>
+              <Link
+                href="/design-service"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
+              >
+                🎨 {t('Ücretsiz Tasarım', 'Free Design')}
+              </Link>
+              <Link
+                href="/gallery"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
+              >
+                🖼️ {t('İlham Galerisi', 'Gallery')}
               </Link>
               <hr className="border-[var(--brand-primary)]/10 my-2" />
-              <Link 
+              <Link
                 href="/about"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
               >
                 {t('Hikayemiz', 'Our Story')}
               </Link>
-              <Link 
+              <Link
                 href="/contact"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"

@@ -4,6 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Leaf, Sparkles, Package, Recycle, Heart } from 'lucide-react';
 import NewsletterForm from '@/components/store/NewsletterForm';
 import CustomerReviews from '@/components/store/CustomerReviews';
+import BeforeAfterSlider from '@/components/store/BeforeAfterSlider';
+import WhyChooseUs from '@/components/store/WhyChooseUs';
+import SupportHub from '@/components/store/SupportHub';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -15,14 +18,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const isEnglish = locale === 'en';
 
   return {
-    title: isEnglish 
+    title: isEnglish
       ? 'Grohn Fabrics - Premium Textiles & Home Decor'
       : 'Grohn Fabrics - Premium Kumaş & Ev Tekstili',
     description: isEnglish
       ? 'Shop premium quality fabrics, curtains, and home textiles. Natural fibers, sustainable production, handcrafted in Turkey. Free worldwide shipping.'
       : 'Premium kalite kumaş, perde ve ev tekstili. Doğal lifler, sürdürülebilir üretim, Türkiye\'den el işçiliği. Dünya genelinde ücretsiz kargo.',
     openGraph: {
-      title: isEnglish 
+      title: isEnglish
         ? 'Grohn Fabrics - Premium Textiles & Home Decor'
         : 'Grohn Fabrics - Premium Kumaş & Ev Tekstili',
       description: isEnglish
@@ -36,8 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: 'Grohn Fabrics',
-      description: isEnglish 
-        ? 'Premium textiles from Turkey' 
+      description: isEnglish
+        ? 'Premium textiles from Turkey'
         : 'Türkiye\'den premium tekstil',
     },
     alternates: {
@@ -198,10 +201,10 @@ export default async function HomePage() {
                 const regionPrice = prices.find((p: { market_id: string }) => p.market_id === region);
                 const imageUrl = product.thumbnail_url || product.images?.[0];
                 const productName = isEnglish ? product.name_en : product.name_tr;
-                
+
                 return (
-                  <Link 
-                    key={product.id} 
+                  <Link
+                    key={product.id}
                     href={`/products/${product.slug}`}
                     className="group"
                   >
@@ -265,8 +268,8 @@ export default async function HomePage() {
               { name: t('Perdeler', 'Curtains'), slug: 'curtain', description: t('Işık ve doğa uyumlu tasarımlar', 'Light and nature-friendly designs'), bg: 'from-[#8BA888]' },
               { name: t('Ev Tekstili', 'Home Textiles'), slug: 'pillow', description: t('Organik yastık ve örtüler', 'Organic pillows and covers'), bg: 'from-[#9CB898]' },
             ].map((category) => (
-              <Link 
-                href={`/products?type=${category.slug}`} 
+              <Link
+                href={`/products?type=${category.slug}`}
                 key={category.slug}
                 className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
               >
@@ -285,46 +288,38 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 bg-white">
+      {/* Before / After Slider */}
+      <section className="py-20">
         <div className="container">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-light">{t('Neden Grohn?', 'Why Grohn?')}</h2>
+          <div className="text-center mb-10">
+            <span className="inline-block px-3 py-1 mb-4 text-xs font-medium bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] rounded-full">
+              {t('Dönüşüm', 'Transformation')}
+            </span>
+            <h2 className="text-3xl font-light mb-4">{t('Perdeyi Çek, Odayı Dönüştür', 'Pull the Drapes, Transform the Room')}</h2>
+            <p className="text-[var(--foreground-muted)] max-w-lg mx-auto">
+              {t(
+                'Bir perdenin farkını kendiniz görün. Sürükleyerek karşılaştırın.',
+                'See the difference a curtain makes. Drag to compare.'
+              )}
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
-              <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
-                <Leaf className="w-7 h-7 text-[var(--brand-primary)]" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t('Doğal Materyaller', 'Natural Materials')}</h3>
-              <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                {t('%100 doğal liflerden üretilen, çevre dostu ve sağlıklı kumaşlar', '100% natural fiber fabrics that are eco-friendly and healthy')}
-              </p>
-            </div>
-            <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
-              <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
-                <Recycle className="w-7 h-7 text-[var(--brand-primary)]" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t('Sürdürülebilir Üretim', 'Sustainable Production')}</h3>
-              <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                {t('Çevreye duyarlı üretim süreçleri ve geri dönüştürülebilir ambalaj', 'Environmentally conscious production processes and recyclable packaging')}
-              </p>
-            </div>
-            <div className="text-center p-8 rounded-2xl bg-[var(--background-secondary)] hover:bg-[var(--brand-primary)]/5 transition-colors">
-              <div className="w-14 h-14 mx-auto mb-5 bg-[var(--brand-primary)]/10 rounded-xl flex items-center justify-center">
-                <Heart className="w-7 h-7 text-[var(--brand-primary)]" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">{t('Usta İşçiliği', 'Master Craftsmanship')}</h3>
-              <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
-                {t('Yılların deneyimiyle harmanlanmış geleneksel zanaat ve modern tasarım', 'Traditional craftsmanship blended with years of experience and modern design')}
-              </p>
-            </div>
+          <div className="max-w-3xl mx-auto">
+            <BeforeAfterSlider
+              beforeLabel={t('ÖNCE', 'BEFORE')}
+              afterLabel={t('SONRA', 'AFTER')}
+            />
           </div>
         </div>
       </section>
 
+      {/* Why Choose Us - Comparison Table */}
+      <WhyChooseUs locale={locale} />
+
       {/* Customer Reviews */}
       <CustomerReviews />
+
+      {/* All-in-One Support Hub */}
+      <SupportHub locale={locale} />
 
       {/* B2B Banner */}
       <section className="py-20 bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary-dark)] to-[#4A6346] relative overflow-hidden">
