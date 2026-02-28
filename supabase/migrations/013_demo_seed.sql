@@ -358,19 +358,19 @@ WHERE p.product_type = 'fabric' AND p.slug IN (
 -- CUSTOMER REVIEWS (Fake but realistic)
 -- =====================================================
 
-INSERT INTO customer_reviews (product_id, reviewer_name, rating, comment_tr, comment_en, is_approved) 
-SELECT p.id, r.name, r.rating, r.ctr, r.cen, true
+INSERT INTO reviews (product_id, reviewer_name, rating, comment, source, category_keyword, is_approved, is_featured)
+SELECT p.id, r.name, r.rating, r.cmt, 'website', r.cat, true, r.feat
 FROM products p
 JOIN (VALUES
-  ('bej-pamuk-perde', 'Ayşe K.', 5, 'Harika kalite! Tam istediğim renk tonunda geldi. Oturma odamızı tamamen değiştirdi.', 'Amazing quality! Arrived in exactly the shade I wanted. Completely transformed our living room.'),
-  ('bej-pamuk-perde', 'Mehmet Y.', 4, 'Güzel kumaş, dikişleri çok düzgün. Sadece renk fotoğraftan biraz farklı geldi.', 'Nice fabric, very neat stitching. Color was slightly different from the photo though.'),
-  ('gri-pamuk-perde', 'Zeynep A.', 5, 'Çok şık! Modern evimize çok yakıştı. Kargo da çok hızlıydı, teşekkürler.', 'Very elegant! Looks great in our modern home. Shipping was also very fast, thanks.'),
-  ('antrasit-perde', 'Can D.', 5, 'Yatak odamız için aldım, karartma özelliği mükemmel. Derin bir uyku çekiyoruz artık.', 'Got it for our bedroom, blackout feature is perfect. We sleep deeply now.'),
-  ('hardal-keten-perde', 'Elif S.', 5, 'Keten dokusu çok doğal ve güzel. Tam bohem tarzı arıyordum, buldum!', 'Linen texture is very natural and beautiful. I was looking for a boho style, found it!'),
-  ('hardal-keten-perde', 'Deniz T.', 4, 'Rengi çok güzel ama doğal olduğu için biraz büzüşme oldu yıkamada.', 'Color is beautiful but being natural, it shrunk a bit in the wash.'),
-  ('salon-perdesi', 'Fatma B.', 5, 'Premium kalite gerçekten hissediliyor. Misafirlerimiz çok beğendi!', 'Premium quality is truly felt. Our guests loved it!'),
-  ('yatak-odasi-perde-seti', 'Ali R.', 5, 'Set olarak almak çok mantıklı. İkisi birlikte harika duruyor.', 'Buying as a set makes a lot of sense. They look great together.'),
-  ('pamuk-keten-karisim-kumas', 'Seda M.', 5, 'Kumaş kalitesi çok yüksek. Kendi perdelerimi diktim, mükemmel oldu.', 'Fabric quality is very high. I sewed my own curtains, turned out perfect.'),
-  ('keten-yastik', 'Burcu E.', 4, 'Çok soft bir doku, kanepe üzerinde harika duruyor.', 'Very soft texture, looks amazing on the couch.')
-) AS r(slug, name, rating, ctr, cen) ON p.slug = r.slug
+  ('bej-pamuk-perde', 'Ayşe K.', 5, 'Harika kalite! Tam istediğim renk tonunda geldi. Oturma odamızı tamamen değiştirdi.', 'curtain', true),
+  ('bej-pamuk-perde', 'Mehmet Y.', 4, 'Güzel kumaş, dikişleri çok düzgün. Sadece renk fotoğraftan biraz farklı geldi.', 'curtain', false),
+  ('gri-pamuk-perde', 'Zeynep A.', 5, 'Çok şık! Modern evimize çok yakıştı. Kargo da çok hızlıydı, teşekkürler.', 'curtain', true),
+  ('antrasit-perde', 'Can D.', 5, 'Yatak odamız için aldım, karartma özelliği mükemmel. Derin bir uyku çekiyoruz artık.', 'curtain', true),
+  ('hardal-keten-perde', 'Elif S.', 5, 'Keten dokusu çok doğal ve güzel. Tam bohem tarzı arıyordum, buldum!', 'curtain', true),
+  ('hardal-keten-perde', 'Deniz T.', 4, 'Rengi çok güzel ama doğal olduğu için biraz büzüşme oldu yıkamada.', 'curtain', false),
+  ('salon-perdesi', 'Fatma B.', 5, 'Premium kalite gerçekten hissediliyor. Misafirlerimiz çok beğendi!', 'curtain', true),
+  ('yatak-odasi-perde-seti', 'Ali R.', 5, 'Set olarak almak çok mantıklı. İkisi birlikte harika duruyor.', 'curtain', false),
+  ('pamuk-keten-karisim-kumas', 'Seda M.', 5, 'Kumaş kalitesi çok yüksek. Kendi perdelerimi diktim, mükemmel oldu.', 'fabric', true),
+  ('keten-yastik', 'Burcu E.', 4, 'Çok soft bir doku, kanepe üzerinde harika duruyor.', 'general', false)
+) AS r(slug, name, rating, cmt, cat, feat) ON p.slug = r.slug
 ON CONFLICT DO NOTHING;
