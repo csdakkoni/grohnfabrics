@@ -131,33 +131,34 @@ export default async function HomePage() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
+        {/* Strong gradient overlays for text readability */}
+        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Content */}
         <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-20">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/15 text-white rounded-full border border-white/20 backdrop-blur-sm">
+          <div className="max-w-2xl" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}>
+            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/20 text-white rounded-full border border-white/25 backdrop-blur-md" style={{ textShadow: 'none' }}>
               <Sparkles className="w-4 h-4" />
               {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
             </span>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-6 tracking-tight text-white">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-6 tracking-tight text-white" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
               {t('Doğanın Dokusu', "Nature's Texture")}
               <span className="block font-semibold">{t('Evinizde', 'In Your Home')}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/80 mb-8 max-w-lg leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-lg leading-relaxed">
               {t(
                 '%100 organik pamuk ve keten liflerden, OEKO-TEX® sertifikalı perdeler. El yapımı, özel ölçü.',
                 '100% organic cotton & linen curtains, OEKO-TEX® certified. Handcrafted, custom sizes.'
               )}
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href="/products" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white text-[#2C3830] rounded-full hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 group">
+            <div className="flex flex-wrap gap-4" style={{ textShadow: 'none' }}>
+              <Link href="/products" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white text-[#2B2B2B] rounded-full hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 group">
                 {t('Koleksiyonu Keşfet', 'Explore Collection')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all backdrop-blur-sm">
+              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white border-2 border-white/40 rounded-full hover:bg-white/15 transition-all backdrop-blur-sm">
                 {t('Ölçü Hesapla', 'Calculate Size')}
               </Link>
             </div>
@@ -171,7 +172,7 @@ export default async function HomePage() {
               { icon: <Truck className="w-4 h-4" />, text: t('Ücretsiz Kargo', 'Free Shipping') },
               { icon: <Recycle className="w-4 h-4" />, text: t('Sürdürülebilir Üretim', 'Sustainable Production') },
             ].map((badge, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-white/70">
+              <div key={i} className="flex items-center gap-2 text-sm text-white/80" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
                 {badge.icon}
                 <span>{badge.text}</span>
               </div>
