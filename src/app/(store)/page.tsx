@@ -131,22 +131,22 @@ export default async function HomePage() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Dark overlay - strong enough for white text */}
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        {/* Gentle overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* Content */}
         <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-20">
-          <div className="max-w-2xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 md:p-10">
-            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/20 text-white rounded-full border border-white/25" style={{ textShadow: 'none' }}>
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/20 text-white rounded-full border border-white/25 backdrop-blur-md">
               <Sparkles className="w-4 h-4" />
               {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
             </span>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] mb-6 tracking-tight text-white">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] mb-6 tracking-tight text-white drop-shadow-lg">
               {t('Doğanın Dokusu', "Nature's Texture")}
               <span className="block font-bold">{t('Evinizde', 'In Your Home')}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white mb-8 max-w-lg leading-relaxed font-light">
+            <p className="text-lg md:text-xl text-white mb-8 max-w-lg leading-relaxed font-light drop-shadow-md">
               {t(
                 '%100 organik pamuk ve keten liflerden, OEKO-TEX® sertifikalı perdeler. El yapımı, özel ölçü.',
                 '100% organic cotton & linen curtains, OEKO-TEX® certified. Handcrafted, custom sizes.'
