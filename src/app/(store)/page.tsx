@@ -264,13 +264,13 @@ export default async function HomePage() {
       {/* Categories */}
       <section className="py-20 bg-[var(--background-secondary)]">
         <div className="container">
-          <div className="text-center mb-12">
-            <span className="inline-block px-3 py-1 mb-4 text-xs font-medium bg-[var(--brand-primary)]/10 text-[var(--brand-primary)] rounded-full">
-              {t('Koleksiyonlar', 'Collections')}
+          <div className="text-center mb-16">
+            <span className="inline-block mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--foreground-muted)]">
+              {t('Kategoriler', 'Shop by Category')}
             </span>
-            <h2 className="text-3xl font-light mb-4">{t('Doğadan İlham', 'Inspired by Nature')}</h2>
-            <p className="text-[var(--foreground-muted)] max-w-md mx-auto">
-              {t('Doğal dokular ve organik tasarımlarla evinize huzur katın', 'Bring peace to your home with natural textures and organic designs')}
+            <h2 className="text-4xl font-medium mb-4 text-[var(--foreground)]">{t('Doğadan İlham', 'Inspired by Nature')}</h2>
+            <p className="text-[var(--foreground-muted)] max-w-md mx-auto font-light">
+              {t('Doğal dokular ve organik tasarımlarla evinize huzur katın.', 'Bring peace to your home with natural textures and organic designs.')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -282,20 +282,24 @@ export default async function HomePage() {
               <Link
                 href={`/products?category=${category.slug}`}
                 key={category.slug}
-                className="group relative aspect-[4/5] rounded-2xl overflow-hidden"
+                className="group flex flex-col"
               >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors z-10" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                  <h3 className="text-xl font-medium text-white mb-1">{category.name}</h3>
-                  <p className="text-sm text-white/70 mb-4">{category.description}</p>
-                  <span className="inline-flex items-center gap-2 text-sm text-white/90 font-medium group-hover:gap-3 transition-all">
-                    {t('Keşfet', 'Explore')} <ArrowRight className="w-4 h-4" />
+                <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-6 bg-[var(--background)]">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-10" />
+                </div>
+                <div className="flex flex-col items-center text-center">
+                  <h3 className="text-xl font-medium text-[var(--foreground)] mb-2 relative inline-block">
+                    {category.name}
+                    <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[var(--foreground)] transition-all duration-300 group-hover:w-full"></span>
+                  </h3>
+                  <p className="text-sm text-[var(--foreground-muted)] font-light mb-4">{category.description}</p>
+                  <span className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-medium text-[var(--foreground)] group-hover:text-[var(--accent)] group-hover:gap-3 transition-all">
+                    {t('Keşfet', 'Shop Now')} <ArrowRight className="w-4 h-4" />
                   </span>
                 </div>
               </Link>
