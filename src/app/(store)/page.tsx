@@ -143,11 +143,11 @@ export default async function HomePage() {
               <Sparkles className="w-4 h-4" />
               {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
             </span>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-6 tracking-tight text-white" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] mb-6 tracking-tight text-white" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
               {t('Doğanın Dokusu', "Nature's Texture")}
-              <span className="block font-semibold">{t('Evinizde', 'In Your Home')}</span>
+              <span className="block font-bold">{t('Evinizde', 'In Your Home')}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-lg leading-relaxed">
+            <p className="text-lg md:text-xl text-white mb-8 max-w-lg leading-relaxed font-light">
               {t(
                 '%100 organik pamuk ve keten liflerden, OEKO-TEX® sertifikalı perdeler. El yapımı, özel ölçü.',
                 '100% organic cotton & linen curtains, OEKO-TEX® certified. Handcrafted, custom sizes.'
@@ -158,7 +158,7 @@ export default async function HomePage() {
                 {t('Koleksiyonu Keşfet', 'Explore Collection')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white border-2 border-white/40 rounded-full hover:bg-white/15 transition-all backdrop-blur-sm">
+              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white/90 text-[#2B2B2B] rounded-full hover:bg-white transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
                 {t('Ölçü Hesapla', 'Calculate Size')}
               </Link>
             </div>
