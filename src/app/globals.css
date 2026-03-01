@@ -8,31 +8,31 @@
 
 :root {
   /* Brand Colors - Sage Green / Adaçayı */
-  --brand-primary: #7A9B76;
-  --brand-primary-light: #A8C4A4;
-  --brand-primary-dark: #5C7A58;
-  
+  --brand-primary: #4A7A45;
+  --brand-primary-light: #7A9B76;
+  --brand-primary-dark: #2F5C2B;
+
   /* Accent - Terracotta / Toprak */
-  --accent: #C9967E;
+  --accent: #B8846C;
   --accent-light: #E8D4C8;
-  --accent-dark: #A67560;
-  
+  --accent-dark: #8A5E48;
+
   /* Neutrals - Warm Naturals */
   --background: #FDFBF7;
   --background-secondary: #F5F2EC;
   --foreground: #2C3830;
   --foreground-muted: #5C665E;
   --foreground-light: #8A9189;
-  
+
   /* Borders - Soft Earth */
   --border: #E5E0D8;
   --border-dark: #D1CCC4;
-  
+
   /* Cards */
   --card-bg: #FFFFFF;
   --card-shadow: 0 2px 8px rgba(44, 56, 48, 0.04), 0 1px 2px rgba(44, 56, 48, 0.02);
   --card-shadow-hover: 0 8px 24px rgba(44, 56, 48, 0.08);
-  
+
   /* Status Colors - Natural Palette */
   --success: #6B9B6B;
   --success-light: #E8F2E8;
@@ -42,13 +42,13 @@
   --error-light: #FDECEC;
   --info: #7B9BC4;
   --info-light: #ECF2F8;
-  
+
   /* Admin Sidebar - Deep Forest */
   --sidebar-bg: #2C3830;
   --sidebar-text: #A8B0A8;
   --sidebar-text-hover: #F5F2EC;
   --sidebar-active: #3C4840;
-  
+
   /* Spacing */
   --radius-sm: 0.5rem;
   --radius-md: 0.625rem;
@@ -83,17 +83,33 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 500;
   line-height: 1.3;
   color: var(--foreground);
   letter-spacing: -0.01em;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
 
 p {
   color: var(--foreground-muted);
@@ -484,7 +500,9 @@ textarea.input {
    ============================================ */
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .animate-spin {
@@ -492,8 +510,15 @@ textarea.input {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .animate-pulse {
@@ -501,8 +526,15 @@ textarea.input {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
@@ -546,10 +578,18 @@ textarea.input {
   .container {
     padding: 0 1rem;
   }
-  
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
 }
 
 /* ============================================
@@ -573,10 +613,23 @@ textarea.input {
   line-height: 1.3;
 }
 
-.prose h1 { font-size: 2rem; }
-.prose h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-.prose h3 { font-size: 1.25rem; }
-.prose h4 { font-size: 1.125rem; }
+.prose h1 {
+  font-size: 2rem;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+}
 
 .prose p {
   margin-bottom: 1.25em;
