@@ -39,10 +39,31 @@ const headerStyles: { value: HeaderStyle; labelTr: string; labelEn: string; icon
   { value: 'goblet', labelTr: 'Kadeh Pilili', labelEn: 'Goblet Pleat', icon: '🏆' },
 ];
 
-export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en' }) {
+export interface FabricConfig {
+  id: string;
+  name: string;
+  widthCm: number;
+  pricePerMeter: number;
+  currency: string;
+  image?: string;
+  maxOrderLimit?: number;
+}
+
+export default function MeasurementTool({
+  locale = 'tr',
+  fabric,
+  onAddToCart,
+  onCancel
+}: {
+  locale?: 'tr' | 'en';
+  fabric?: FabricConfig;
+  onAddToCart?: (results: any, state: any, price: number) => void;
+  onCancel?: () => void;
+}) {
   const [step, setStep] = useState(1);
   const [state, setState] = useState<MeasurementState>(initialState);
   const [showResults, setShowResults] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const isEn = locale === 'en';
   const t = (tr: string, en: string) => (isEn ? en : tr);
@@ -61,6 +82,7 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
   };
 
   const handleNext = () => {
+    setConfigError(null);
     if (step < TOTAL_STEPS) {
       // Skip step 5 if no rod
       if (step === 4 && !state.hasRod) {
@@ -69,6 +91,32 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
         setStep(step + 1);
       }
     } else {
+      // Final Validation against Fabric Limits
+      if (fabric && fabric.widthCm) {
+        const windowW = parseFloat(state.windowWidth) || 0;
+        const extension = state.hasRod ? parseFloat(state.rodExtension) || 0 : 0;
+        const fullnessStr = state.fullness === '1.5' || state.fullness === '2' || state.fullness === '2.5' ? state.fullness : '2';
+        const fullness = parseFloat(fullnessStr);
+        const panelsCount = state.panelType === 'split' ? 2 : 1;
+
+        const totalRodWidth = windowW + extension * 2;
+        const totalFabricWidth = Math.ceil(totalRodWidth * fullness + 10);
+        const perPanelWidth = Math.ceil(totalFabricWidth / panelsCount);
+
+        if (perPanelWidth > fabric.widthCm) {
+          // Calculate max allowed rod width
+          // perPanelWidth = (RodWidth * fullness + 10) / panelsCount
+          // fabric.widthCm = (MaxRodWidth * fullness + 10) / panelsCount
+          const maxRodWidth = Math.floor(((fabric.widthCm * panelsCount) - 10) / fullness);
+
+          setConfigError(
+            isEn
+              ? `Based on a fabric width of ${fabric.widthCm}cm and ${fullness}x fullness, the maximum possible width for a ${state.panelType} curtain is ${maxRodWidth}cm. Please drop the fullness or add panels.`
+              : `Seçtiğiniz ${fabric.widthCm}cm enindeki kumaş ve ${fullness}x pile oranı ile üretilebilecek maksimum korniş genişliği ${maxRodWidth}cm'dir. Kumaşlar yan yana eklenemez. Lütfen panel sayısını artırın veya pile oranını düşürün.`
+          );
+          return;
+        }
+      }
       setShowResults(true);
     }
   };
@@ -114,6 +162,11 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
     // Total fabric in meters (width × height / 10000 for m²)
     const fabricArea = (totalFabricWidth * curtainHeight) / 10000;
 
+    // Custom Cost calculation (if fabric is provided)
+    // We need 'curtainHeight' cm of length for EACH panel.
+    const linearMetersNeeded = (curtainHeight * panelsCount) / 100;
+    const customCost = fabric ? linearMetersNeeded * fabric.pricePerMeter : 0;
+
     return {
       totalRodWidth,
       totalFabricWidth,
@@ -121,6 +174,8 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
       panelsCount,
       perPanelWidth,
       fabricArea: fabricArea.toFixed(2),
+      linearMetersNeeded: linearMetersNeeded.toFixed(2),
+      customCost,
     };
   };
 
@@ -174,11 +229,10 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
                   <button
                     key={hs.value}
                     onClick={() => setState({ ...state, headerStyle: hs.value })}
-                    className={`p-4 rounded-xl border-2 text-left transition-all hover:shadow-sm ${
-                      state.headerStyle === hs.value
-                        ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                        : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                    }`}
+                    className={`p-4 rounded-xl border-2 text-left transition-all hover:shadow-sm ${state.headerStyle === hs.value
+                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                      }`}
                   >
                     <span className="text-2xl block mb-2">{hs.icon}</span>
                     <span className="text-sm font-medium">{isEn ? hs.labelEn : hs.labelTr}</span>
@@ -205,22 +259,20 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setState({ ...state, hasRod: true })}
-                  className={`p-6 rounded-xl border-2 text-center transition-all ${
-                    state.hasRod === true
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                  }`}
+                  className={`p-6 rounded-xl border-2 text-center transition-all ${state.hasRod === true
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                    : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                    }`}
                 >
                   <span className="text-3xl block mb-3">✅</span>
                   <span className="font-medium">{t('Evet, var', 'Yes, I do')}</span>
                 </button>
                 <button
                   onClick={() => setState({ ...state, hasRod: false })}
-                  className={`p-6 rounded-xl border-2 text-center transition-all ${
-                    state.hasRod === false
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                  }`}
+                  className={`p-6 rounded-xl border-2 text-center transition-all ${state.hasRod === false
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                    : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                    }`}
                 >
                   <span className="text-3xl block mb-3">❌</span>
                   <span className="font-medium">{t('Hayır, yok', 'No, I don\'t')}</span>
@@ -388,11 +440,10 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setState({ ...state, panelType: 'single' })}
-                  className={`p-6 rounded-xl border-2 text-center transition-all ${
-                    state.panelType === 'single'
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                  }`}
+                  className={`p-6 rounded-xl border-2 text-center transition-all ${state.panelType === 'single'
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                    : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                    }`}
                 >
                   <div className="w-16 h-24 mx-auto mb-3 border-2 border-current rounded-sm flex">
                     <div className="flex-1 bg-[var(--brand-primary)]/20 rounded-sm" />
@@ -402,11 +453,10 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
                 </button>
                 <button
                   onClick={() => setState({ ...state, panelType: 'split' })}
-                  className={`p-6 rounded-xl border-2 text-center transition-all ${
-                    state.panelType === 'split'
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                  }`}
+                  className={`p-6 rounded-xl border-2 text-center transition-all ${state.panelType === 'split'
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                    : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                    }`}
                 >
                   <div className="w-16 h-24 mx-auto mb-3 border-2 border-current rounded-sm flex gap-0.5">
                     <div className="flex-1 bg-[var(--brand-primary)]/20 rounded-sm" />
@@ -442,11 +492,10 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
                   <button
                     key={opt.value}
                     onClick={() => setState({ ...state, fullness: opt.value })}
-                    className={`p-5 rounded-xl border-2 text-center transition-all ${
-                      state.fullness === opt.value
-                        ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
-                        : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
-                    }`}
+                    className={`p-5 rounded-xl border-2 text-center transition-all ${state.fullness === opt.value
+                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)]/5'
+                      : 'border-[var(--border)] hover:border-[var(--brand-primary)]/30'
+                      }`}
                   >
                     <span className="text-2xl font-light block mb-2">{opt.label}</span>
                     <span className="text-xs text-[var(--foreground-muted)]">{isEn ? opt.desc.en : opt.desc.tr}</span>
@@ -540,6 +589,13 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
           )}
         </div>
 
+        {/* Config Error Banner */}
+        {configError && (
+          <div className="mx-6 md:mx-8 mb-4 p-4 bg-[var(--error-light)] text-[var(--error)] rounded-xl border border-[var(--error)]/20 animate-fadeIn">
+            <p className="text-sm font-medium">❌ {configError}</p>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="px-6 md:px-8 py-4 bg-[var(--background-secondary)] border-t border-[var(--border)] flex items-center justify-between">
           <button
@@ -556,9 +612,18 @@ export default function MeasurementTool({ locale = 'tr' }: { locale?: 'tr' | 'en
                 <button onClick={handleReset} className="btn btn-outline btn-sm">
                   <RotateCcw className="w-4 h-4" /> {t('Yeniden Hesapla', 'Recalculate')}
                 </button>
-                <Link href="/products?type=curtain" className="btn btn-primary btn-sm">
-                  <ShoppingBag className="w-4 h-4" /> {t('Alışverişe Başla', 'Shop Now')}
-                </Link>
+                {fabric ? (
+                  <button
+                    onClick={() => onAddToCart && onAddToCart(results, state, results?.customCost || 0)}
+                    className="btn btn-primary btn-sm px-6"
+                  >
+                    <ShoppingBag className="w-4 h-4" /> {t(`${fabric.currency === 'TRY' ? '₺' : '$'}${results?.customCost.toFixed(2)} - Sepete Ekle`, `Add to Cart - ${fabric.currency === 'TRY' ? '₺' : '$'}${results?.customCost.toFixed(2)}`)}
+                  </button>
+                ) : (
+                  <Link href="/products?type=curtain" className="btn btn-primary btn-sm">
+                    <ShoppingBag className="w-4 h-4" /> {t('Alışverişe Başla', 'Shop Now')}
+                  </Link>
+                )}
               </>
             )}
             {!showResults && (

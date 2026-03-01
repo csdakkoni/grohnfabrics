@@ -20,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  
+
   const { data: product } = await supabaseAdmin
     .from('products')
     .select('name_tr, name_en, description_tr, description_en, thumbnail_url, images, product_type')
@@ -39,7 +39,7 @@ export async function generateMetadata({
   const isEnglish = locale === 'en';
 
   const title = isEnglish ? product.name_en : product.name_tr;
-  const description = isEnglish 
+  const description = isEnglish
     ? (product.description_en || `Shop ${product.name_en} at Grohn Fabrics. Premium quality textiles from Turkey.`)
     : (product.description_tr || `${product.name_tr} - Grohn Fabrics'te premium kalite tekstil ürünleri.`);
   const image = product.thumbnail_url || product.images?.[0] || 'https://grohnfabrics.com/og-image.jpg';
@@ -117,18 +117,18 @@ export default async function ProductPage({
 
   // Get region and locale from cookies
   const cookieStore = await cookies();
-  
+
   // Region = IP based, determines price/shipping/payment
   // Admin can override via admin_region_override cookie
   const adminOverride = cookieStore.get('admin_region_override')?.value;
   const region = adminOverride || cookieStore.get('region')?.value || 'TR';
   const isGlobal = region === 'GLOBAL';
-  
+
   // Locale = user preference, determines UI language
   const locale = (cookieStore.get('locale')?.value || 'tr') as 'tr' | 'en';
 
   const prices = product.prices || [];
-  
+
   // Get price for current REGION
   let currentPrice;
   if (region === 'TR') {
@@ -138,7 +138,7 @@ export default async function ProductPage({
   }
   const basePrice = currentPrice?.price || prices[0]?.price || 0;
   const baseCurrency = currentPrice?.currency || (region === 'TR' ? 'TRY' : 'USD');
-  
+
   const category = Array.isArray(product.category) ? product.category[0] : product.category;
   const material = product.material; // Already fetched separately
   const optionGroups = product.option_groups || [];
@@ -178,8 +178,8 @@ export default async function ProductPage({
             {category && (
               <>
                 <ChevronRight className="w-4 h-4 text-[var(--foreground-light)]" />
-                <Link 
-                  href={`/products?category=${category.slug}`} 
+                <Link
+                  href={`/products?category=${category.slug}`}
                   className="text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
                 >
                   {isEnglish ? category.name_en : category.name_tr}
@@ -195,7 +195,7 @@ export default async function ProductPage({
       <div className="container py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Images & Videos Gallery */}
-          <ProductGallery 
+          <ProductGallery
             images={product.images || []}
             videos={product.videos || []}
             productName={isEnglish ? product.name_en : product.name_tr}
@@ -222,16 +222,17 @@ export default async function ProductPage({
 
             {/* Price - Market-specific */}
             <div className="mb-8">
-              <ProductPrice 
-                prices={prices} 
+              <ProductPrice
+                prices={prices}
                 salesModel={product.sales_model}
                 size="lg"
               />
             </div>
 
             {/* Options & Add to Cart - Client Component */}
-            <ProductDetailClient 
+            <ProductDetailClient
               product={product}
+              material={material}
               optionGroups={optionGroups}
               basePrice={basePrice}
               baseCurrency={baseCurrency}
@@ -241,14 +242,14 @@ export default async function ProductPage({
             {/* Swatch Request - Only for fabric products */}
             {product.product_type === 'fabric' && (
               <div className="mt-6">
-                <SwatchRequestForm 
+                <SwatchRequestForm
                   productId={product.id}
                   productName={isEnglish ? (product.name_en || product.name_tr) : product.name_tr}
                   productImage={product.thumbnail_url || product.images?.[0]}
                   colorOptions={
                     optionGroups
                       .filter((g: { option_type: string }) => g.option_type === 'color')
-                      .flatMap((g: { values: Array<{ id: string; value_tr: string; value_en: string; hex_color?: string; is_available: boolean }> }) => 
+                      .flatMap((g: { values: Array<{ id: string; value_tr: string; value_en: string; hex_color?: string; is_available: boolean }> }) =>
                         g.values
                           .filter((v: { is_available: boolean }) => v.is_available)
                           .map((v: { id: string; value_tr: string; value_en: string; hex_color?: string }) => ({
@@ -264,9 +265,9 @@ export default async function ProductPage({
 
             {/* Ask a Question */}
             <div className="mt-6">
-              <AskQuestionForm 
-                productId={product.id} 
-                productName={isEnglish ? (product.name_en || product.name_tr) : product.name_tr} 
+              <AskQuestionForm
+                productId={product.id}
+                productName={isEnglish ? (product.name_en || product.name_tr) : product.name_tr}
               />
             </div>
 
@@ -352,7 +353,7 @@ export default async function ProductPage({
                     </div>
                   )}
                 </div>
-                
+
                 {/* Care Instructions */}
                 {(isEnglish ? material.care_instructions_en : material.care_instructions_tr) && (
                   <div className="mt-4 p-4 bg-[var(--background-secondary)] rounded-xl">
@@ -377,7 +378,7 @@ export default async function ProductPage({
       </div>
 
       {/* Customer Reviews Section */}
-      <CustomerReviews 
+      <CustomerReviews
         category={product.product_type === 'fabric' ? 'fabric' : 'curtain'}
         showEtsyLink={true}
       />
