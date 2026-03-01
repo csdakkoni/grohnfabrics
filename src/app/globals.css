@@ -2,52 +2,52 @@
 
 /* ============================================
    GROHN FABRICS - DESIGN SYSTEM
-   🌿 Natural & Botanical Theme
-   Pastel, Elegant, Organic
+   Coyuchi-inspired: Warm, Clean, High Contrast
    ============================================ */
 
 :root {
-  /* Brand Colors - Sage Green / Adaçayı */
-  --brand-primary: #4A7A45;
-  --brand-primary-light: #7A9B76;
-  --brand-primary-dark: #2F5C2B;
+  /* Brand Colors - Warm Charcoal & Natural Sage */
+  --brand-primary: #3D3D3D;
+  --brand-primary-light: #6B7F5E;
+  --brand-primary-dark: #1A1A1A;
 
-  /* Accent - Terracotta / Toprak */
-  --accent: #B8846C;
-  --accent-light: #E8D4C8;
-  --accent-dark: #8A5E48;
+  /* Accent - Warm Terracotta */
+  --accent: #C4956A;
+  --accent-light: #F0E4D8;
+  --accent-dark: #9B6F46;
 
-  /* Neutrals - Warm Naturals */
-  --background: #FDFBF7;
-  --background-secondary: #F5F2EC;
-  --foreground: #2C3830;
-  --foreground-muted: #5C665E;
-  --foreground-light: #8A9189;
+  /* Neutrals - Coyuchi-style Warm Naturals */
+  --background: #FAF8F5;
+  --background-secondary: #F2EDE6;
+  --foreground: #2B2B2B;
+  --foreground-muted: #6B6B6B;
+  --foreground-light: #999999;
 
-  /* Borders - Soft Earth */
-  --border: #E5E0D8;
-  --border-dark: #D1CCC4;
+  /* Borders - Soft Warm */
+  --border: #E8E3DC;
+  --border-dark: #D5CFC7;
 
   /* Cards */
   --card-bg: #FFFFFF;
-  --card-shadow: 0 2px 8px rgba(44, 56, 48, 0.04), 0 1px 2px rgba(44, 56, 48, 0.02);
-  --card-shadow-hover: 0 8px 24px rgba(44, 56, 48, 0.08);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
 
-  /* Status Colors - Natural Palette */
-  --success: #6B9B6B;
-  --success-light: #E8F2E8;
-  --warning: #C9A86C;
-  --warning-light: #FDF8EC;
-  --error: #C47B7B;
+  /* Status Colors - Muted Natural */
+  --success: #5C8A5C;
+  --success-light: #EBF5EB;
+  --warning: #C4956A;
+  --warning-light: #FDF6EE;
+  --error: #C27070;
   --error-light: #FDECEC;
-  --info: #7B9BC4;
+  --info: #6B8DB5;
   --info-light: #ECF2F8;
 
-  /* Admin Sidebar - Deep Forest */
-  --sidebar-bg: #2C3830;
-  --sidebar-text: #A8B0A8;
+  /* Admin Sidebar - Deep Dark */
+  --sidebar-bg: #1A1A1A;
+  --sidebar-text: #A0A0A0;
   --sidebar-text-hover: #F5F2EC;
-  --sidebar-active: #3C4840;
+  --sidebar-active: #2D2D2D;
+
 
   /* Spacing */
   --radius-sm: 0.5rem;
