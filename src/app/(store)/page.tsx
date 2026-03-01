@@ -131,9 +131,10 @@ export default async function HomePage() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Gentle overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/25 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Overlay: strong on left where text sits over bright windows */}
+        <div className="absolute inset-0 bg-black/15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
         {/* Content */}
         <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-20">
