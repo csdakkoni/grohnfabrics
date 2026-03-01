@@ -131,23 +131,32 @@ export default async function HomePage() {
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        {/* Overlay: strong on left where text sits over bright windows */}
-        <div className="absolute inset-0 bg-black/15" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/5" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        {/* Gentle background overlay so the image isn't muddy */}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
         {/* Content */}
         <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-20">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/20 text-white rounded-full border border-white/25 backdrop-blur-md">
+            <span
+              className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/20 rounded-full border border-white/25 backdrop-blur-md"
+              style={{ color: '#ffffff' }}
+            >
               <Sparkles className="w-4 h-4" />
               {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
             </span>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] mb-6 tracking-tight text-white drop-shadow-lg">
+            <h1
+              className="text-5xl md:text-6xl lg:text-7xl font-medium leading-[1.1] mb-6 tracking-tight drop-shadow-xl"
+              style={{ color: '#ffffff', textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}
+            >
               {t('Doğanın Dokusu', "Nature's Texture")}
-              <span className="block font-bold">{t('Evinizde', 'In Your Home')}</span>
+              <span className="block font-bold mt-2">{t('Evinizde', 'In Your Home')}</span>
             </h1>
-            <p className="text-lg md:text-xl text-white mb-8 max-w-lg leading-relaxed font-light drop-shadow-md">
+            <p
+              className="text-lg md:text-xl mb-8 max-w-lg leading-relaxed font-light drop-shadow-md"
+              style={{ color: '#ffffff', textShadow: '0 1px 10px rgba(0,0,0,0.4)' }}
+            >
               {t(
                 '%100 organik pamuk ve keten liflerden, OEKO-TEX® sertifikalı perdeler. El yapımı, özel ölçü.',
                 '100% organic cotton & linen curtains, OEKO-TEX® certified. Handcrafted, custom sizes.'
@@ -158,8 +167,9 @@ export default async function HomePage() {
                 {t('Koleksiyonu Keşfet', 'Explore Collection')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white/90 text-[#2B2B2B] rounded-full hover:bg-white transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white text-[#2B2B2B] rounded-full hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 group">
                 {t('Ölçü Hesapla', 'Calculate Size')}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform opacity-0 -ml-6" /> {/* Hidden arrow for symmetric padding/size if needed, or remove */}
               </Link>
             </div>
           </div>
