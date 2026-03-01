@@ -123,88 +123,63 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="relative py-16 md:py-24 overflow-hidden bg-gradient-to-br from-[#F7F5F0] via-[#F2EFE8] to-[#E8E4DB]">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 right-10 w-80 h-80 bg-[var(--brand-primary)]/8 rounded-full blur-[100px]" />
-          <div className="absolute bottom-10 left-10 w-96 h-96 bg-[var(--accent)]/10 rounded-full blur-[120px]" />
-        </div>
-        <div className="container relative">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Text */}
-            <div>
-              <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-[var(--brand-primary)]/10 text-[var(--brand-primary-dark)] rounded-full border border-[var(--brand-primary)]/20">
-                <Sparkles className="w-4 h-4" />
-                {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
-              </span>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-light leading-tight mb-6 tracking-tight">
-                {t('Doğanın Dokusu', "Nature's Texture")}
-                <span className="block font-medium text-[var(--brand-primary)]">{t('Evinizde', 'In Your Home')}</span>
-              </h1>
-              <p className="text-lg text-[var(--foreground-muted)] mb-8 max-w-lg leading-relaxed">
-                {t(
-                  'Doğal liflerden üretilen premium kumaş, perde ve ev tekstili koleksiyonumuzu keşfedin. Sürdürülebilir üretim, zamansız tasarım.',
-                  'Discover our premium fabric, curtain and home textile collection made from natural fibers. Sustainable production, timeless design.'
-                )}
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link href="/products" className="btn btn-primary btn-lg group">
-                  {t('Koleksiyonu Keşfet', 'Explore Collection')}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <Link href="/about" className="btn btn-outline btn-lg">
-                  {t('Hikayemiz', 'Our Story')}
-                </Link>
-              </div>
+      {/* Hero Section - Full Bleed Cinematic */}
+      <section className="relative h-[85vh] min-h-[600px] max-h-[900px] overflow-hidden">
+        {/* Full-bleed background image */}
+        <img
+          src="/images/hero-main.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
+
+        {/* Content */}
+        <div className="relative h-full container flex flex-col justify-end pb-16 md:pb-20">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium bg-white/15 text-white rounded-full border border-white/20 backdrop-blur-sm">
+              <Sparkles className="w-4 h-4" />
+              {t('Doğal & Premium Tekstil', 'Natural & Premium Textiles')}
+            </span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-6 tracking-tight text-white">
+              {t('Doğanın Dokusu', "Nature's Texture")}
+              <span className="block font-semibold">{t('Evinizde', 'In Your Home')}</span>
+            </h1>
+            <p className="text-lg md:text-xl text-white/80 mb-8 max-w-lg leading-relaxed">
+              {t(
+                '%100 organik pamuk ve keten liflerden, OEKO-TEX® sertifikalı perdeler. El yapımı, özel ölçü.',
+                '100% organic cotton & linen curtains, OEKO-TEX® certified. Handcrafted, custom sizes.'
+              )}
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Link href="/products" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium bg-white text-[#2C3830] rounded-full hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 group">
+                {t('Koleksiyonu Keşfet', 'Explore Collection')}
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link href="/measurement-tool" className="inline-flex items-center gap-2 px-8 py-4 text-base font-medium text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all backdrop-blur-sm">
+                {t('Ölçü Hesapla', 'Calculate Size')}
+              </Link>
             </div>
-            {/* Right: Hero Image */}
-            <div className="relative hidden lg:block">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/5]">
-                <img
-                  src="/images/hero-curtain.png"
-                  alt={t('Premium doğal perde', 'Premium natural curtain')}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+          </div>
+
+          {/* Trust strip at bottom */}
+          <div className="mt-12 flex flex-wrap gap-6 md:gap-10">
+            {[
+              { icon: <Leaf className="w-4 h-4" />, text: t('%100 Doğal Lifler', '100% Natural Fibers') },
+              { icon: <Shield className="w-4 h-4" />, text: t('OEKO-TEX® Sertifikalı', 'OEKO-TEX® Certified') },
+              { icon: <Truck className="w-4 h-4" />, text: t('Ücretsiz Kargo', 'Free Shipping') },
+              { icon: <Recycle className="w-4 h-4" />, text: t('Sürdürülebilir Üretim', 'Sustainable Production') },
+            ].map((badge, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-white/70">
+                {badge.icon}
+                <span>{badge.text}</span>
               </div>
-              {/* Floating badge */}
-              <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--brand-primary)]/10 flex items-center justify-center">
-                  <Leaf className="w-5 h-5 text-[var(--brand-primary)]" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{t('%100 Doğal Lifler', '100% Natural Fibers')}</p>
-                  <p className="text-xs text-[var(--foreground-muted)]">{t('OEKO-TEX® Sertifikalı', 'OEKO-TEX® Certified')}</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Trust Badges */}
-      <section className="py-5 bg-[var(--brand-primary)]/5 border-y border-[var(--brand-primary)]/10">
-        <div className="container">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-            <div className="flex items-center gap-2.5 text-sm">
-              <Leaf className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">{t('Doğal Lifler', 'Natural Fibers')}</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-sm">
-              <Recycle className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">{t('Sürdürülebilir Üretim', 'Sustainable Production')}</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-sm">
-              <Truck className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">{t('Hızlı Teslimat', 'Fast Delivery')}</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-sm">
-              <Heart className="w-5 h-5 text-[var(--brand-primary)]" />
-              <span className="text-[var(--foreground)]">{t('El İşçiliği', 'Handcrafted')}</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Featured Products */}
       {featuredProducts.length > 0 && (
