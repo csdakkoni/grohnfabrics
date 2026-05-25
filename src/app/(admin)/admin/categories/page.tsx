@@ -3,12 +3,17 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Boxes, Edit2, Trash2 } from 'lucide-react';
+import ImageUpload from '@/components/admin/ImageUpload';
+import { slugify } from '@/lib/utils';
 
 interface Category {
   id: string;
   slug: string;
   name_tr: string;
   name_en: string;
+  description_tr: string | null;
+  description_en: string | null;
+  image_url: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -23,6 +28,9 @@ export default function CategoriesPage() {
     name_tr: '',
     name_en: '',
     slug: '',
+    description_tr: '',
+    description_en: '',
+    image_url: '',
   });
 
   useEffect(() => {
@@ -41,36 +49,43 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const slug = form.slug || form.name_tr
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+    const slug = form.slug || slugify(form.name_tr);
+
+    const categoryData = {
+      name_tr: form.name_tr,
+      name_en: form.name_en,
+      slug,
+      description_tr: form.description_tr || null,
+      description_en: form.description_en || null,
+      image_url: form.image_url || null,
+    };
 
     if (editingId) {
       await supabase
         .from('categories')
-        .update({ name_tr: form.name_tr, name_en: form.name_en, slug })
+        .update(categoryData)
         .eq('id', editingId);
     } else {
       await supabase
         .from('categories')
-        .insert({ name_tr: form.name_tr, name_en: form.name_en, slug });
+        .insert(categoryData);
     }
 
-    setForm({ name_tr: '', name_en: '', slug: '' });
+    setForm({ name_tr: '', name_en: '', slug: '', description_tr: '', description_en: '', image_url: '' });
     setShowForm(false);
     setEditingId(null);
     loadCategories();
   };
 
   const handleEdit = (cat: Category) => {
-    setForm({ name_tr: cat.name_tr, name_en: cat.name_en, slug: cat.slug });
+    setForm({
+      name_tr: cat.name_tr,
+      name_en: cat.name_en,
+      slug: cat.slug,
+      description_tr: cat.description_tr || '',
+      description_en: cat.description_en || '',
+      image_url: cat.image_url || '',
+    });
     setEditingId(cat.id);
     setShowForm(true);
   };
@@ -109,7 +124,7 @@ export default function CategoriesPage() {
           <p className="text-[var(--foreground-muted)]">Ürün kategorilerini yönetin</p>
         </div>
         <button 
-          onClick={() => { setShowForm(true); setEditingId(null); setForm({ name_tr: '', name_en: '', slug: '' }); }}
+          onClick={() => { setShowForm(true); setEditingId(null); setForm({ name_tr: '', name_en: '', slug: '', description_tr: '', description_en: '', image_url: '' }); }}
           className="btn btn-primary"
         >
           <Plus className="w-4 h-4" />
@@ -119,32 +134,34 @@ export default function CategoriesPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="card w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto">
+          <div className="card w-full max-w-xl mx-4 my-8">
             <div className="card-header">
               <h2 className="card-title">{editingId ? 'Kategori Düzenle' : 'Yeni Kategori'}</h2>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className="card-body space-y-4">
-                <div className="form-group">
-                  <label className="label">Kategori Adı (TR) *</label>
-                  <input
-                    type="text"
-                    value={form.name_tr}
-                    onChange={(e) => setForm({ ...form, name_tr: e.target.value })}
-                    className="input"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="label">Category Name (EN) *</label>
-                  <input
-                    type="text"
-                    value={form.name_en}
-                    onChange={(e) => setForm({ ...form, name_en: e.target.value })}
-                    className="input"
-                    required
-                  />
+              <div className="card-body space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                    <label className="label">Kategori Adı (TR) *</label>
+                    <input
+                      type="text"
+                      value={form.name_tr}
+                      onChange={(e) => setForm({ ...form, name_tr: e.target.value })}
+                      className="input"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Category Name (EN) *</label>
+                    <input
+                      type="text"
+                      value={form.name_en}
+                      onChange={(e) => setForm({ ...form, name_en: e.target.value })}
+                      className="input"
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="label">URL Slug</label>
@@ -154,6 +171,35 @@ export default function CategoriesPage() {
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
                     className="input"
                     placeholder="otomatik oluşturulur"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-group">
+                    <label className="label">Açıklama (TR)</label>
+                    <textarea
+                      value={form.description_tr}
+                      onChange={(e) => setForm({ ...form, description_tr: e.target.value })}
+                      className="input"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">Description (EN)</label>
+                    <textarea
+                      value={form.description_en}
+                      onChange={(e) => setForm({ ...form, description_en: e.target.value })}
+                      className="input"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="label">Kategori Görseli</label>
+                  <ImageUpload
+                    images={form.image_url ? [form.image_url] : []}
+                    onImagesChange={(urls) => setForm(prev => ({ ...prev, image_url: urls[0] || '' }))}
+                    folder="categories"
+                    maxImages={1}
                   />
                 </div>
               </div>
@@ -190,9 +236,18 @@ export default function CategoriesPage() {
               {categories.map((cat) => (
                 <tr key={cat.id}>
                   <td>
-                    <div>
-                      <p className="font-medium">{cat.name_tr}</p>
-                      <p className="text-sm text-[var(--foreground-light)]">{cat.name_en}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--background-secondary)] overflow-hidden flex-shrink-0 flex items-center justify-center border border-[var(--border)]">
+                        {cat.image_url ? (
+                          <img src={cat.image_url} alt={cat.name_tr} className="w-full h-full object-cover" />
+                        ) : (
+                          <Boxes className="w-5 h-5 text-[var(--foreground-light)]" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium">{cat.name_tr}</p>
+                        <p className="text-sm text-[var(--foreground-light)]">{cat.name_en}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="text-[var(--foreground-muted)]">{cat.slug}</td>

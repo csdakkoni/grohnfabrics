@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ArrowLeft, Layers, Check, Info } from 'lucide-react';
 import ImageUpload from '@/components/admin/ImageUpload';
+import { slugify } from '@/lib/utils';
 
 interface Category {
   id: string;
@@ -112,16 +113,7 @@ export default function NewProductPage() {
 
   // Auto-generate slug from Turkish name
   useEffect(() => {
-    const slug = form.name_tr
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+    const slug = slugify(form.name_tr);
     setForm(f => ({ ...f, slug }));
   }, [form.name_tr]);
 

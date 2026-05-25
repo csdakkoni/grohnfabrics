@@ -23,14 +23,14 @@ interface RegionConfig {
 
 const REGIONS: Record<RegionId, RegionConfig> = {
   TR: {
-    id: 'TR',
-    name: 'Türkiye',
-    defaultCurrency: 'TRY',
-    currencies: ['TRY'],
-    currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
-    shipping: ['ups'],  // UPS for all regions
-    payment: ['iyzico'],
-  },
+     id: 'TR',
+     name: 'Türkiye',
+     defaultCurrency: 'TRY',
+     currencies: ['TRY'],
+     currencySymbols: { TRY: '₺', USD: '$', EUR: '€' },
+     shipping: ['yurtici_kargo', 'aras_kargo'],
+     payment: ['iyzico'],
+   },
   GLOBAL: {
     id: 'GLOBAL',
     name: 'International',

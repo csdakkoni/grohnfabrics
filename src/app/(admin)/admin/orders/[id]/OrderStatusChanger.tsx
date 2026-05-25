@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 interface OrderStatusChangerProps {
   orderId: string;
   currentStatus: string;
+  marketId?: string;
 }
 
 const statusFlow: Record<string, string[]> = {
@@ -38,7 +39,7 @@ const statusColors: Record<string, string> = {
   refunded: 'bg-[var(--warning)] text-white hover:bg-[var(--warning)]/90',
 };
 
-export default function OrderStatusChanger({ orderId, currentStatus }: OrderStatusChangerProps) {
+export default function OrderStatusChanger({ orderId, currentStatus, marketId }: OrderStatusChangerProps) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export default function OrderStatusChanger({ orderId, currentStatus }: OrderStat
     
     if (newStatus === 'shipped') {
       updateData.shipped_at = new Date().toISOString();
-      updateData.shipping_provider = 'ups'; // UPS for all shipments
+      updateData.shipping_provider = marketId === 'TR' ? 'yurtici_kargo' : 'ups';
       if (trackingNumber) {
         updateData.tracking_number = trackingNumber;
       }

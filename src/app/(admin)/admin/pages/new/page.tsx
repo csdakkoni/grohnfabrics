@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { slugify } from '@/lib/utils';
 
 export default function NewPagePage() {
   const router = useRouter();
@@ -28,16 +29,7 @@ export default function NewPagePage() {
   });
 
   const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    return slugify(title);
   };
 
   const handleTitleChange = (value: string) => {

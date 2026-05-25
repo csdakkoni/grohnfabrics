@@ -26,10 +26,15 @@ export function generateShipmentNotificationEmail(params: ShipmentNotificationPa
     const t = (tr: string, en: string) => locale === 'tr' ? tr : en;
     const orderUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/order/${orderId}`;
 
-    // UPS tracking URL
-    const trackingUrl = shippingProvider === 'ups' || !shippingProvider
-        ? `https://www.ups.com/track?tracknum=${trackingNumber}`
-        : orderUrl; // Fallback to order page
+    // Generate tracking URL based on carrier
+    let trackingUrl = orderUrl;
+    if (shippingProvider === 'yurtici_kargo') {
+        trackingUrl = `https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${trackingNumber}`;
+    } else if (shippingProvider === 'aras_kargo') {
+        trackingUrl = `https://www.araskargo.com.tr/kargo-takip/${trackingNumber}`;
+    } else if (shippingProvider === 'ups' || !shippingProvider) {
+        trackingUrl = `https://www.ups.com/track?tracknum=${trackingNumber}`;
+    }
 
     return `
 <!DOCTYPE html>

@@ -173,6 +173,7 @@ export default async function OrderDetailPage({
               <OrderStatusChanger 
                 orderId={order.id} 
                 currentStatus={order.status} 
+                marketId={order.market_id}
               />
             </div>
           </div>
@@ -315,8 +316,8 @@ export default async function OrderDetailPage({
                 )}
               </div>
               
-              {/* UPS Kargo Etiketi */}
-              {(order.status === 'paid' || order.status === 'processing') && (
+              {/* UPS Kargo Etiketi (Sadece Global siparişler için) */}
+              {order.market_id === 'GLOBAL' && (order.status === 'paid' || order.status === 'processing') && (
                 <div className="pt-3 border-t border-[var(--border)]">
                   <UPSLabelButton 
                     orderId={order.id} 

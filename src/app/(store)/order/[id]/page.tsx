@@ -215,6 +215,32 @@ export default async function OrderDetailPage({
                               order.shipping_provider}
                     </p>
                   )}
+                  {/* Yurtiçi Kargo Tracking Link */}
+                  {order.shipping_provider === 'yurtici_kargo' && (
+                    <a
+                      href={`https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${order.tracking_number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-[#1A365D] text-white text-sm font-medium rounded-lg hover:bg-[#2A4365] transition-colors"
+                    >
+                      <Truck className="w-4 h-4" />
+                      Yurtiçi Kargo'da Takip Et
+                    </a>
+                  )}
+
+                  {/* Aras Kargo Tracking Link */}
+                  {order.shipping_provider === 'aras_kargo' && (
+                    <a
+                      href={`https://www.araskargo.com.tr/kargo-takip/${order.tracking_number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-[#D97706] text-white text-sm font-medium rounded-lg hover:bg-[#B45309] transition-colors"
+                    >
+                      <Truck className="w-4 h-4" />
+                      Aras Kargo'da Takip Et
+                    </a>
+                  )}
+
                   {/* UPS Tracking Link */}
                   {(order.shipping_provider === 'ups' || !order.shipping_provider) && (
                     <a
