@@ -47,10 +47,10 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--sidebar-bg)] flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex flex-col">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-white/10">
-        <Link href="/admin/dashboard" className="text-lg font-semibold text-white">
+        <Link href="/admin/dashboard" className="text-lg font-semibold !text-white">
           GROHN FABRICS
         </Link>
       </div>
@@ -66,8 +66,8 @@ export default function AdminSidebar() {
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                 ${isActive 
-                  ? 'bg-[var(--sidebar-active)] text-white' 
-                  : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-hover)] hover:bg-white/5'
+                  ? 'bg-[var(--sidebar-active)] !text-white' 
+                  : '!text-[var(--sidebar-text)] hover:!text-[var(--sidebar-text-hover)] hover:bg-white/5'
                 }
               `}
             >
@@ -82,7 +82,7 @@ export default function AdminSidebar() {
       <div className="p-4 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-hover)] hover:bg-white/5 transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium !text-[var(--sidebar-text)] hover:!text-[var(--sidebar-text-hover)] hover:bg-white/5 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           Çıkış Yap
