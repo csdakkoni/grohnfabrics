@@ -127,7 +127,7 @@ export default function MarketsPage() {
     setEditingShipping({
       id: 'new-' + Date.now(),
       market_id: marketId,
-      provider: 'ups',
+      provider: marketId === 'TR' ? 'yurtici_kargo' : 'ups',
       name_tr: '',
       name_en: '',
       base_rate: 0,
@@ -399,9 +399,14 @@ export default function MarketsPage() {
                     onChange={(e) => setEditingShipping({ ...editingShipping, provider: e.target.value })}
                     className="input"
                   >
+                    <option value="yurtici_kargo">Yurtiçi Kargo</option>
+                    <option value="aras_kargo">Aras Kargo</option>
+                    <option value="mng_kargo">MNG Kargo</option>
+                    <option value="ptt">PTT Kargo</option>
                     <option value="ups">UPS</option>
                     <option value="dhl">DHL</option>
                     <option value="fedex">FedEx</option>
+                    <option value="custom">Diğer / Özel</option>
                   </select>
                 </div>
               </div>
