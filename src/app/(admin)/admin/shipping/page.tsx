@@ -222,7 +222,7 @@ export default function ShippingPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-primary)]"></div>
       </div>
     );
   }
@@ -231,13 +231,13 @@ export default function ShippingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Kargo Fiyatları</h1>
-          <p className="text-[var(--color-text-light)]">Ülke ve bölge bazlı kargo fiyatlarını yönetin</p>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Kargo Fiyatları</h1>
+          <p className="text-[var(--foreground-muted)]">Ülke ve bölge bazlı kargo fiyatlarını yönetin</p>
         </div>
         <button
           onClick={saveAll}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-primary-dark)] disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -245,14 +245,14 @@ export default function ShippingPage() {
       </div>
 
       {/* Profil Seçimi */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[var(--color-border)]">
-        <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-[var(--border)]">
+        <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
           Kargo Profili
         </label>
         <select
           value={selectedProfile}
           onChange={(e) => setSelectedProfile(e.target.value)}
-          className="w-full md:w-64 px-3 py-2 border border-[var(--color-border)] rounded-lg"
+          className="w-full md:w-64 px-3 py-2 border border-[var(--border)] rounded-lg"
         >
           {profiles.map(profile => (
             <option key={profile.id} value={profile.id}>
@@ -263,13 +263,13 @@ export default function ShippingPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-[var(--color-border)]">
+      <div className="flex gap-2 border-b border-[var(--border)]">
         <button
           onClick={() => setActiveTab('countries')}
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'countries'
-              ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]'
-              : 'text-[var(--color-text-light)] hover:text-[var(--color-text)]'
+              ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]'
+              : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
           }`}
         >
           <MapPin className="w-4 h-4 inline mr-2" />
@@ -279,8 +279,8 @@ export default function ShippingPage() {
           onClick={() => setActiveTab('zones')}
           className={`px-4 py-2 font-medium transition-colors ${
             activeTab === 'zones'
-              ? 'text-[var(--color-primary)] border-b-2 border-[var(--color-primary)]'
-              : 'text-[var(--color-text-light)] hover:text-[var(--color-text)]'
+              ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]'
+              : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
           }`}
         >
           <Globe className="w-4 h-4 inline mr-2" />
@@ -290,12 +290,12 @@ export default function ShippingPage() {
 
       {/* Ülke Fiyatları */}
       {activeTab === 'countries' && (
-        <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border)] overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
-            <h2 className="font-semibold text-[var(--color-text)]">Ülke Bazlı Fiyatlar</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
+          <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
+            <h2 className="font-semibold text-[var(--foreground)]">Ülke Bazlı Fiyatlar</h2>
             <button
               onClick={addCountryRate}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--color-primary)] text-white rounded-lg text-sm hover:bg-[var(--color-primary-dark)]"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--brand-primary)] text-white rounded-lg text-sm hover:bg-[var(--brand-primary-dark)]"
             >
               <Plus className="w-4 h-4" />
               Ülke Ekle
@@ -306,18 +306,18 @@ export default function ShippingPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-light)]">Ülke</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-light)]">Fiyat</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-light)]">Para Birimi</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-light)]">Teslimat (Gün)</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-light)]">Durum</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-[var(--color-text-light)]">İşlem</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Ülke</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Fiyat</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Para Birimi</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Teslimat (Gün)</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Durum</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-[var(--foreground-muted)]">İşlem</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border)]">
+              <tbody className="divide-y divide-[var(--border)]">
                 {countryRates.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-[var(--color-text-light)]">
+                    <td colSpan={6} className="px-4 py-8 text-center text-[var(--foreground-muted)]">
                       Henüz ülke fiyatı eklenmemiş. "Ülke Ekle" butonuna tıklayın.
                     </td>
                   </tr>
@@ -328,7 +328,7 @@ export default function ShippingPage() {
                         <select
                           value={rate.country_code}
                           onChange={(e) => updateCountryRate(rate.id, { country_code: e.target.value })}
-                          className="w-full px-2 py-1 border border-[var(--color-border)] rounded"
+                          className="w-full px-2 py-1 border border-[var(--border)] rounded"
                         >
                           <option value="">Ülke Seçin</option>
                           {ALL_COUNTRIES.map(country => (
@@ -343,7 +343,7 @@ export default function ShippingPage() {
                           type="number"
                           value={rate.rate}
                           onChange={(e) => updateCountryRate(rate.id, { rate: parseFloat(e.target.value) || 0 })}
-                          className="w-24 px-2 py-1 border border-[var(--color-border)] rounded"
+                          className="w-24 px-2 py-1 border border-[var(--border)] rounded"
                           min="0"
                           step="0.01"
                         />
@@ -352,7 +352,7 @@ export default function ShippingPage() {
                         <select
                           value={rate.currency}
                           onChange={(e) => updateCountryRate(rate.id, { currency: e.target.value })}
-                          className="px-2 py-1 border border-[var(--color-border)] rounded"
+                          className="px-2 py-1 border border-[var(--border)] rounded"
                         >
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
@@ -366,7 +366,7 @@ export default function ShippingPage() {
                             type="number"
                             value={rate.estimated_days_min}
                             onChange={(e) => updateCountryRate(rate.id, { estimated_days_min: parseInt(e.target.value) || 0 })}
-                            className="w-16 px-2 py-1 border border-[var(--color-border)] rounded"
+                            className="w-16 px-2 py-1 border border-[var(--border)] rounded"
                             min="0"
                           />
                           <span>-</span>
@@ -374,7 +374,7 @@ export default function ShippingPage() {
                             type="number"
                             value={rate.estimated_days_max}
                             onChange={(e) => updateCountryRate(rate.id, { estimated_days_max: parseInt(e.target.value) || 0 })}
-                            className="w-16 px-2 py-1 border border-[var(--color-border)] rounded"
+                            className="w-16 px-2 py-1 border border-[var(--border)] rounded"
                             min="0"
                           />
                         </div>
@@ -410,26 +410,26 @@ export default function ShippingPage() {
 
       {/* Bölgeler */}
       {activeTab === 'zones' && (
-        <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border)] p-6">
-          <h2 className="font-semibold text-[var(--color-text)] mb-4">Kargo Bölgeleri</h2>
+        <div className="bg-white rounded-xl shadow-sm border border-[var(--border)] p-6">
+          <h2 className="font-semibold text-[var(--foreground)] mb-4">Kargo Bölgeleri</h2>
           
           {zones.length === 0 ? (
-            <p className="text-[var(--color-text-light)]">
+            <p className="text-[var(--foreground-muted)]">
               Henüz bölge tanımlanmamış. Bölgeler SQL ile oluşturulabilir.
             </p>
           ) : (
             <div className="space-y-4">
               {zones.map(zone => (
-                <div key={zone.id} className="border border-[var(--color-border)] rounded-lg p-4">
+                <div key={zone.id} className="border border-[var(--border)] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-[var(--color-text)]">{zone.name}</h3>
+                    <h3 className="font-medium text-[var(--foreground)]">{zone.name}</h3>
                     {zone.rate && (
-                      <span className="text-[var(--color-primary)] font-semibold">
+                      <span className="text-[var(--brand-primary)] font-semibold">
                         {zone.rate.rate} {zone.rate.currency}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-[var(--color-text-light)] mb-2">{zone.description}</p>
+                  <p className="text-sm text-[var(--foreground-muted)] mb-2">{zone.description}</p>
                   <div className="flex flex-wrap gap-1">
                     {zone.countries.map(c => (
                       <span key={c.country_code} className="px-2 py-0.5 bg-gray-100 rounded text-xs">
@@ -438,7 +438,7 @@ export default function ShippingPage() {
                     ))}
                   </div>
                   {zone.rate && (
-                    <p className="text-xs text-[var(--color-text-light)] mt-2">
+                    <p className="text-xs text-[var(--foreground-muted)] mt-2">
                       Tahmini teslimat: {zone.rate.estimated_days_min}-{zone.rate.estimated_days_max} iş günü
                     </p>
                   )}
