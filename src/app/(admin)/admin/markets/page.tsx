@@ -22,6 +22,7 @@ interface ShippingProfile {
   name_en: string;
   base_rate: number;
   per_kg_rate: number;
+  free_shipping_threshold: number | null;
   estimated_days_min: number;
   estimated_days_max: number;
   is_active: boolean;
@@ -91,6 +92,7 @@ export default function MarketsPage() {
         name_en: profile.name_en,
         base_rate: profile.base_rate,
         per_kg_rate: profile.per_kg_rate,
+        free_shipping_threshold: profile.free_shipping_threshold,
         estimated_days_min: profile.estimated_days_min,
         estimated_days_max: profile.estimated_days_max,
         is_active: profile.is_active,
@@ -105,6 +107,7 @@ export default function MarketsPage() {
           name_en: profile.name_en,
           base_rate: profile.base_rate,
           per_kg_rate: profile.per_kg_rate,
+          free_shipping_threshold: profile.free_shipping_threshold,
           estimated_days_min: profile.estimated_days_min,
           estimated_days_max: profile.estimated_days_max,
           is_active: profile.is_active,
@@ -132,6 +135,7 @@ export default function MarketsPage() {
       name_en: '',
       base_rate: 0,
       per_kg_rate: 0,
+      free_shipping_threshold: null,
       estimated_days_min: 1,
       estimated_days_max: 3,
       is_active: true,
@@ -331,6 +335,11 @@ export default function MarketsPage() {
                     <td>{profile.name_tr}</td>
                     <td>
                       {profile.market_id === 'TR' ? `₺${profile.base_rate}` : `$${profile.base_rate}`}
+                      {profile.free_shipping_threshold && (
+                        <span className="block text-xs text-[var(--foreground-muted)]">
+                          Min: {profile.market_id === 'TR' ? `₺${profile.free_shipping_threshold}` : `$${profile.free_shipping_threshold}`}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {profile.market_id === 'TR' ? `₺${profile.per_kg_rate}` : `$${profile.per_kg_rate}`}
@@ -430,7 +439,7 @@ export default function MarketsPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="form-group">
                   <label className="label">Taban Ücret</label>
                   <input
@@ -442,13 +451,24 @@ export default function MarketsPage() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="label">Kg Başına Ücret</label>
+                  <label className="label">Kg Başına</label>
                   <input
                     type="number"
                     step="0.01"
                     value={editingShipping.per_kg_rate}
                     onChange={(e) => setEditingShipping({ ...editingShipping, per_kg_rate: parseFloat(e.target.value) || 0 })}
                     className="input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="label">Min Bedava Limiti</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingShipping.free_shipping_threshold ?? ''}
+                    onChange={(e) => setEditingShipping({ ...editingShipping, free_shipping_threshold: parseFloat(e.target.value) || null })}
+                    className="input"
+                    placeholder="Limit Yok"
                   />
                 </div>
               </div>

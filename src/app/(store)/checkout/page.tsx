@@ -124,10 +124,24 @@ export default function CheckoutPage() {
 
       // Ülke bazlı özel fiyat yoksa, Türkiye için varsayılan kuralları uygula
       if (address.country === 'TR') {
-        // Türkiye için varsayılan sabit kargo
-        setShippingCost(total >= 500 ? 0 : 50);
+        // Türkiye için veritabanında aktif kargo profilini bul
+        const { data: trProfile } = await supabase
+          .from('shipping_profiles')
+          .select('base_rate, free_shipping_threshold, estimated_days_min, estimated_days_max')
+          .eq('market_id', 'TR')
+          .eq('is_active', true)
+          .order('base_rate', { ascending: true }) // En ucuz/standart olanı al
+          .limit(1)
+          .maybeSingle();
+
+        const baseRate = trProfile?.base_rate ?? 50;
+        const threshold = trProfile?.free_shipping_threshold ?? 1000;
+        const minDays = trProfile?.estimated_days_min ?? 2;
+        const maxDays = trProfile?.estimated_days_max ?? 4;
+
+        setShippingCost(total >= threshold ? 0 : baseRate);
         setShippingCurrency('TRY');
-        setEstimatedDays({ min: 2, max: 4 });
+        setEstimatedDays({ min: minDays, max: maxDays });
         return;
       }
 
