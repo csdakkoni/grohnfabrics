@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 import { generateShipmentNotificationEmail, getShipmentNotificationSubject } from '@/lib/email/templates/shipment-notification';
 import { generateReviewRequestEmail, getReviewRequestSubject } from '@/lib/email/templates/review-request';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
 
 export async function POST(
   request: NextRequest,

@@ -10,7 +10,7 @@ import 'iyzipay/lib/IyzipayResource';
 // @ts-ignore  
 import 'iyzipay/lib/resources/CheckoutFormInitialize';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock');
 
 interface CartItem {
   productId: string;
