@@ -8,12 +8,14 @@ import SearchModal from './SearchModal';
 import MarketSwitcher from './MarketSwitcher';
 import { useMarket } from '@/lib/market/context';
 import { useWishlist } from './WishlistProvider';
+import { createClient } from '@/lib/supabase/client';
 
 export default function StoreHeader() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { t, isAdminMode } = useMarket();
+  const { t, isAdminMode, locale } = useMarket();
   const { items: wishlistItems } = useWishlist();
+  const [menuPages, setMenuPages] = useState<any[]>([]);
 
   // Keyboard shortcut for search (Cmd/Ctrl + K)
   useEffect(() => {
@@ -25,6 +27,23 @@ export default function StoreHeader() {
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Fetch published menu pages dynamically
+  useEffect(() => {
+    const supabase = createClient();
+    async function loadMenuPages() {
+      const { data } = await supabase
+        .from('pages')
+        .select('slug, title_tr, title_en')
+        .eq('is_published', true)
+        .eq('show_in_menu', true)
+        .order('menu_order', { ascending: true });
+      if (data) {
+        setMenuPages(data);
+      }
+    }
+    loadMenuPages();
   }, []);
 
   return (
@@ -88,6 +107,15 @@ export default function StoreHeader() {
               >
                 {t('Galeri', 'Gallery')}
               </Link>
+              {menuPages.map((page) => (
+                <Link
+                  key={page.slug}
+                  href={`/${page.slug}`}
+                  className="text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--brand-primary)] transition-colors"
+                >
+                  {locale === 'en' && page.title_en ? page.title_en : page.title_tr}
+                </Link>
+              ))}
             </nav>
 
             {/* Actions */}
@@ -192,6 +220,16 @@ export default function StoreHeader() {
               >
                 🖼️ {t('İlham Galerisi', 'Gallery')}
               </Link>
+              {menuPages.map((page) => (
+                <Link
+                  key={page.slug}
+                  href={`/${page.slug}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--brand-primary)]/5 hover:text-[var(--brand-primary)] transition-colors"
+                >
+                  📄 {locale === 'en' && page.title_en ? page.title_en : page.title_tr}
+                </Link>
+              ))}
               <hr className="border-[var(--brand-primary)]/10 my-2" />
               <Link
                 href="/about"
