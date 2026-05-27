@@ -241,16 +241,16 @@ function ShippingPageContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-8 space-y-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Kargo Fiyatları</h1>
+          <h1 className="text-2xl font-semibold">Kargo Fiyatları</h1>
           <p className="text-[var(--foreground-muted)]">Ülke ve bölge bazlı kargo fiyatlarını yönetin</p>
         </div>
         <button
           onClick={saveAll}
           disabled={saving}
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--brand-primary)] text-white rounded-lg hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
+          className="btn btn-primary flex items-center gap-2"
         >
           <Save className="w-4 h-4" />
           {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -258,31 +258,35 @@ function ShippingPageContent() {
       </div>
 
       {/* Profil Seçimi */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-[var(--border)]">
-        <label className="block text-sm font-medium text-[var(--foreground)] mb-2">
-          Kargo Profili
-        </label>
-        <select
-          value={selectedProfile}
-          onChange={(e) => setSelectedProfile(e.target.value)}
-          className="w-full md:w-64 px-3 py-2 border border-[var(--border)] rounded-lg"
-        >
-          {profiles.map(profile => (
-            <option key={profile.id} value={profile.id}>
-              {profile.name_tr} ({profile.market_id})
-            </option>
-          ))}
-        </select>
+      <div className="card">
+        <div className="card-body py-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <label className="text-sm font-medium text-[var(--foreground)] min-w-[100px]">
+              Kargo Profili:
+            </label>
+            <select
+              value={selectedProfile}
+              onChange={(e) => setSelectedProfile(e.target.value)}
+              className="input max-w-xs"
+            >
+              {profiles.map(profile => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.name_tr} ({profile.market_id === 'TR' ? '🇹🇷 TR' : '🌍 Global'})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-[var(--border)]">
+      <div className="flex gap-2 border-b border-[var(--border)] mb-6">
         <button
           onClick={() => setActiveTab('countries')}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[2px] ${
             activeTab === 'countries'
-              ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]'
-              : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+              ? 'text-[var(--brand-primary)] border-[var(--brand-primary)]'
+              : 'text-[var(--foreground-muted)] border-transparent hover:text-[var(--foreground)]'
           }`}
         >
           <MapPin className="w-4 h-4 inline mr-2" />
@@ -290,10 +294,10 @@ function ShippingPageContent() {
         </button>
         <button
           onClick={() => setActiveTab('zones')}
-          className={`px-4 py-2 font-medium transition-colors ${
+          className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-[2px] ${
             activeTab === 'zones'
-              ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]'
-              : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
+              ? 'text-[var(--brand-primary)] border-[var(--brand-primary)]'
+              : 'text-[var(--foreground-muted)] border-transparent hover:text-[var(--foreground)]'
           }`}
         >
           <Globe className="w-4 h-4 inline mr-2" />
@@ -303,45 +307,48 @@ function ShippingPageContent() {
 
       {/* Ülke Fiyatları */}
       {activeTab === 'countries' && (
-        <div className="bg-white rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
-          <div className="p-4 border-b border-[var(--border)] flex justify-between items-center">
-            <h2 className="font-semibold text-[var(--foreground)]">Ülke Bazlı Fiyatlar</h2>
+        <div className="card">
+          <div className="card-header flex justify-between items-center">
+            <div>
+              <h2 className="card-title">Ülke Bazlı Fiyatlar</h2>
+              <p className="card-description">Seçilen profile özel kargo fiyatı ve teslimat süreleri</p>
+            </div>
             <button
               onClick={addCountryRate}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--brand-primary)] text-white rounded-lg text-sm hover:bg-[var(--brand-primary-dark)]"
+              className="btn btn-secondary btn-sm flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Ülke Ekle
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+          <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+            <table className="table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Ülke</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Fiyat</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Para Birimi</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Teslimat (Gün)</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--foreground-muted)]">Durum</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-[var(--foreground-muted)]">İşlem</th>
+                  <th>Ülke</th>
+                  <th>Fiyat</th>
+                  <th>Para Birimi</th>
+                  <th>Teslimat (Gün)</th>
+                  <th>Durum</th>
+                  <th className="text-right">İşlem</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--border)]">
+              <tbody>
                 {countryRates.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-[var(--foreground-muted)]">
+                    <td colSpan={6} className="text-center py-8 text-[var(--foreground-muted)]">
                       Henüz ülke fiyatı eklenmemiş. "Ülke Ekle" butonuna tıklayın.
                     </td>
                   </tr>
                 ) : (
                   countryRates.map(rate => (
-                    <tr key={rate.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
+                    <tr key={rate.id}>
+                      <td className="w-1/3">
                         <select
                           value={rate.country_code}
                           onChange={(e) => updateCountryRate(rate.id, { country_code: e.target.value })}
-                          className="w-full px-2 py-1 border border-[var(--border)] rounded"
+                          className="input py-1.5"
                         >
                           <option value="">Ülke Seçin</option>
                           {ALL_COUNTRIES.map(country => (
@@ -351,63 +358,65 @@ function ShippingPageContent() {
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="w-28">
                         <input
                           type="number"
                           value={rate.rate}
                           onChange={(e) => updateCountryRate(rate.id, { rate: parseFloat(e.target.value) || 0 })}
-                          className="w-24 px-2 py-1 border border-[var(--border)] rounded"
+                          className="input py-1.5 text-center"
                           min="0"
                           step="0.01"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="w-32">
                         <select
                           value={rate.currency}
                           onChange={(e) => updateCountryRate(rate.id, { currency: e.target.value })}
-                          className="px-2 py-1 border border-[var(--border)] rounded"
+                          className="input py-1.5"
                         >
-                          <option value="USD">USD</option>
-                          <option value="EUR">EUR</option>
-                          <option value="GBP">GBP</option>
-                          <option value="TRY">TRY</option>
+                          <option value="USD">USD ($)</option>
+                          <option value="EUR">EUR (€)</option>
+                          <option value="GBP">GBP (£)</option>
+                          <option value="TRY">TRY (₺)</option>
                         </select>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
+                      <td>
+                        <div className="flex items-center gap-2 max-w-[200px]">
                           <input
                             type="number"
                             value={rate.estimated_days_min}
                             onChange={(e) => updateCountryRate(rate.id, { estimated_days_min: parseInt(e.target.value) || 0 })}
-                            className="w-16 px-2 py-1 border border-[var(--border)] rounded"
+                            className="input py-1.5 text-center"
                             min="0"
+                            placeholder="Min"
                           />
-                          <span>-</span>
+                          <span className="text-[var(--foreground-muted)]">-</span>
                           <input
                             type="number"
                             value={rate.estimated_days_max}
                             onChange={(e) => updateCountryRate(rate.id, { estimated_days_max: parseInt(e.target.value) || 0 })}
-                            className="w-16 px-2 py-1 border border-[var(--border)] rounded"
+                            className="input py-1.5 text-center"
                             min="0"
+                            placeholder="Max"
                           />
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <button
                           onClick={() => updateCountryRate(rate.id, { is_active: !rate.is_active })}
-                          className={`px-2 py-1 rounded text-sm ${
+                          className={`badge cursor-pointer ${
                             rate.is_active
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-500'
+                              ? 'badge-success'
+                              : 'badge-gray'
                           }`}
                         >
                           {rate.is_active ? 'Aktif' : 'Pasif'}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="text-right">
                         <button
                           onClick={() => deleteCountryRate(rate.id)}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          className="btn btn-ghost btn-sm text-[var(--error)] p-2"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -423,48 +432,53 @@ function ShippingPageContent() {
 
       {/* Bölgeler */}
       {activeTab === 'zones' && (
-        <div className="bg-white rounded-xl shadow-sm border border-[var(--border)] p-6">
-          <h2 className="font-semibold text-[var(--foreground)] mb-4">Kargo Bölgeleri</h2>
-          
-          {zones.length === 0 ? (
-            <p className="text-[var(--foreground-muted)]">
-              Henüz bölge tanımlanmamış. Bölgeler SQL ile oluşturulabilir.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {zones.map(zone => (
-                <div key={zone.id} className="border border-[var(--border)] rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-[var(--foreground)]">{zone.name}</h3>
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">Kargo Bölgeleri</h2>
+            <p className="card-description">Farklı ülkeleri gruplayarak toplu kargo fiyatı tanımlayın</p>
+          </div>
+          <div className="card-body">
+            {zones.length === 0 ? (
+              <p className="text-[var(--foreground-muted)] text-center py-6">
+                Henüz bölge tanımlanmamış. Bölgeler SQL ile oluşturulabilir.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {zones.map(zone => (
+                  <div key={zone.id} className="border border-[var(--border)] rounded-xl p-4 hover:border-[var(--brand-primary)]/30 transition-colors">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-lg">{zone.name}</h3>
+                      {zone.rate && (
+                        <span className="text-[var(--brand-primary)] font-semibold text-lg">
+                          {zone.rate.currency === 'TRY' ? '₺' : zone.rate.currency === 'USD' ? '$' : zone.rate.currency === 'EUR' ? '€' : ''}
+                          {zone.rate.rate}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-[var(--foreground-muted)] mb-3">{zone.description}</p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {zone.countries.map(c => (
+                        <span key={c.country_code} className="px-2 py-0.5 bg-[var(--background-secondary)] text-[var(--foreground-muted)] rounded text-xs">
+                          {c.country_name}
+                        </span>
+                      ))}
+                    </div>
                     {zone.rate && (
-                      <span className="text-[var(--brand-primary)] font-semibold">
-                        {zone.rate.rate} {zone.rate.currency}
-                      </span>
+                      <p className="text-xs text-[var(--foreground-muted)]">
+                        Tahmini teslimat: <span className="font-medium text-[var(--foreground)]">{zone.rate.estimated_days_min}-{zone.rate.estimated_days_max} iş günü</span>
+                      </p>
                     )}
                   </div>
-                  <p className="text-sm text-[var(--foreground-muted)] mb-2">{zone.description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {zone.countries.map(c => (
-                      <span key={c.country_code} className="px-2 py-0.5 bg-gray-100 rounded text-xs">
-                        {c.country_name}
-                      </span>
-                    ))}
-                  </div>
-                  {zone.rate && (
-                    <p className="text-xs text-[var(--foreground-muted)] mt-2">
-                      Tahmini teslimat: {zone.rate.estimated_days_min}-{zone.rate.estimated_days_max} iş günü
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Not:</strong> Ülke bazlı fiyat tanımlandığında, o ülke için bölge fiyatı yerine ülke fiyatı kullanılır.
-              Ülke fiyatı tanımlanmamış ülkeler için bölge fiyatı geçerlidir.
-            </p>
+            <div className="mt-6 p-4 bg-blue-50/50 border border-blue-100 rounded-xl">
+              <p className="text-sm text-blue-800 font-light leading-relaxed">
+                <strong>Not:</strong> Ülke bazlı fiyat tanımlandığında, o ülke için bölge fiyatı yerine ülke fiyatı kullanılır.
+                Ülke fiyatı tanımlanmamış ülkeler için bölge fiyatı geçerlidir.
+              </p>
+            </div>
           </div>
         </div>
       )}
