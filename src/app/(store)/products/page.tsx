@@ -60,6 +60,20 @@ async function getProducts(searchParams: SearchParams, region: string) {
     query = query.eq('product_type', searchParams.type);
   }
 
+  if (searchParams.category) {
+    const { data: categoryData } = await supabaseAdmin
+      .from('categories')
+      .select('id')
+      .eq('slug', searchParams.category)
+      .maybeSingle();
+
+    if (categoryData) {
+      query = query.eq('category_id', categoryData.id);
+    } else {
+      return [];
+    }
+  }
+
   const { data } = await query;
   return data || [];
 }
@@ -109,7 +123,25 @@ export default async function ProductsPage({
     return label ? (isEnglish ? label.en : label.tr) : type;
   };
 
-  const currentType = params.type ? getTypeLabel(params.type) : t('Tüm Ürünler', 'All Products');
+  const activeCategory = categories.find((c) => c.slug === params.category);
+
+  const getDynamicTitle = () => {
+    const categoryName = activeCategory ? (isEnglish ? activeCategory.name_en : activeCategory.name_tr) : '';
+    const typeLabel = params.type ? getTypeLabel(params.type) : '';
+
+    if (categoryName && typeLabel) {
+      return `${categoryName} ${typeLabel}`;
+    }
+    if (categoryName) {
+      return categoryName;
+    }
+    if (typeLabel) {
+      return typeLabel;
+    }
+    return t('Tüm Ürünler', 'All Products');
+  };
+
+  const currentType = getDynamicTitle();
 
   // Get currency symbol based on region
   const currencySymbol = region === 'TR' ? '₺' : '$';
@@ -136,8 +168,8 @@ export default async function ProductsPage({
               <ul className="space-y-2">
                 <li>
                   <Link 
-                    href="/products"
-                    className={`text-sm ${!params.type ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
+                    href={params.category ? `/products?category=${params.category}` : '/products'}
+                    className={`text-sm ${(!params.type && !params.category) ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                   >
                     {t('Tüm Ürünler', 'All Products')}
                   </Link>
@@ -145,7 +177,7 @@ export default async function ProductsPage({
                 {Object.entries(typeLabels).map(([key, label]) => (
                   <li key={key}>
                     <Link 
-                      href={`/products?type=${key}`}
+                      href={`/products?type=${key}${params.category ? `&category=${params.category}` : ''}`}
                       className={`text-sm ${params.type === key ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                     >
                       {isEnglish ? label.en : label.tr}
@@ -160,11 +192,19 @@ export default async function ProductsPage({
               <div>
                 <h3 className="text-sm font-semibold mb-4">{t('Koleksiyonlar', 'Collections')}</h3>
                 <ul className="space-y-2">
+                  <li>
+                    <Link 
+                      href={params.type ? `/products?type=${params.type}` : '/products'}
+                      className={`text-sm ${!params.category ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
+                    >
+                      {t('Tüm Koleksiyonlar', 'All Collections')}
+                    </Link>
+                  </li>
                   {categories.map((cat) => (
                     <li key={cat.id}>
                       <Link 
-                        href={`/products?category=${cat.slug}`}
-                        className="text-sm text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+                        href={`/products?category=${cat.slug}${params.type ? `&type=${params.type}` : ''}`}
+                        className={`text-sm ${params.category === cat.slug ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                       >
                         {isEnglish ? cat.name_en : cat.name_tr}
                       </Link>
