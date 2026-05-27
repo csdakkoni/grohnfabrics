@@ -598,6 +598,7 @@ CREATE TABLE IF NOT EXISTS pages (
   featured_image VARCHAR(500),
   is_published BOOLEAN DEFAULT false,
   show_in_menu BOOLEAN DEFAULT false,
+  show_in_footer BOOLEAN DEFAULT false,
   menu_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

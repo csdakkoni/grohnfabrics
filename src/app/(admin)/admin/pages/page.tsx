@@ -12,6 +12,7 @@ interface Page {
   title_en?: string;
   is_published: boolean;
   show_in_menu: boolean;
+  show_in_footer: boolean;
   menu_order: number;
   updated_at: string;
 }
@@ -24,7 +25,7 @@ export default function PagesPage() {
   const fetchPages = useCallback(async () => {
     const { data } = await supabase
       .from('pages')
-      .select('id, slug, title_tr, title_en, is_published, show_in_menu, menu_order, updated_at')
+      .select('id, slug, title_tr, title_en, is_published, show_in_menu, show_in_footer, menu_order, updated_at')
       .order('menu_order', { ascending: true });
     
     setPages(data || []);
@@ -47,6 +48,14 @@ export default function PagesPage() {
     await supabase
       .from('pages')
       .update({ show_in_menu: !page.show_in_menu })
+      .eq('id', page.id);
+    fetchPages();
+  };
+
+  const toggleFooter = async (page: Page) => {
+    await supabase
+      .from('pages')
+      .update({ show_in_footer: !page.show_in_footer })
       .eq('id', page.id);
     fetchPages();
   };
@@ -98,6 +107,7 @@ export default function PagesPage() {
                   <th>URL</th>
                   <th>Durum</th>
                   <th>Menüde</th>
+                  <th>Footer'da</th>
                   <th>Güncelleme</th>
                   <th></th>
                 </tr>
@@ -157,6 +167,14 @@ export default function PagesPage() {
                         ) : (
                           'Hayır'
                         )}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => toggleFooter(page)}
+                        className={`badge ${page.show_in_footer ? 'badge-primary' : 'badge-gray'} cursor-pointer`}
+                      >
+                        {page.show_in_footer ? 'Evet' : 'Hayır'}
                       </button>
                     </td>
                     <td className="text-sm text-[var(--foreground-muted)]">

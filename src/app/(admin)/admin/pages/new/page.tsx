@@ -25,6 +25,7 @@ export default function NewPagePage() {
     meta_description_en: '',
     is_published: false,
     show_in_menu: false,
+    show_in_footer: false,
     menu_order: 0,
   });
 
@@ -261,6 +262,19 @@ export default function NewPagePage() {
                   />
                   <label htmlFor="show_in_menu" className="text-sm">
                     Menüde göster
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="show_in_footer"
+                    checked={formData.show_in_footer}
+                    onChange={(e) => setFormData(prev => ({ ...prev, show_in_footer: e.target.checked }))}
+                    className="w-4 h-4 rounded border-[var(--border)]"
+                  />
+                  <label htmlFor="show_in_footer" className="text-sm">
+                    Footer'da göster
                   </label>
                 </div>
 

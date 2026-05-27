@@ -20,6 +20,7 @@ interface PageData {
   featured_image: string;
   is_published: boolean;
   show_in_menu: boolean;
+  show_in_footer: boolean;
   menu_order: number;
 }
 
@@ -303,6 +304,19 @@ export default function EditPagePage({ params }: { params: Promise<{ id: string 
                   />
                   <label htmlFor="show_in_menu" className="text-sm">
                     Menüde göster
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="show_in_footer"
+                    checked={formData.show_in_footer}
+                    onChange={(e) => setFormData(prev => prev ? { ...prev, show_in_footer: e.target.checked } : null)}
+                    className="w-4 h-4 rounded border-[var(--border)]"
+                  />
+                  <label htmlFor="show_in_footer" className="text-sm">
+                    Footer'da göster
                   </label>
                 </div>
 

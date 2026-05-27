@@ -1,10 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useMarket } from '@/lib/market/context';
+import { createClient } from '@/lib/supabase/client';
 
 export default function StoreFooter() {
-  const { t } = useMarket();
+  const { t, locale } = useMarket();
+  const [footerPages, setFooterPages] = useState<any[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    async function loadFooterPages() {
+      const { data } = await supabase
+        .from('pages')
+        .select('slug, title_tr, title_en')
+        .eq('is_published', true)
+        .eq('show_in_footer', true)
+        .order('menu_order', { ascending: true });
+      if (data) {
+        setFooterPages(data);
+      }
+    }
+    loadFooterPages();
+  }, []);
 
   return (
     <footer className="bg-gradient-to-br from-[#2C3830] via-[#253028] to-[#1E2820] !text-white">
@@ -54,6 +73,13 @@ export default function StoreFooter() {
               <li><Link href="/about" className="text-sm !text-white/60 hover:!text-white transition-colors">{t('Hikayemiz', 'Our Story')}</Link></li>
               <li><Link href="/contact" className="text-sm !text-white/60 hover:!text-white transition-colors">{t('İletişim', 'Contact')}</Link></li>
               <li><Link href="/contact?subject=wholesale" className="text-sm !text-white/60 hover:!text-white transition-colors">{t('B2B & Toptan', 'B2B & Wholesale')}</Link></li>
+              {footerPages.map((page) => (
+                <li key={page.slug}>
+                  <Link href={`/${page.slug}`} className="text-sm !text-white/60 hover:!text-white transition-colors">
+                    {locale === 'en' && page.title_en ? page.title_en : page.title_tr}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
