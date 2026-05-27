@@ -773,3 +773,20 @@ CREATE POLICY "Public can view active template values" ON option_value_templates
 -- 2. customers tablosuna admin rolü ekle:
 --    INSERT INTO customers (id, email, role) VALUES ('USER_UUID', 'admin@email.com', 'admin');
 -- =============================================
+
+-- ============================================
+-- EXPLICIT GRANTS FOR DATA API ACCESS (Supabase 2026 Security Compatibility)
+-- ============================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+
