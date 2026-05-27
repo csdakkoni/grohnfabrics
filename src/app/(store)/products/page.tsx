@@ -126,17 +126,11 @@ export default async function ProductsPage({
   const activeCategory = categories.find((c) => c.slug === params.category);
 
   const getDynamicTitle = () => {
-    const categoryName = activeCategory ? (isEnglish ? activeCategory.name_en : activeCategory.name_tr) : '';
-    const typeLabel = params.type ? getTypeLabel(params.type) : '';
-
-    if (categoryName && typeLabel) {
-      return `${categoryName} ${typeLabel}`;
+    if (activeCategory) {
+      return isEnglish ? activeCategory.name_en : activeCategory.name_tr;
     }
-    if (categoryName) {
-      return categoryName;
-    }
-    if (typeLabel) {
-      return typeLabel;
+    if (params.type) {
+      return getTypeLabel(params.type);
     }
     return t('Tüm Ürünler', 'All Products');
   };
@@ -168,7 +162,7 @@ export default async function ProductsPage({
               <ul className="space-y-2">
                 <li>
                   <Link 
-                    href={params.category ? `/products?category=${params.category}` : '/products'}
+                    href="/products"
                     className={`text-sm ${(!params.type && !params.category) ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                   >
                     {t('Tüm Ürünler', 'All Products')}
@@ -177,7 +171,7 @@ export default async function ProductsPage({
                 {Object.entries(typeLabels).map(([key, label]) => (
                   <li key={key}>
                     <Link 
-                      href={`/products?type=${key}${params.category ? `&category=${params.category}` : ''}`}
+                      href={`/products?type=${key}`}
                       className={`text-sm ${params.type === key ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                     >
                       {isEnglish ? label.en : label.tr}
@@ -194,7 +188,7 @@ export default async function ProductsPage({
                 <ul className="space-y-2">
                   <li>
                     <Link 
-                      href={params.type ? `/products?type=${params.type}` : '/products'}
+                      href="/products"
                       className={`text-sm ${!params.category ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                     >
                       {t('Tüm Koleksiyonlar', 'All Collections')}
@@ -203,7 +197,7 @@ export default async function ProductsPage({
                   {categories.map((cat) => (
                     <li key={cat.id}>
                       <Link 
-                        href={`/products?category=${cat.slug}${params.type ? `&type=${params.type}` : ''}`}
+                        href={`/products?category=${cat.slug}`}
                         className={`text-sm ${params.category === cat.slug ? 'text-[var(--brand-primary)] font-medium' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}
                       >
                         {isEnglish ? cat.name_en : cat.name_tr}
