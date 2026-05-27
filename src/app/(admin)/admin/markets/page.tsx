@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Globe, Edit2, Save, Plus, Trash2 } from 'lucide-react';
+import { Globe, Edit2, Save, Plus, Trash2, Settings } from 'lucide-react';
+import Link from 'next/link';
 
 interface Market {
   id: string;
@@ -353,12 +354,20 @@ export default function MarketsPage() {
                       </span>
                     </td>
                     <td>
-                      <div className="flex gap-1">
-                        <button onClick={() => setEditingShipping(profile)} className="btn btn-ghost btn-sm">
-                          <Edit2 className="w-4 h-4" />
+                      <div className="flex gap-1 items-center">
+                        <Link 
+                          href={`/admin/shipping?profile_id=${profile.id}`} 
+                          className="btn btn-ghost btn-sm text-[var(--brand-primary)] inline-flex items-center gap-1"
+                          title="Ülke fiyatlarını ve bölgeleri yönet"
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                          <span className="text-xs font-normal">Fiyatları Yönet</span>
+                        </Link>
+                        <button onClick={() => setEditingShipping(profile)} className="btn btn-ghost btn-sm" title="Kargo profilini düzenle">
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => deleteShipping(profile.id)} className="btn btn-ghost btn-sm text-[var(--error)]">
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={() => deleteShipping(profile.id)} className="btn btn-ghost btn-sm text-[var(--error)]" title="Kargo profilini sil">
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

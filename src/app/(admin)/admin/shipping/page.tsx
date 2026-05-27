@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Trash2, Save, Globe, MapPin } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 interface ShippingZone {
   id: string;
@@ -76,7 +77,7 @@ const ALL_COUNTRIES = [
   { code: 'CN', name: 'Çin' },
 ];
 
-export default function ShippingPage() {
+function ShippingPageContent() {
   const [profiles, setProfiles] = useState<ShippingProfile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<string>('');
   const [zones, setZones] = useState<ShippingZone[]>([]);
@@ -86,6 +87,8 @@ export default function ShippingPage() {
   const [activeTab, setActiveTab] = useState<'countries' | 'zones'>('countries');
 
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const profileIdParam = searchParams.get('profile_id');
 
   useEffect(() => {
     loadProfiles();
@@ -97,6 +100,12 @@ export default function ShippingPage() {
     }
   }, [selectedProfile]);
 
+  useEffect(() => {
+    if (profileIdParam && profiles.some(p => p.id === profileIdParam)) {
+      setSelectedProfile(profileIdParam);
+    }
+  }, [profileIdParam, profiles]);
+
   async function loadProfiles() {
     const { data } = await supabase
       .from('shipping_profiles')
@@ -105,12 +114,16 @@ export default function ShippingPage() {
 
     if (data) {
       setProfiles(data);
-      // Global profili varsayılan seç
-      const globalProfile = data.find(p => p.market_id === 'GLOBAL');
-      if (globalProfile) {
-        setSelectedProfile(globalProfile.id);
-      } else if (data.length > 0) {
-        setSelectedProfile(data[0].id);
+      // Try to select URL parameter first, then fall back to default
+      if (profileIdParam && data.some(p => p.id === profileIdParam)) {
+        setSelectedProfile(profileIdParam);
+      } else {
+        const globalProfile = data.find(p => p.market_id === 'GLOBAL');
+        if (globalProfile) {
+          setSelectedProfile(globalProfile.id);
+        } else if (data.length > 0) {
+          setSelectedProfile(data[0].id);
+        }
       }
     }
     setLoading(false);
@@ -456,5 +469,17 @@ export default function ShippingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ShippingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand-primary)]"></div>
+      </div>
+    }>
+      <ShippingPageContent />
+    </Suspense>
   );
 }
