@@ -62,6 +62,7 @@ export default function CheckoutPage() {
   const { cart, total, clear } = useCart();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Info, 2: Payment
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
   const [shippingCurrency, setShippingCurrency] = useState('TRY');
   const [estimatedDays, setEstimatedDays] = useState<{ min: number; max: number } | null>(null);
@@ -215,6 +216,14 @@ export default function CheckoutPage() {
     
     if (step === 1) {
       setStep(2);
+      return;
+    }
+
+    if (step === 2 && !agreedTerms) {
+      alert(market === 'TR'
+        ? 'Devam etmeden önce lütfen Ön Bilgilendirme Koşullarını ve Mesafeli Satış Sözleşmesini okuyup kabul edin.'
+        : 'Please accept the Terms of Service and Privacy Policy to proceed.'
+      );
       return;
     }
 
@@ -492,7 +501,7 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="card-body">
+                    <div className="card-body space-y-6">
                       <div className="p-4 bg-[var(--background-secondary)] rounded-xl flex items-center gap-4">
                         <CreditCard className="w-8 h-8 text-[var(--brand-primary)]" />
                         <div>
@@ -503,6 +512,44 @@ export default function CheckoutPage() {
                             {t('checkout.card_desc')}
                           </p>
                         </div>
+                      </div>
+
+                      {/* Legal Terms Checkbox */}
+                      <div className="flex items-start gap-3 pt-4 text-sm text-[var(--foreground-muted)] border-t border-[var(--border)]">
+                        <input
+                          type="checkbox"
+                          id="agreedTerms"
+                          checked={agreedTerms}
+                          onChange={(e) => setAgreedTerms(e.target.checked)}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-[var(--brand-primary)] focus:ring-[var(--brand-primary)] cursor-pointer"
+                          required
+                        />
+                        <label htmlFor="agreedTerms" className="leading-snug select-none cursor-pointer">
+                          {market === 'TR' ? (
+                            <>
+                              Bilgilerimin doğruluğunu,{' '}
+                              <Link href="/distance-sales" target="_blank" className="underline text-[var(--brand-primary)] font-medium hover:text-[var(--brand-primary-dark)]">
+                                Ön Bilgilendirme Koşullarını
+                              </Link>{' '}
+                              ve{' '}
+                              <Link href="/distance-sales" target="_blank" className="underline text-[var(--brand-primary)] font-medium hover:text-[var(--brand-primary-dark)]">
+                                Mesafeli Satış Sözleşmesini
+                              </Link>{' '}
+                              okuduğumu ve kabul ettiğimi onaylıyorum.
+                            </>
+                          ) : (
+                            <>
+                              I confirm that my details are correct and I agree to the{' '}
+                              <Link href="/terms" target="_blank" className="underline text-[var(--brand-primary)] font-medium hover:text-[var(--brand-primary-dark)]">
+                                Terms of Service
+                              </Link>{' '}
+                              and{' '}
+                              <Link href="/privacy" target="_blank" className="underline text-[var(--brand-primary)] font-medium hover:text-[var(--brand-primary-dark)]">
+                                Privacy Policy
+                              </Link>.
+                            </>
+                          )}
+                        </label>
                       </div>
                     </div>
                     <div className="card-footer">
