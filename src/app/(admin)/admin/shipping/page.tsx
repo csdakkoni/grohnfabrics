@@ -40,6 +40,7 @@ interface ShippingProfile {
 
 // Tüm ülkeler listesi
 const ALL_COUNTRIES = [
+  { code: 'TR', name: 'Türkiye' },
   { code: 'US', name: 'Amerika Birleşik Devletleri' },
   { code: 'GB', name: 'İngiltere' },
   { code: 'DE', name: 'Almanya' },

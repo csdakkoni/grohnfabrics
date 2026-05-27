@@ -104,21 +104,13 @@ export default function CheckoutPage() {
   useEffect(() => {
     // Fetch shipping rate for selected country
     async function fetchShippingRate() {
-      if (address.country === 'TR') {
-        // Türkiye için sabit kargo
-        setShippingCost(total >= 500 ? 0 : 50);
-        setShippingCurrency('TRY');
-        setEstimatedDays({ min: 2, max: 4 });
-        return;
-      }
-
-      // Ülke bazlı fiyat ara
+      // Önce veritabanında ülke bazlı özel fiyat ara
       const { data: countryRate } = await supabase
         .from('shipping_country_rates')
         .select('*')
         .eq('country_code', address.country)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (countryRate) {
         setShippingCost(countryRate.rate);
@@ -130,12 +122,21 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Ülke bazlı özel fiyat yoksa, Türkiye için varsayılan kuralları uygula
+      if (address.country === 'TR') {
+        // Türkiye için varsayılan sabit kargo
+        setShippingCost(total >= 500 ? 0 : 50);
+        setShippingCurrency('TRY');
+        setEstimatedDays({ min: 2, max: 4 });
+        return;
+      }
+
       // Bölge bazlı fiyat ara - önce ülkenin bölgesini bul
       const { data: zoneCountry } = await supabase
         .from('shipping_zone_countries')
         .select('zone_id')
         .eq('country_code', address.country)
-        .single();
+        .maybeSingle();
 
       if (zoneCountry?.zone_id) {
         // Bölge fiyatını al
@@ -144,7 +145,7 @@ export default function CheckoutPage() {
           .select('rate, currency, estimated_days_min, estimated_days_max')
           .eq('zone_id', zoneCountry.zone_id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (zoneRate) {
           setShippingCost(zoneRate.rate);
