@@ -32,6 +32,7 @@ export default function StoreHeader() {
   // Fetch published menu pages dynamically
   useEffect(() => {
     const supabase = createClient();
+    const DEFAULT_SLUGS = ['about', 'contact', 'shipping', 'returns', 'privacy', 'terms', 'distance-sales'];
     async function loadMenuPages() {
       const { data } = await supabase
         .from('pages')
@@ -40,7 +41,9 @@ export default function StoreHeader() {
         .eq('show_in_menu', true)
         .order('menu_order', { ascending: true });
       if (data) {
-        setMenuPages(data);
+        // Filtreleme: Zaten sabit olan sistem sayfalarını hariç tut
+        const customPages = data.filter(page => !DEFAULT_SLUGS.includes(page.slug));
+        setMenuPages(customPages);
       }
     }
     loadMenuPages();

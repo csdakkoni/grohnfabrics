@@ -11,6 +11,7 @@ export default function StoreFooter() {
 
   useEffect(() => {
     const supabase = createClient();
+    const DEFAULT_SLUGS = ['about', 'contact', 'shipping', 'returns', 'privacy', 'terms', 'distance-sales'];
     async function loadFooterPages() {
       const { data } = await supabase
         .from('pages')
@@ -19,7 +20,9 @@ export default function StoreFooter() {
         .eq('show_in_footer', true)
         .order('menu_order', { ascending: true });
       if (data) {
-        setFooterPages(data);
+        // Filtreleme: Zaten footer tasarımında sabit olan sistem sayfalarını hariç tut
+        const customPages = data.filter(page => !DEFAULT_SLUGS.includes(page.slug));
+        setFooterPages(customPages);
       }
     }
     loadFooterPages();
