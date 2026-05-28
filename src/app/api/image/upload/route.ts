@@ -131,8 +131,9 @@ export async function POST(request: NextRequest) {
     for (const [sizeName, config] of Object.entries(sizesToProcess)) {
       const processAndUpload = async () => {
         try {
-          // Skip if original is smaller than target (except thumb)
-          if (metadata.width && metadata.height && sizeName !== 'thumb') {
+          // Skip if original is smaller than target (except thumb and variant uploads)
+          // For variants, always process to ensure we get a URL back
+          if (!isVariantUpload && metadata.width && metadata.height && sizeName !== 'thumb') {
             if (metadata.width < config.width && metadata.height < config.height) {
               return;
             }

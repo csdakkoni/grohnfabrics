@@ -591,17 +591,21 @@ export default function VariantManager({ productId }: VariantManagerProps) {
                                             setSavingIds(prev => new Set(prev).add('upload-' + value.id));
                                             
                                             try {
-                                              // Resize image client-side before upload (avoids 413 errors)
-                                              console.log(`Resizing ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-                                              const resizedBlob = await resizeImage(file, 1600, 1600, 0.85);
-                                              console.log(`Resized: ${(resizedBlob.size / 1024 / 1024).toFixed(2)}MB`);
+                                              const fileSizeMB = file.size / 1024 / 1024;
+                                              let uploadFile = file;
                                               
-                                              // Create new file from resized blob
-                                              const resizedFile = new File([resizedBlob], file.name, { type: 'image/jpeg' });
+                                              // Only resize if file is too large for Vercel (>4MB)
+                                              // Small files go directly to server — sharp handles all format conversion
+                                              if (fileSizeMB > 4) {
+                                                console.log(`Resizing ${file.name}: ${fileSizeMB.toFixed(2)}MB`);
+                                                const resizedBlob = await resizeImage(file, 1600, 1600, 0.85);
+                                                console.log(`Resized: ${(resizedBlob.size / 1024 / 1024).toFixed(2)}MB`);
+                                                uploadFile = new File([resizedBlob], file.name, { type: 'image/jpeg' });
+                                              }
                                               
                                               // Upload via API (uses R2)
                                               const formData = new FormData();
-                                              formData.append('file', resizedFile);
+                                              formData.append('file', uploadFile);
                                               formData.append('folder', `variants/${value.id}`);
                                               
                                               const response = await fetch('/api/image/upload', {
