@@ -3,6 +3,7 @@
 import { useCart } from './CartProvider';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useMarket } from '@/lib/market/context';
 
 export default function CartDrawer() {
@@ -60,7 +61,7 @@ export default function CartDrawer() {
                   {/* Image */}
                   <div className="w-20 h-20 rounded-lg bg-white overflow-hidden flex-shrink-0">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <Image src={item.image} alt={item.name} width={80} height={80} quality={60} className="object-cover w-full h-full" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ShoppingBag className="w-8 h-8 text-[var(--foreground-light)]" />

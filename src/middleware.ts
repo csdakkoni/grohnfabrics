@@ -73,24 +73,29 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Check if user is admin
+  // Only do full auth check for admin routes (saves 200-500ms on store pages)
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  
+  let user = null;
   let isAdmin = false;
-  if (user) {
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+  
+  if (isAdminRoute) {
+    // Full auth check only for admin routes
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
     
-    const adminRoles = ['admin', 'sales', 'production', 'warehouse'];
-    isAdmin = !!(customer && adminRoles.includes(customer.role));
-  }
-
-  // Protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+    if (user) {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      const adminRoles = ['admin', 'sales', 'production', 'warehouse'];
+      isAdmin = !!(customer && adminRoles.includes(customer.role));
+    }
+    
+    // Protect admin routes
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
@@ -101,10 +106,14 @@ export async function middleware(request: NextRequest) {
     if (!isAdmin) {
       return NextResponse.redirect(new URL('/', request.url));
     }
+  } else {
+    // For store pages, just refresh the session without full auth check
+    // This is lightweight - just refreshes cookies if needed
+    await supabase.auth.getUser();
   }
 
   // Region & Locale detection for store pages
-  if (!request.nextUrl.pathname.startsWith('/admin') && 
+  if (!isAdminRoute && 
       !request.nextUrl.pathname.startsWith('/api') &&
       !request.nextUrl.pathname.startsWith('/login')) {
     

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Package } from 'lucide-react';
 import { cookies } from 'next/headers';
 import type { Metadata } from 'next';
@@ -227,12 +228,15 @@ export default async function ProductsPage({
                       className="group"
                     >
                       <div className="product-card">
-                        <div className="product-card-image">
+                        <div className="product-card-image relative">
                           {imageUrl ? (
-                            <img
+                            <Image
                               src={imageUrl}
                               alt={productName}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="(max-width: 768px) 50vw, 25vw"
+                              quality={75}
+                              className="object-cover"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-[var(--background-secondary)]">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X, ZoomIn, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 
 interface MediaItem {
@@ -37,7 +38,7 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
     ...videos.map(url => ({ 
       type: 'video' as const, 
       url,
-      thumbnail: url.replace(/\.[^/.]+$/, '-thumb.jpg') // Assume thumbnail exists
+      thumbnail: url.replace(/\.[^/.]+$/, '-thumb.jpg')
     })),
   ];
 
@@ -99,10 +100,14 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
           onClick={() => setLightboxOpen(true)}
         >
           {currentMedia.type === 'image' ? (
-            <img
+            <Image
               src={currentMedia.url}
               alt={productName}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              priority={currentIndex === 0}
+              quality={85}
             />
           ) : (
             <video
@@ -182,24 +187,31 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
               <button
                 key={i}
                 onClick={() => goToIndex(i)}
-                className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                className={`aspect-square rounded-lg overflow-hidden border-2 transition-all relative ${
                   i === currentIndex 
                     ? 'border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/20' 
                     : 'border-transparent hover:border-[var(--border)]'
                 }`}
               >
                 {media.type === 'image' ? (
-                  <img 
+                  <Image 
                     src={media.url} 
                     alt="" 
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="120px"
+                    className="object-cover"
+                    quality={60}
                   />
                 ) : (
                   <div className="relative w-full h-full">
-                    <img 
+                    <Image 
                       src={media.thumbnail || media.url} 
                       alt="" 
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="120px"
+                      className="object-cover"
+                      quality={60}
+                      unoptimized={media.type === 'video'}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <Play className="w-6 h-6 text-white" fill="white" />
@@ -220,7 +232,7 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
         )}
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox Modal - keep <img> for full-size view (no optimization needed) */}
       {lightboxOpen && (
         <div 
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
@@ -247,6 +259,7 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
             onClick={(e) => e.stopPropagation()}
           >
             {currentMedia.type === 'image' ? (
+              // Lightbox uses unoptimized for full quality view
               <img
                 src={currentMedia.url}
                 alt={productName}
@@ -288,14 +301,14 @@ export default function ProductGallery({ images, videos = [], productName, jumpT
                 <button
                   key={i}
                   onClick={(e) => { e.stopPropagation(); goToIndex(i); }}
-                  className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all ${
+                  className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden border-2 transition-all relative ${
                     i === currentIndex 
                       ? 'border-white' 
                       : 'border-transparent opacity-50 hover:opacity-100'
                   }`}
                 >
                   {media.type === 'image' ? (
-                    <img src={media.url} alt="" className="w-full h-full object-cover" />
+                    <Image src={media.url} alt="" fill sizes="64px" className="object-cover" quality={50} />
                   ) : (
                     <div className="relative w-full h-full">
                       <img src={media.thumbnail || media.url} alt="" className="w-full h-full object-cover" />

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { ArrowRight, Truck, Shield, Leaf, Sparkles, Package, Recycle, Heart } from 'lucide-react';
@@ -126,10 +127,14 @@ export default async function HomePage() {
       {/* Hero Section - Full Bleed Cinematic */}
       <section className="relative h-[85vh] min-h-[600px] max-h-[900px] overflow-hidden">
         {/* Full-bleed background image */}
-        <img
+        <Image
           src="/images/hero-main.png"
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
+          alt="Grohn Fabrics"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+          quality={80}
         />
         {/* Gentle background overlay so the image isn't muddy */}
         <div className="absolute inset-0 bg-black/30" />
@@ -220,12 +225,15 @@ export default async function HomePage() {
                     className="group"
                   >
                     <div className="product-card">
-                      <div className="product-card-image">
+                      <div className="product-card-image relative">
                         {imageUrl ? (
-                          <img
+                          <Image
                             src={imageUrl}
                             alt={productName}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            fill
+                            sizes="(max-width: 768px) 50vw, 25vw"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            quality={75}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-[var(--background-secondary)]">
@@ -286,10 +294,13 @@ export default async function HomePage() {
                   >
                     <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-6 bg-[var(--background)] border border-[var(--border)]">
                       {category.image_url ? (
-                        <img
+                        <Image
                           src={category.image_url}
                           alt={categoryName}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-700"
+                          quality={75}
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center bg-[var(--background-secondary)]">

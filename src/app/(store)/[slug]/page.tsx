@@ -2,7 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: revalidate every 5 minutes
 
 // Reserved slugs that should not be treated as CMS pages
 const RESERVED_SLUGS = ['products', 'checkout', 'cart', 'order', 'login', 'admin'];

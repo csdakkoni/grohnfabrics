@@ -3,6 +3,7 @@
 import { useWishlist } from '@/components/store/WishlistProvider';
 import { useMarket } from '@/lib/market/context';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Heart, Package, ArrowRight, X, ShoppingBag, Loader2 } from 'lucide-react';
 import { useCart } from '@/components/store/CartProvider';
 
@@ -92,12 +93,15 @@ export default function FavoritesPage() {
                 </button>
 
                 <Link href={`/products/${product.slug}`}>
-                  <div className="product-card-image">
+                  <div className="product-card-image relative">
                     {imageUrl ? (
-                      <img
+                      <Image
                         src={imageUrl}
                         alt={productName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        quality={75}
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-[var(--background-secondary)]">
