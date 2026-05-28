@@ -163,8 +163,12 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           material_id: form.material_id || null,
           product_type: form.product_type,
           sales_model: form.sales_model,
-          min_order_quantity: parseFloat(form.min_order_quantity),
-          order_step: parseFloat(form.order_step),
+          min_order_quantity: form.sales_model === 'meter' 
+            ? parseFloat(form.min_order_quantity) 
+            : Math.max(1, Math.round(parseFloat(form.min_order_quantity) || 1)),
+          order_step: form.sales_model === 'meter' 
+            ? parseFloat(form.order_step) 
+            : 1,
           is_active: form.is_active,
           show_in_tr: form.show_in_tr,
           show_in_global: form.show_in_global,

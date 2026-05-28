@@ -36,8 +36,12 @@ export default function AddToCartButton({
   const { t } = useMarket();
   
   const isMeter = product.sales_model === 'meter';
-  const minQty = product.min_order_quantity || 1;
-  const step = product.order_step || (isMeter ? 0.5 : 1);
+  const minQty = isMeter 
+    ? (product.min_order_quantity || 1) 
+    : Math.max(1, Math.round(product.min_order_quantity || 1));
+  const step = isMeter 
+    ? (product.order_step || 0.5) 
+    : 1;
   
   const [quantity, setQuantity] = useState(minQty);
   const [adding, setAdding] = useState(false);
@@ -49,12 +53,22 @@ export default function AddToCartButton({
 
   const decreaseQty = () => {
     if (quantity > minQty) {
-      setQuantity(q => Math.max(minQty, q - step));
+      setQuantity(q => {
+        const next = q - step;
+        return isMeter 
+          ? Math.round(Math.max(minQty, next) * 10) / 10 
+          : Math.max(minQty, Math.round(next));
+      });
     }
   };
 
   const increaseQty = () => {
-    setQuantity(q => q + step);
+    setQuantity(q => {
+      const next = q + step;
+      return isMeter 
+        ? Math.round(next * 10) / 10 
+        : Math.round(next);
+    });
   };
 
   const handleAddToCart = async () => {

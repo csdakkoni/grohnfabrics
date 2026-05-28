@@ -29,7 +29,18 @@ export function getCart(): Cart {
   try {
     const stored = localStorage.getItem(CART_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const cart = JSON.parse(stored) as Cart;
+      // Sanitize quantities to fix any legacy floating point issues
+      cart.items = cart.items.map(item => {
+        let sanitizedQty = item.quantity;
+        if (item.salesModel === 'meter') {
+          sanitizedQty = Math.round(item.quantity * 10) / 10;
+        } else {
+          sanitizedQty = Math.max(1, Math.round(item.quantity));
+        }
+        return { ...item, quantity: sanitizedQty };
+      });
+      return cart;
     }
   } catch (e) {
     console.error('Failed to parse cart:', e);
@@ -40,6 +51,18 @@ export function getCart(): Cart {
 
 export function saveCart(cart: Cart): void {
   if (typeof window === 'undefined') return;
+
+  // Sanitize quantities to prevent floating point precision issues on saving
+  cart.items = cart.items.map(item => {
+    let sanitizedQty = item.quantity;
+    if (item.salesModel === 'meter') {
+      sanitizedQty = Math.round(item.quantity * 10) / 10;
+    } else {
+      sanitizedQty = Math.max(1, Math.round(item.quantity));
+    }
+    return { ...item, quantity: sanitizedQty };
+  });
+
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   
   // Dispatch custom event for cart updates
