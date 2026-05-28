@@ -147,6 +147,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate prices for active regions
+    if (form.show_in_tr && !form.price_tr) {
+      alert('Türkiye pazarında gösterilecek ürünler için TL fiyatı (Fiyat TL) girmelisiniz.');
+      return;
+    }
+    if (form.show_in_global && !form.price_usd && !form.price_eur) {
+      alert('Global pazarda gösterilecek ürünler için en az bir yabancı para biriminde fiyat (Fiyat USD veya Fiyat EUR) girmelisiniz.');
+      return;
+    }
+    if (!form.show_in_tr && !form.show_in_global) {
+      alert('Ürünün en az bir pazarda gösterilmesi gerekir (Türkiye veya Global).');
+      return;
+    }
+
     setSaving(true);
 
     try {
