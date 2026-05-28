@@ -54,7 +54,7 @@ export default async function TermsPage() {
             <p>These terms shall be governed by and construed in accordance with the laws of Turkey/United States, depending on your location.</p>
 
             <h2>9. Contact</h2>
-            <p>For questions about these terms: legal@grohnfabrics.com</p>
+            <p>For questions about these terms: grohn@grohn.com.tr</p>
           </>
         ) : (
           <>
@@ -83,7 +83,7 @@ export default async function TermsPage() {
             <p>Bu koşullar, bulunduğunuz yere bağlı olarak Türkiye veya Amerika Birleşik Devletleri yasalarına göre yönetilecek ve yorumlanacaktır.</p>
 
             <h2>9. İletişim</h2>
-            <p>Bu koşullar hakkında sorularınız için: hukuk@grohnfabrics.com</p>
+            <p>Bu koşullar hakkında sorularınız için: grohn@grohn.com.tr</p>
           </>
         )}
       </div>

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // In production, you would send an email here
     // Example with Resend, SendGrid, or Nodemailer
     // await sendEmail({
-    //   to: process.env.CONTACT_EMAIL || 'info@grohnfabrics.com',
+    //   to: process.env.CONTACT_EMAIL || 'grohn@grohn.com.tr',
     //   subject: `[İletişim Formu] ${subject} - ${name}`,
     //   body: `
     //     Ad: ${name}

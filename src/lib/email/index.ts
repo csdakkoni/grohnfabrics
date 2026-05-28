@@ -168,7 +168,7 @@ export function generateOrderConfirmationEmail(order: OrderData, locale: 'tr' | 
     <!-- Footer -->
     <div style="text-align: center; margin-top: 32px; color: #5C665E; font-size: 14px;">
       <p style="margin: 0 0 8px;">${t('Sorularınız için bize ulaşın', 'Questions? Contact us')}</p>
-      <a href="mailto:info@grohnfabrics.com" style="color: #7A9B76; text-decoration: none;">info@grohnfabrics.com</a>
+      <a href="mailto:grohn@grohn.com.tr" style="color: #7A9B76; text-decoration: none;">grohn@grohn.com.tr</a>
       <p style="margin: 24px 0 0; font-size: 12px; color: #8A9189;">
         © ${new Date().getFullYear()} Grohn Fabrics. ${t('Tüm hakları saklıdır.', 'All rights reserved.')}
       </p>
@@ -259,7 +259,7 @@ export function generateShippingNotificationEmail(order: OrderData, locale: 'tr'
     <!-- Footer -->
     <div style="text-align: center; margin-top: 32px; color: #5C665E; font-size: 14px;">
       <p style="margin: 0 0 8px;">${t('Sorularınız için bize ulaşın', 'Questions? Contact us')}</p>
-      <a href="mailto:info@grohnfabrics.com" style="color: #7A9B76; text-decoration: none;">info@grohnfabrics.com</a>
+      <a href="mailto:grohn@grohn.com.tr" style="color: #7A9B76; text-decoration: none;">grohn@grohn.com.tr</a>
       <p style="margin: 24px 0 0; font-size: 12px; color: #8A9189;">
         © ${new Date().getFullYear()} Grohn Fabrics. ${t('Tüm hakları saklıdır.', 'All rights reserved.')}
       </p>

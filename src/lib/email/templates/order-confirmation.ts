@@ -147,8 +147,8 @@ export function generateOrderConfirmationEmail(params: OrderConfirmationParams):
       
       <p style="margin: 30px 0 0; color: #888; font-size: 14px; text-align: center;">
         ${t(
-        'Sorularınız için bize orders@grohnfabrics.com adresinden ulaşabilirsiniz.',
-        'For any questions, contact us at orders@grohnfabrics.com'
+        'Sorularınız için bize grohn@grohn.com.tr adresinden ulaşabilirsiniz.',
+        'For any questions, contact us at grohn@grohn.com.tr'
     )}
       </p>
     </div>

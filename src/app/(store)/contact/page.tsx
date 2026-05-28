@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageCircle } from 'lucide-react';
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -91,8 +91,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="font-medium mb-1">E-posta</p>
-                    <a href="mailto:info@grohnfabrics.com" className="text-[var(--foreground-muted)] hover:text-[var(--brand-primary)]">
-                      info@grohnfabrics.com
+                    <a href="mailto:grohn@grohn.com.tr" className="text-[var(--foreground-muted)] hover:text-[var(--brand-primary)]">
+                      grohn@grohn.com.tr
                     </a>
                   </div>
                 </div>
@@ -103,8 +103,25 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="font-medium mb-1">Telefon</p>
-                    <a href="tel:+902121234567" className="text-[var(--foreground-muted)] hover:text-[var(--brand-primary)]">
-                      +90 (212) 123 45 67
+                    <a href="tel:+905398802346" className="text-[var(--foreground-muted)] hover:text-[var(--brand-primary)]">
+                      +90 (539) 880 23 46
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-[#25D366]" />
+                  </div>
+                  <div>
+                    <p className="font-medium mb-1">WhatsApp</p>
+                    <a 
+                      href="https://wa.me/905398802346" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[var(--foreground-muted)] hover:text-[#25D366]"
+                    >
+                      +90 (539) 880 23 46
                     </a>
                   </div>
                 </div>
@@ -116,9 +133,9 @@ export default function ContactPage() {
                   <div>
                     <p className="font-medium mb-1">Adres</p>
                     <p className="text-[var(--foreground-muted)]">
-                      Tekstilciler Cad. No:123<br />
-                      Merter, Güngören<br />
-                      İstanbul, Türkiye
+                      Velimeşe OSB<br />
+                      Kervancı Ticaret Merkezi B12<br />
+                      Ergene, Tekirdağ
                     </p>
                   </div>
                 </div>
@@ -130,14 +147,30 @@ export default function ContactPage() {
                   <div>
                     <p className="font-medium mb-1">Çalışma Saatleri</p>
                     <p className="text-[var(--foreground-muted)]">
-                      Pazartesi - Cuma: 09:00 - 18:00<br />
-                      Cumartesi: 10:00 - 14:00<br />
+                      Pazartesi - Cuma: 08:30 - 18:00<br />
+                      Cumartesi: 09:00 - 15:00<br />
                       Pazar: Kapalı
                     </p>
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* WhatsApp CTA */}
+            <a
+              href="https://wa.me/905398802346?text=Merhaba%2C%20bilgi%20almak%20istiyorum."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-5 bg-[#25D366] text-white rounded-2xl hover:bg-[#20BD5A] transition-colors"
+            >
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-semibold">WhatsApp ile Yazın</p>
+                <p className="text-sm text-white/80">Hızlı yanıt için bize WhatsApp'tan ulaşın</p>
+              </div>
+            </a>
 
             {/* Wholesale Info */}
             <div className="p-6 bg-[var(--brand-primary-light)] rounded-2xl">
@@ -146,10 +179,10 @@ export default function ContactPage() {
                 İşletmeler için özel fiyatlandırma ve toplu sipariş avantajları sunuyoruz.
               </p>
               <a 
-                href="mailto:wholesale@grohnfabrics.com" 
+                href="mailto:grohn@grohn.com.tr" 
                 className="text-sm font-medium text-[var(--brand-primary)]"
               >
-                wholesale@grohnfabrics.com
+                grohn@grohn.com.tr
               </a>
             </div>
           </div>

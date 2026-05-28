@@ -42,7 +42,7 @@ export default async function ReturnsPage() {
 
             <h2>How to Return</h2>
             <ol>
-              <li>Contact us at <a href="mailto:returns@grohnfabrics.com">returns@grohnfabrics.com</a> with your order number</li>
+              <li>Contact us at <a href="mailto:grohn@grohn.com.tr">grohn@grohn.com.tr</a> with your order number</li>
               <li>We will provide you with a return authorization and shipping instructions</li>
               <li>Ship the item back to us (return shipping costs are the customer's responsibility unless the item is defective)</li>
               <li>Once we receive and inspect the item, we will process your refund within 5-7 business days</li>
@@ -52,11 +52,11 @@ export default async function ReturnsPage() {
             <p>Refunds will be issued to your original payment method. Please allow 5-10 business days for the refund to appear in your account, depending on your bank.</p>
 
             <h2>Damaged or Defective Items</h2>
-            <p>If you receive a damaged or defective item, please contact us immediately at <a href="mailto:support@grohnfabrics.com">support@grohnfabrics.com</a> with photos of the damage. We will arrange a free return and send a replacement or issue a full refund.</p>
+            <p>If you receive a damaged or defective item, please contact us immediately at <a href="mailto:grohn@grohn.com.tr">grohn@grohn.com.tr</a> with photos of the damage. We will arrange a free return and send a replacement or issue a full refund.</p>
 
             <h2>Contact Us</h2>
             <p>For any questions about returns, please contact us at:</p>
-            <p>Email: returns@grohnfabrics.com</p>
+            <p>Email: grohn@grohn.com.tr</p>
           </>
         ) : (
           <>
@@ -73,7 +73,7 @@ export default async function ReturnsPage() {
 
             <h2>İade Nasıl Yapılır?</h2>
             <ol>
-              <li>Sipariş numaranızla birlikte <a href="mailto:iade@grohnfabrics.com">iade@grohnfabrics.com</a> adresine e-posta gönderin</li>
+              <li>Sipariş numaranızla birlikte <a href="mailto:grohn@grohn.com.tr">grohn@grohn.com.tr</a> adresine e-posta gönderin</li>
               <li>Size iade onayı ve kargo talimatları sağlayacağız</li>
               <li>Ürünü bize geri gönderin (ürün kusurlu olmadıkça iade kargo ücreti müşteriye aittir)</li>
               <li>Ürünü aldıktan ve inceledikten sonra iadenizi 5-7 iş günü içinde işleme alacağız</li>
@@ -83,11 +83,11 @@ export default async function ReturnsPage() {
             <p>İadeler orijinal ödeme yönteminize yapılacaktır. Bankanıza bağlı olarak iadenin hesabınızda görünmesi için 5-10 iş günü bekleyin.</p>
 
             <h2>Hasarlı veya Kusurlu Ürünler</h2>
-            <p>Hasarlı veya kusurlu bir ürün aldıysanız, lütfen hasarın fotoğraflarıyla birlikte hemen <a href="mailto:destek@grohnfabrics.com">destek@grohnfabrics.com</a> adresinden bize ulaşın. Ücretsiz iade ayarlayacak ve değişim ürün göndereceğiz veya tam iade yapacağız.</p>
+            <p>Hasarlı veya kusurlu bir ürün aldıysanız, lütfen hasarın fotoğraflarıyla birlikte hemen <a href="mailto:grohn@grohn.com.tr">grohn@grohn.com.tr</a> adresinden bize ulaşın. Ücretsiz iade ayarlayacak ve değişim ürün göndereceğiz veya tam iade yapacağız.</p>
 
             <h2>Bize Ulaşın</h2>
             <p>İadeler hakkında sorularınız için bize ulaşın:</p>
-            <p>E-posta: iade@grohnfabrics.com</p>
+            <p>E-posta: grohn@grohn.com.tr</p>
           </>
         )}
       </div>

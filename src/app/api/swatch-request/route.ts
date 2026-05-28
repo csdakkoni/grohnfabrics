@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     try {
       await resend.emails.send({
         from: 'Grohn Fabrics <noreply@grohnfabrics.com>',
-        to: ['info@grohnfabrics.com'],
+        to: ['grohn@grohn.com.tr'],
         subject: `New Swatch Request: ${productName}`,
         html: `
           <h2>New Swatch Request</h2>

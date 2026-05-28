@@ -69,7 +69,7 @@ export default async function PrivacyPage() {
 
             <h2>6. Contact Us</h2>
             <p>If you have questions about this Privacy Policy, please contact us at:</p>
-            <p>Email: privacy@grohnfabrics.com</p>
+            <p>Email: grohn@grohn.com.tr</p>
           </>
         ) : (
           <>
@@ -113,7 +113,7 @@ export default async function PrivacyPage() {
 
             <h2>6. Bize Ulaşın</h2>
             <p>Bu Gizlilik Politikası hakkında sorularınız varsa, lütfen bizimle iletişime geçin:</p>
-            <p>E-posta: privacy@grohnfabrics.com</p>
+            <p>E-posta: grohn@grohn.com.tr</p>
           </>
         )}
       </div>

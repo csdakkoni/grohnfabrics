@@ -34,7 +34,7 @@ export default async function DistanceSalesPage() {
             <ul>
               <li>Company: Grohn Fabrics</li>
               <li>Address: [Your Business Address]</li>
-              <li>Email: info@grohnfabrics.com</li>
+              <li>Email: grohn@grohn.com.tr</li>
               <li>Phone: [Your Phone Number]</li>
             </ul>
             <p><strong>Buyer:</strong> The customer who places an order through grohnfabrics.com</p>
@@ -60,7 +60,7 @@ export default async function DistanceSalesPage() {
             <p><strong>Exceptions:</strong> Custom-made products cannot be returned unless defective.</p>
 
             <h2>7. Contact</h2>
-            <p>For any questions regarding this agreement, please contact: legal@grohnfabrics.com</p>
+            <p>For any questions regarding this agreement, please contact: grohn@grohn.com.tr</p>
           </>
         ) : (
           <>
@@ -69,7 +69,7 @@ export default async function DistanceSalesPage() {
             <ul>
               <li>Şirket: Grohn Fabrics</li>
               <li>Adres: [İşletme Adresi]</li>
-              <li>E-posta: info@grohnfabrics.com</li>
+              <li>E-posta: grohn@grohn.com.tr</li>
               <li>Telefon: [Telefon Numarası]</li>
             </ul>
             <p><strong>Alıcı:</strong> grohnfabrics.com üzerinden sipariş veren müşteri</p>
@@ -98,7 +98,7 @@ export default async function DistanceSalesPage() {
             <p>Bu sözleşmeden doğan uyuşmazlıklarda Türkiye Cumhuriyeti kanunları uygulanır. Uyuşmazlıklarda tüketici hakem heyetleri ve tüketici mahkemeleri yetkilidir.</p>
 
             <h2>8. İletişim</h2>
-            <p>Bu sözleşme hakkında sorularınız için: hukuk@grohnfabrics.com</p>
+            <p>Bu sözleşme hakkında sorularınız için: grohn@grohn.com.tr</p>
           </>
         )}
       </div>
