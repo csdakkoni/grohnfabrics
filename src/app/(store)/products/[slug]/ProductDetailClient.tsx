@@ -17,6 +17,7 @@ interface OptionValue {
   hex_color?: string;
   price_modifier: number;
   is_available: boolean;
+  images?: string[];
 }
 
 interface OptionGroup {
@@ -53,6 +54,7 @@ interface ProductDetailClientProps {
   basePrice: number;
   baseCurrency: string;
   locale?: 'tr' | 'en';
+  onColorImagesChange?: (images: string[]) => void;
 }
 
 export default function ProductDetailClient({
@@ -61,7 +63,8 @@ export default function ProductDetailClient({
   optionGroups,
   basePrice,
   baseCurrency,
-  locale = 'tr'
+  locale = 'tr',
+  onColorImagesChange
 }: ProductDetailClientProps) {
   // Currency comes from server (based on region cookie)
   const currency = baseCurrency;
@@ -163,6 +166,7 @@ export default function ProductDetailClient({
         <ProductOptions
           optionGroups={optionGroups}
           onSelectionChange={setSelections}
+          onColorImagesChange={onColorImagesChange}
         />
       )}
 

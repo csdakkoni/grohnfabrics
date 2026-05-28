@@ -13,17 +13,28 @@ interface ProductGalleryProps {
   images: string[];
   videos?: string[];
   productName: string;
+  colorImages?: string[];
 }
 
-export default function ProductGallery({ images, videos = [], productName }: ProductGalleryProps) {
+export default function ProductGallery({ images, videos = [], productName, colorImages = [] }: ProductGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
 
+  // When colorImages change, build the effective images list and reset to first image
+  const effectiveImages = colorImages.length > 0
+    ? [...colorImages, ...images.filter(img => !colorImages.includes(img))]
+    : images;
+
+  // Reset to first image when color changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [colorImages]);
+
   // Combine images and videos into media items
   const mediaItems: MediaItem[] = [
-    ...images.map(url => ({ type: 'image' as const, url })),
+    ...effectiveImages.map(url => ({ type: 'image' as const, url })),
     ...videos.map(url => ({ 
       type: 'video' as const, 
       url,

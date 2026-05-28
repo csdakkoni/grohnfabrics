@@ -9,6 +9,7 @@ interface OptionValue {
   hex_color?: string;
   price_modifier: number;
   is_available: boolean;
+  images?: string[];
 }
 
 interface OptionGroup {
@@ -23,9 +24,10 @@ interface OptionGroup {
 interface ProductOptionsProps {
   optionGroups: OptionGroup[];
   onSelectionChange: (selections: Record<string, { valueId: string; valueName: string; priceModifier: number }>) => void;
+  onColorImagesChange?: (images: string[]) => void;
 }
 
-export default function ProductOptions({ optionGroups, onSelectionChange }: ProductOptionsProps) {
+export default function ProductOptions({ optionGroups, onSelectionChange, onColorImagesChange }: ProductOptionsProps) {
   const [selections, setSelections] = useState<Record<string, { valueId: string; valueName: string; priceModifier: number }>>({});
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function ProductOptions({ optionGroups, onSelectionChange }: Prod
     onSelectionChange(initial);
   }, [optionGroups]);
 
-  const handleSelect = (groupId: string, value: OptionValue) => {
+  const handleSelect = (groupId: string, value: OptionValue, group: OptionGroup) => {
     if (!value.is_available) return;
     
     const newSelections = {
@@ -58,6 +60,11 @@ export default function ProductOptions({ optionGroups, onSelectionChange }: Prod
     };
     setSelections(newSelections);
     onSelectionChange(newSelections);
+
+    // If this is a color option, notify parent about the color's images
+    if (group.option_type === 'color' && onColorImagesChange) {
+      onColorImagesChange(value.images || []);
+    }
   };
 
   if (optionGroups.length === 0) return null;
@@ -80,7 +87,7 @@ export default function ProductOptions({ optionGroups, onSelectionChange }: Prod
                   <button
                     key={value.id}
                     type="button"
-                    onClick={() => handleSelect(group.id, value)}
+                    onClick={() => handleSelect(group.id, value, group)}
                     disabled={!value.is_available}
                     title={value.value_tr}
                     className={`
@@ -111,7 +118,7 @@ export default function ProductOptions({ optionGroups, onSelectionChange }: Prod
                   <button
                     key={value.id}
                     type="button"
-                    onClick={() => handleSelect(group.id, value)}
+                    onClick={() => handleSelect(group.id, value, group)}
                     disabled={!value.is_available}
                     className={`
                       px-4 py-2 rounded-lg border text-sm font-medium transition-all

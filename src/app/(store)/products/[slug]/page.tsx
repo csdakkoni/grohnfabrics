@@ -3,9 +3,8 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Truck, Shield, Package, Ruler, Scale, Droplets, Scissors } from 'lucide-react';
-import ProductDetailClient from './ProductDetailClient';
+import ProductGalleryWithVariants from './ProductGalleryWithVariants';
 import ProductPrice from '@/components/store/ProductPrice';
-import ProductGallery from '@/components/store/ProductGallery';
 import AskQuestionForm from '@/components/store/AskQuestionForm';
 import CustomerReviews from '@/components/store/CustomerReviews';
 import SwatchRequestForm from '@/components/store/SwatchRequestForm';
@@ -77,7 +76,7 @@ async function getProduct(slug: string) {
       prices:product_prices(id, price, currency, market_id),
       option_groups:option_groups(
         id, name_tr, name_en, option_type, is_required,
-        values:option_values(id, value_tr, value_en, hex_color, price_modifier, is_available)
+        values:option_values(id, value_tr, value_en, hex_color, price_modifier, is_available, images)
       )
     `)
     .eq('slug', slug)
@@ -193,16 +192,17 @@ export default async function ProductPage({
       </div>
 
       <div className="container py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Images & Videos Gallery */}
-          <ProductGallery
-            images={product.images || []}
-            videos={product.videos || []}
-            productName={isEnglish ? product.name_en : product.name_tr}
-          />
-
-          {/* Product Info */}
-          <div>
+        <ProductGalleryWithVariants
+          images={product.images || []}
+          videos={product.videos || []}
+          productName={isEnglish ? product.name_en : product.name_tr}
+          product={product}
+          material={material}
+          optionGroups={optionGroups}
+          basePrice={basePrice}
+          baseCurrency={baseCurrency}
+          locale={locale}
+        >
             {/* Type Badge */}
             <span className="inline-block px-3 py-1 text-xs font-medium bg-[var(--background-secondary)] text-[var(--foreground-muted)] rounded-full mb-4">
               {typeLabels[product.product_type]?.[locale] || product.product_type}
@@ -228,16 +228,6 @@ export default async function ProductPage({
                 size="lg"
               />
             </div>
-
-            {/* Options & Add to Cart - Client Component */}
-            <ProductDetailClient
-              product={product}
-              material={material}
-              optionGroups={optionGroups}
-              basePrice={basePrice}
-              baseCurrency={baseCurrency}
-              locale={locale}
-            />
 
             {/* Swatch Request - Only for fabric products */}
             {product.product_type === 'fabric' && (
@@ -373,9 +363,8 @@ export default async function ProductPage({
                 )}
               </p>
             </div>
-          </div>
+          </ProductGalleryWithVariants>
         </div>
-      </div>
 
       {/* Customer Reviews Section */}
       <CustomerReviews
