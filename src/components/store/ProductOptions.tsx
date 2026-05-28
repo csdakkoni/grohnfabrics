@@ -24,7 +24,7 @@ interface OptionGroup {
 interface ProductOptionsProps {
   optionGroups: OptionGroup[];
   onSelectionChange: (selections: Record<string, { valueId: string; valueName: string; priceModifier: number }>) => void;
-  onColorImagesChange?: (images: string[]) => void;
+  onColorImagesChange?: (images: string[], valueId?: string) => void;
 }
 
 export default function ProductOptions({ optionGroups, onSelectionChange, onColorImagesChange }: ProductOptionsProps) {
@@ -63,7 +63,7 @@ export default function ProductOptions({ optionGroups, onSelectionChange, onColo
 
     // If this is a color option, notify parent about the color's images
     if (group.option_type === 'color' && onColorImagesChange) {
-      onColorImagesChange(value.images || []);
+      onColorImagesChange(value.images || [], value.id);
     }
   };
 

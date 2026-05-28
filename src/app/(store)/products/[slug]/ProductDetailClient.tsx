@@ -54,7 +54,7 @@ interface ProductDetailClientProps {
   basePrice: number;
   baseCurrency: string;
   locale?: 'tr' | 'en';
-  onColorImagesChange?: (images: string[]) => void;
+  onColorImagesChange?: (images: string[], valueId?: string) => void;
 }
 
 export default function ProductDetailClient({
