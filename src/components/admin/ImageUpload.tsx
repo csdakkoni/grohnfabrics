@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompression';
 
@@ -24,6 +24,18 @@ export default function ImageUpload({
   const [progress, setProgress] = useState<string>('');
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Local blob preview URLs mapped by remote URL
+  const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(previewMap).forEach(blobUrl => {
+        URL.revokeObjectURL(blobUrl);
+      });
+    };
+  }, []);
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -34,11 +46,15 @@ export default function ImageUpload({
 
     setUploading(true);
     const newImages: string[] = [];
+    const newPreviews: Record<string, string> = {};
     const totalFiles = Math.min(files.length, maxImages - images.length);
 
     for (let i = 0; i < totalFiles; i++) {
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
+
+      // Create local blob preview immediately
+      const localPreviewUrl = URL.createObjectURL(file);
 
       setProgress(`${i + 1}/${totalFiles}: ${file.name} işleniyor...`);
 
@@ -72,16 +88,25 @@ export default function ImageUpload({
         
         if (data.success && data.url) {
           newImages.push(data.url);
-        } else if (data.error) {
-          console.error('Upload failed:', data.error);
-          alert(`Hata: ${data.error}`);
+          // Map the remote URL to the local blob preview
+          newPreviews[data.url] = localPreviewUrl;
+        } else {
+          // Upload failed - cleanup blob URL
+          URL.revokeObjectURL(localPreviewUrl);
+          if (data.error) {
+            console.error('Upload failed:', data.error);
+            alert(`Hata: ${data.error}`);
+          }
         }
       } catch (error) {
+        // Upload error - cleanup blob URL
+        URL.revokeObjectURL(localPreviewUrl);
         console.error('Upload error:', error);
       }
     }
 
     if (newImages.length > 0) {
+      setPreviewMap(prev => ({ ...prev, ...newPreviews }));
       onImagesChange([...images, ...newImages]);
     }
     setUploading(false);
@@ -89,7 +114,19 @@ export default function ImageUpload({
   };
 
   const handleRemove = (index: number) => {
+    const removedUrl = images[index];
     const newImages = images.filter((_, i) => i !== index);
+    
+    // Cleanup blob URL if exists
+    if (previewMap[removedUrl]) {
+      URL.revokeObjectURL(previewMap[removedUrl]);
+      setPreviewMap(prev => {
+        const next = { ...prev };
+        delete next[removedUrl];
+        return next;
+      });
+    }
+    
     onImagesChange(newImages);
   };
 
@@ -97,6 +134,12 @@ export default function ImageUpload({
     e.preventDefault();
     setDragOver(false);
     handleUpload(e.dataTransfer.files);
+  };
+
+  // Get the best available src for an image URL
+  // Prefer local blob preview (always works), fall back to remote URL
+  const getImageSrc = (url: string): string => {
+    return previewMap[url] || url;
   };
 
   return (
@@ -152,7 +195,7 @@ export default function ImageUpload({
           {images.map((url, index) => (
             <div key={url} className="relative group aspect-square rounded-lg overflow-hidden bg-[var(--background-secondary)]">
               <img
-                src={url}
+                src={getImageSrc(url)}
                 alt={`Image ${index + 1}`}
                 className="w-full h-full object-cover"
               />
