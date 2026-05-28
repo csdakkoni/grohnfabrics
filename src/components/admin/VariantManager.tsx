@@ -34,12 +34,8 @@ async function resizeImage(file: File, maxWidth = 1600, maxHeight = 1600, qualit
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       
-      // Use original format if supported, otherwise default to JPEG
-      const outputType = file.type === 'image/webp' ? 'image/webp' 
-                       : file.type === 'image/png' ? 'image/png'
-                       : 'image/jpeg';
-      
-      // Convert to blob
+      // Always convert to JPEG - server processes everything as JPEG anyway
+      // This ensures maximum compatibility across all browsers
       canvas.toBlob(
         (blob) => {
           if (blob) {
@@ -48,7 +44,7 @@ async function resizeImage(file: File, maxWidth = 1600, maxHeight = 1600, qualit
             reject(new Error('Failed to create blob'));
           }
         },
-        outputType,
+        'image/jpeg',
         quality
       );
     };
