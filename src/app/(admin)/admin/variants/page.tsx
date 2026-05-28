@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { Plus, Pencil, Trash2, Palette, Ruler, ChevronDown, ChevronRight, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Palette, Ruler, ChevronDown, ChevronRight, GripVertical, Loader2 } from 'lucide-react';
 
 interface OptionValueTemplate {
   id: string;
@@ -41,9 +40,33 @@ const optionTypeIcons: Record<string, React.ReactNode> = {
   radio: <ChevronRight className="w-4 h-4" />,
 };
 
+// API helper – all CRUD goes through the server-side admin route
+async function apiCall(action: string, data: Record<string, unknown>) {
+  const res = await fetch('/api/admin/variants', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, data }),
+  });
+  const json = await res.json();
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'API error');
+  }
+  return json;
+}
+
+async function apiList(): Promise<OptionGroupTemplate[]> {
+  const res = await fetch('/api/admin/variants');
+  const json = await res.json();
+  if (!res.ok || json.error) {
+    throw new Error(json.error || 'API error');
+  }
+  return json.templates;
+}
+
 export default function VariantTemplatesPage() {
   const [templates, setTemplates] = useState<OptionGroupTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set());
   
   // Modal states
@@ -52,8 +75,6 @@ export default function VariantTemplatesPage() {
   const [editingGroup, setEditingGroup] = useState<OptionGroupTemplate | null>(null);
   const [editingValue, setEditingValue] = useState<OptionValueTemplate | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  
-  const supabase = createClient();
 
   useEffect(() => {
     loadTemplates();
@@ -61,23 +82,11 @@ export default function VariantTemplatesPage() {
 
   const loadTemplates = async () => {
     setLoading(true);
-    const { data: groups } = await supabase
-      .from('option_group_templates')
-      .select('*')
-      .order('sort_order');
-
-    if (groups) {
-      const templatesWithValues = await Promise.all(
-        groups.map(async (group) => {
-          const { data: values } = await supabase
-            .from('option_value_templates')
-            .select('*')
-            .eq('template_id', group.id)
-            .order('sort_order');
-          return { ...group, values: values || [] };
-        })
-      );
-      setTemplates(templatesWithValues);
+    try {
+      const data = await apiList();
+      setTemplates(data);
+    } catch (err) {
+      console.error('Load error:', err);
     }
     setLoading(false);
   };
@@ -94,75 +103,87 @@ export default function VariantTemplatesPage() {
 
   const handleSaveGroup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSaving(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
     
-    const data = {
+    const data: Record<string, unknown> = {
       name_tr: formData.get('name_tr') as string,
       name_en: formData.get('name_en') as string,
       option_type: formData.get('option_type') as string,
       description: formData.get('description') as string || null,
-      is_active: true,
     };
 
-    if (editingGroup) {
-      await supabase
-        .from('option_group_templates')
-        .update(data)
-        .eq('id', editingGroup.id);
-    } else {
-      await supabase
-        .from('option_group_templates')
-        .insert(data);
+    try {
+      if (editingGroup) {
+        data.id = editingGroup.id;
+        await apiCall('update_group', data);
+      } else {
+        await apiCall('create_group', data);
+      }
+      setShowGroupModal(false);
+      setEditingGroup(null);
+      await loadTemplates();
+    } catch (err) {
+      console.error('Save group error:', err);
+      alert('Kaydetme hatası. Lütfen tekrar deneyin.');
     }
-
-    setShowGroupModal(false);
-    setEditingGroup(null);
-    loadTemplates();
+    setSaving(false);
   };
 
   const handleSaveValue = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSaving(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
     
-    const data = {
+    const data: Record<string, unknown> = {
       template_id: selectedTemplateId!,
       value_tr: formData.get('value_tr') as string,
       value_en: formData.get('value_en') as string,
       sku_suffix: formData.get('sku_suffix') as string || null,
       hex_color: formData.get('hex_color') as string || null,
       default_price_modifier: parseFloat(formData.get('price_modifier') as string) || 0,
-      is_active: true,
     };
 
-    if (editingValue) {
-      await supabase
-        .from('option_value_templates')
-        .update(data)
-        .eq('id', editingValue.id);
-    } else {
-      await supabase
-        .from('option_value_templates')
-        .insert(data);
+    try {
+      if (editingValue) {
+        data.id = editingValue.id;
+        await apiCall('update_value', data);
+      } else {
+        await apiCall('create_value', data);
+      }
+      setShowValueModal(false);
+      setEditingValue(null);
+      setSelectedTemplateId(null);
+      await loadTemplates();
+    } catch (err) {
+      console.error('Save value error:', err);
+      alert('Kaydetme hatası. Lütfen tekrar deneyin.');
     }
-
-    setShowValueModal(false);
-    setEditingValue(null);
-    setSelectedTemplateId(null);
-    loadTemplates();
+    setSaving(false);
   };
 
   const handleDeleteGroup = async (id: string) => {
     if (!confirm('Bu şablonu ve tüm değerlerini silmek istediğinize emin misiniz?')) return;
-    await supabase.from('option_group_templates').delete().eq('id', id);
-    loadTemplates();
+    try {
+      await apiCall('delete_group', { id });
+      await loadTemplates();
+    } catch (err) {
+      console.error('Delete group error:', err);
+      alert('Silme hatası. Lütfen tekrar deneyin.');
+    }
   };
 
   const handleDeleteValue = async (id: string) => {
     if (!confirm('Bu değeri silmek istediğinize emin misiniz?')) return;
-    await supabase.from('option_value_templates').delete().eq('id', id);
-    loadTemplates();
+    try {
+      await apiCall('delete_value', { id });
+      await loadTemplates();
+    } catch (err) {
+      console.error('Delete value error:', err);
+      alert('Silme hatası. Lütfen tekrar deneyin.');
+    }
   };
 
   const openAddValue = (templateId: string) => {
@@ -406,8 +427,12 @@ export default function VariantTemplatesPage() {
                 >
                   İptal
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingGroup ? 'Güncelle' : 'Oluştur'}
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</>
+                  ) : (
+                    editingGroup ? 'Güncelle' : 'Oluştur'
+                  )}
                 </button>
               </div>
             </form>
@@ -506,8 +531,12 @@ export default function VariantTemplatesPage() {
                 >
                   İptal
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingValue ? 'Güncelle' : 'Ekle'}
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Kaydediliyor...</>
+                  ) : (
+                    editingValue ? 'Güncelle' : 'Ekle'
+                  )}
                 </button>
               </div>
             </form>
